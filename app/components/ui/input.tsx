@@ -3,12 +3,9 @@ import * as React from "react";
 import { cn } from "~/lib/utils";
 import { Search, User } from "../icons";
 
-
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <div className="relative w-full ">
-      <Search className="absolute right-3 top-1/2 -translate-y-1/5 text-muted-foreground size-4" />
-      <User className="absolute left-3 top-1/2 -translate-y-1/5 text-muted-foreground size-4" />
       <input
         type={type}
         data-slot="input"

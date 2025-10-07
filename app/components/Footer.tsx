@@ -30,7 +30,7 @@ const Footer = () => {
     <>
       <footer className="w-screen px-20 py-10 flex flex-row items-center justify-between">
         <div className="space-y-3.5">
-          <img src="/logo/jitu.png" alt="logo" />
+          <img src="/logo/jitu.png" alt="logo" className="w-32" />
           <p className="font-poppins text-sm text-blue-700">© 2025 Jitu PTN</p>
         </div>
 

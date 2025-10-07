@@ -8,7 +8,7 @@ const Navbar = () => {
     <>
       <nav className="flex flow-row w-screen px-8 py-8 items-center  justify-between bg-blue-800 font-poppins text-white">
         <div className="flex flex-row items-center gap-6">
-          <img src="/logo/jitu.png" alt="" />
+          <img src="/logo/jitu.png" alt="jitu logo" className="w-32" />
           <div className="flex flex-row gap-5 font-medium text-xl max-md:text-sm ">
             <p className=" hover:text-yellow-100 hover:cursor-pointer">Home</p>
             <p className="hover:text-yellow-100 hover:cursor-pointer">
