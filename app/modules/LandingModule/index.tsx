@@ -49,7 +49,7 @@ export const LandingModule = () => {
           </AccordionItem>
         </Accordion>
         <Input className="mt-3" />
-        <div>
+        <div className="mt-3">
           <DropdownMenu>
             <DropdownMenuTrigger>PlaceHolder</DropdownMenuTrigger>
             <DropdownMenuContent>
