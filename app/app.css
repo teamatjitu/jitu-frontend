@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -6,32 +7,34 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-poppins: "Poppins", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  --color-bg-white: #FBFBFB;
-  --color-error: #D75353;
-  --color-success: #35CA89;
+  --color-bg-white: #fbfbfb;
+  --color-error: #d75353;
+  --color-success: #35ca89;
 
   --color-gray-800: #000000;
   --color-gray-700: #333333;
   --color-gray-500: #666666;
   --color-gray-300: #999999;
-  --color-gray-100: #CCCCCC;
-  --color-gray-50: #E6E6E6;
-  --color-gray-0: #FFFFFF;
+  --color-gray-100: #cccccc;
+  --color-gray-50: #e6e6e6;
+  --color-gray-0: #ffffff;
 
   --color-blue-800: #285898;
-  --color-blue-700: #3575CA;
-  --color-blue-500: #4292FD;
-  --color-blue-300: #559DFD;
-  --color-blue-100: #7BB3FE;
-  --color-blue-50: #A1C9FE;
+  --color-blue-700: #3575ca;
+  --color-blue-500: #4292fd;
+  --color-blue-300: #559dfd;
+  --color-blue-100: #7bb3fe;
+  --color-blue-50: #a1c9fe;
 
-  --color-yellow-800: #CB9702;
-  --color-yellow-700: #E5AA03;
-  --color-yellow-500: #FEBD03;
-  --color-yellow-300: #FECA35;
-  --color-yellow-100: #FED14F;
-  --color-yellow-50: #FED768;
+  --color-yellow-800: #cb9702;
+  --color-yellow-700: #e5aa03;
+  --color-yellow-500: #febd03;
+  --color-yellow-300: #feca35;
+  --color-yellow-100: #fed14f;
+  --color-yellow-50: #fed768;
 }
 
 html,
