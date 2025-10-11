@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { TryOutModule } from "~/modules/TryOutModule";
 import { TryOutAction } from "~/modules/TryOutModule/action";
 import { TryOutLoader } from "~/modules/TryOutModule/loader";
@@ -12,5 +12,6 @@ export async function action(args: ActionFunctionArgs) {
 }
 
 export default function TryOutPage() {
-  return <TryOutModule />;
+  const { tryout } = useLoaderData<{ tryout: Tryout }>();
+  return <TryOutModule tryout={tryout} />;
 }
