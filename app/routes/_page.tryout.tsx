@@ -12,6 +12,6 @@ export async function action(args: ActionFunctionArgs) {
 }
 
 export default function TryOutPage() {
-  const { tryout } = useLoaderData<{ tryout: Tryout }>();
-  return <TryOutModule tryout={tryout} />;
+  const { tryout, tryoutAttempt } = useLoaderData<{ tryout: Tryout, tryoutAttempt: TryoutAttempt }>();
+  return <TryOutModule tryout={tryout} tryoutAttempt={tryoutAttempt} />;
 }
