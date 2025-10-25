@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
 
-import ChartBarInteractive from "./components/chart";
+import ChartBarInteractive from "./components/assets/chart";
 
 const getDefaultAvatar = (name: string) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -10,7 +11,7 @@ const getDefaultAvatar = (name: string) => {
   )}&background=random&color=fff`;
 };
 
-export const DashboardModule = () => {
+export const ProfileModule = () => {
   const defaultPicture = getDefaultAvatar("DekDepe");
   const [isPremium, setIsPremium] = useState(false);
 
@@ -52,12 +53,14 @@ export const DashboardModule = () => {
                     Premium
                   </p>
                 </div>
-                <Button
-                  className="w-full rounded-xl hover:cursor-pointer"
-                  variant={"blue"}
-                >
-                  Edit
-                </Button>
+                <Link to={"/edit-profile"}>
+                  <Button
+                    className="w-full rounded-xl hover:cursor-pointer"
+                    variant={"blue"}
+                  >
+                    Edit
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
