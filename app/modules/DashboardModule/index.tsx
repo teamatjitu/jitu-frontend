@@ -1,96 +1,157 @@
 "use client";
 import { useState } from "react";
+import { Link } from "react-router";
+import { Library } from "~/components/icons";
 import { Button } from "~/components/ui/button";
 
-import ChartBarInteractive from "./components/chart";
-
-const getDefaultAvatar = (name: string) => {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name
-  )}&background=random&color=fff`;
+type Tryout = {
+  judul: string;
+  tanggal: string;
+  link: string;
+  status: "ongoing" | "finished" | "upcoming";
 };
 
 export const DashboardModule = () => {
-  const defaultPicture = getDefaultAvatar("DekDepe");
-  const [isPremium, setIsPremium] = useState(false);
-
-  const dataDiri = {
-    nama: "Dek Depe",
-    kelamin: "Python",
-    telp: "01234567889",
-  };
-
-  const dataSekolah = {
-    asal: "Harvard School & Grooming",
-    domisili: "Jalan Magetan No. 32",
-    kelas: "DO",
-  };
+  const tryouts: Tryout[] = [
+    {
+      judul: "Tryout SNBT #1",
+      tanggal: "1 Januari 2025",
+      link: "www.example.com",
+      status: "ongoing",
+    },
+    {
+      judul: "Tryout SNBT #2",
+      tanggal: "1 Januari 2025",
+      link: "www.example.com",
+      status: "ongoing",
+    },
+    {
+      judul: "Tryout SNBT #3",
+      tanggal: "1 Januari 2025",
+      link: "www.example.com",
+      status: "finished",
+    },
+    {
+      judul: "Tryout SNBT #4",
+      tanggal: "1 Januari 2025",
+      link: "www.example.com",
+      status: "upcoming",
+    },
+    {
+      judul: "Tryout SNBT #5",
+      tanggal: "1 Januari 2025",
+      link: "www.example.com",
+      status: "upcoming",
+    },
+  ];
 
   return (
-    <main className="min-h-screen px-20 py-20  flex flex-col">
-      <h1 className="text-6xl font-semibold text-blue-800">Profile</h1>
-      <div className="flex gap-10 justify-between max-md:flex-wrap md:flex-row mt-12 w-full ">
-        <div className="w-3xl flex flex-col gap-10">
-          {/* User Picture */}
-          <div className="flex flex-row px-4 shadow-lg rounded-3xl border items-center text-blue-800 border-blue-950 py-5 gap-10 bg-blue-50">
-            <img
-              src={defaultPicture}
-              alt="user picture"
-              className="max-xl:w-16 max-xl:h-16 w-32 h-32 rounded-full"
-            />
-            <div className="space-y-1">
-              <h4 className="font-bold text-2xl max-xl:text-lg">
-                Halo, Dek depe
-              </h4>
-              <p className="max-lg:text-sm">DekDepe123@ui.ac.id</p>
-              <div className="w-fit space-y-2">
-                <div className="flex flex-row gap-2.5">
-                  <p className="bg-white w-fit px-2.5 rounded-2xl text-center">
-                    Free
-                  </p>
-                  <p className="bg-yellow-100 w-fit px-2.5 rounded-2xl text-center">
-                    Premium
-                  </p>
-                </div>
-                <Button
-                  className="w-full rounded-xl hover:cursor-pointer"
-                  variant={"blue"}
-                >
-                  Edit
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Data Diri */}
-          <div className="flex flex-col px-4 shadow-lg rounded-3xl border text-blue-800 border-blue-950 py-5 gap-3 bg-blue-50">
-            <h5 className="font-semibold text-2xl">Data Diri</h5>
-            <div className="bg-white text-black px-2.5 py-2.5 rounded-lg border-2 border-gray-300">
-              <p>{dataDiri.nama}</p>
-              <hr className="border-black mb-3" />
-              <p>{dataDiri.kelamin}</p>
-              <hr className="border-black mb-3" />
-              <p>{dataDiri.telp}</p>
-              <hr className="border-black " />
-            </div>
-          </div>
-
-          {/* Data Sekolah */}
-          <div className="flex flex-col px-4 shadow-lg rounded-3xl border text-blue-800 border-blue-950 py-5 gap-3 bg-blue-50">
-            <h5 className="font-semibold text-2xl">Data Sekolah</h5>
-            <div className="bg-white text-black px-2.5 py-2.5 rounded-lg border-2 border-gray-300">
-              <p>{dataSekolah.asal}</p>
-              <hr className="border-black mb-3" />
-              <p>{dataSekolah.domisili}</p>
-              <hr className="border-black mb-3" />
-              <p>{dataSekolah.kelas}</p>
-              <hr className="border-black " />
-            </div>
+    <main className="min-h-screen font-poppins px-20 py-20 items-center text-start flex flex-col">
+      <div className="flex flex-col w-3/4 gap-5 mb-20">
+        <div className="bg-blue-800 rounded-sm gap-4 px-4 py-2.5 flex flex-row items-center">
+          <Library />
+          <div>
+            <p className="text-white text-2xl font-medium">My Collection</p>
+            <p className="text-lg  text-gray-100">
+              Kumpulan Tryout yang telah kamu daftarkan
+            </p>
           </div>
         </div>
-        {/* Chart Div */}
-        <div className="w-[60%] max-md:w-full">
-          <ChartBarInteractive />
+
+        <div className="bg-yellow-500 rounded-sm gap-4 px-4 py-2.5 flex flex-row items-center justify-between">
+          <div>
+            <p className="text-white text-2xl font-medium">Premium Plan</p>
+            <p className="text-lg  text-gray-500">
+              Upgrade ke premium untuk membuka fitur fitur tambahan
+            </p>
+          </div>
+
+          <button className="bg-white text-[#1D3375] text-lg w-28 hover:cursor-pointer font-semibold px-4 py-2 rounded-3xl">
+            Beli
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col w-full items-center">
+        <div className="flex flex-col gap-6 text-start items-start mb-14 justify-center w-3/4">
+          <h1 className="text-2xl text-[#285898] mb-7 font-semibold">
+            Sedang Berlangsung
+          </h1>
+
+          {tryouts
+            .filter((t) => t.status === "ongoing")
+            .map((t, index) => (
+              <div
+                key={index}
+                className="bg-blue-500 shadow-lg w-full shadow-blue-500 rounded-sm gap-4 px-4 py-2.5 flex flex-row items-center justify-between"
+              >
+                <div>
+                  <p className="text-[#FED768] text-2xl font-medium">
+                    {t.judul}
+                  </p>
+                  <p className="text-lg  text-white">{t.tanggal}</p>
+                </div>
+                <Link to={t.link}>
+                  <button className="bg-yellow-500 text-white text-lg w-40 hover:cursor-pointer px-4 py-2 rounded-lg">
+                    Daftar
+                  </button>
+                </Link>
+              </div>
+            ))}
+        </div>
+
+        <div className="flex flex-col text-start gap-4 items-start mb-14 justify-center w-3/4">
+          <h1 className="text-2xl text-[#285898] mb-7 font-semibold">
+            Tryout yang akan Datang
+          </h1>
+
+          {tryouts
+            .filter((t) => t.status === "upcoming")
+            .map((t, index) => (
+              <div
+                key={index}
+                className="bg-blue-800 w-full rounded-sm gap-4 px-4 py-2.5 flex flex-row items-center justify-between"
+              >
+                <div>
+                  <p className="text-[#FED768] text-2xl font-medium">
+                    {t.judul}
+                  </p>
+                  <p className="text-lg  text-white">{t.tanggal}</p>
+                </div>
+                <Link to={t.link}>
+                  <button className="bg-yellow-500 text-white text-lg w-40 hover:cursor-pointer px-4 py-2 rounded-lg">
+                    Daftar
+                  </button>
+                </Link>
+              </div>
+            ))}
+        </div>
+
+        <div className="flex flex-col text-start gap-4 items-start justify-center w-3/4">
+          <h1 className="text-2xl text-[#285898] mb-7 font-semibold">
+            Telah Berlangsung
+          </h1>
+
+          {tryouts
+            .filter((t) => t.status === "finished")
+            .map((t, index) => (
+              <div
+                key={index}
+                className="bg-blue-800  w-full  rounded-sm gap-4 px-4 py-2.5 flex flex-row items-center justify-between"
+              >
+                <div>
+                  <p className="text-[#FED768] text-2xl font-medium">
+                    {t.judul}
+                  </p>
+                  <p className="text-lg  text-white">{t.tanggal}</p>
+                </div>
+
+                <Link to={t.link}>
+                  <button className="bg-yellow-500 text-white text-lg w-40 hover:cursor-pointer px-4 py-2 rounded-lg">
+                    Daftar
+                  </button>
+                </Link>
+              </div>
+            ))}
         </div>
       </div>
     </main>

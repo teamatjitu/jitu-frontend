@@ -110,3 +110,5 @@ export { default as Userplus } from "./svgs/User-plus.svg?react";
 export { default as User } from "./svgs/User.svg?react";
 
 export { default as Video } from "./svgs/Video.svg?react";
+
+export { default as Library } from "./svgs/library.svg?react";

@@ -125,7 +125,7 @@ export const EditProfileModule = () => {
             </form>
             <div className="flex justify-end mt-5">
               <Button
-                className="rounded-md w-40 h-10 text-lg font-bold hover:cursor-pointer"
+                className="rounded-md w-40 h-12 text-lg font-bold hover:cursor-pointer"
                 variant={"blue"}
               >
                 Edit
