@@ -1,3 +1,4 @@
+import { error } from "console";
 import { redirect, type ActionFunctionArgs } from "react-router";
 
 import { authClient } from "~/lib/auth-client";
@@ -19,12 +20,13 @@ export async function LoginAction({ request }: ActionFunctionArgs) {
 
     if (error) {
       console.error("Login error:", error);
-      return error;
+      return { error: error.message };
     } else {
       console.log("Login successful:", data);
-      return redirect("/dashboard");
+      return redirect("/profile");
     }
   } catch (e) {
     console.error("An unexpected error occurred:", e);
+    return { error: "Something Error" };
   }
 }

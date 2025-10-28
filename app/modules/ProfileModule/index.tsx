@@ -4,6 +4,7 @@ import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
 
 import ChartBarInteractive from "./components/assets/chart";
+import { authClient } from "~/lib/auth-client";
 
 const getDefaultAvatar = (name: string) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -15,9 +16,11 @@ export const ProfileModule = () => {
   const defaultPicture = getDefaultAvatar("DekDepe");
   const [isPremium, setIsPremium] = useState(false);
 
+  const { data: session } = authClient.useSession();
+
   const dataDiri = {
-    nama: "Dek Depe",
-    kelamin: "Python",
+    nama: session?.user.name,
+    kelamin: session?.user.email,
     telp: "01234567889",
   };
 

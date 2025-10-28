@@ -36,7 +36,7 @@ const chartData = [
     pu: 200,
     ppu: 200,
     pbm: 100,
-    pk: 150,
+    pk: 100,
     lbi: 300,
     lbe: 450,
     pm: 300,

@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
 import { CircleUser } from "lucide-react";
+import { authClient } from "~/lib/auth-client";
+
 const Navbar = () => {
-  const [isLoggedIn, setLoggedIn] = useState(false);
+  const { data: session, error } = authClient.useSession();
 
   return (
     <>
@@ -20,7 +21,9 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-4 text-center items-center font-medium max-md:text-sm text-lg">
-          <p>Hi, Username</p>
+          <p>Hi, {session?.user.name}</p>
+          <p>{error?.message}</p>
+          <p>Halo aku sore</p>
           <CircleUser className="size-8" />
         </div>
       </nav>
