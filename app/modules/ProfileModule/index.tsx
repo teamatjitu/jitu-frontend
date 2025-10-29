@@ -1,10 +1,37 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
 
 import ChartBarInteractive from "./components/assets/chart";
 import { authClient } from "~/lib/auth-client";
+import { useNavigate } from "react-router";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface SessionInfo {
+  id: string;
+  expiresAt: string;
+  token: string;
+  createdAt: string;
+  updatedAt: string;
+  ipAddress: string;
+  userAgent: string;
+  userId: string;
+}
+
+interface SessionData {
+  session: SessionInfo;
+  user: User;
+}
 
 const getDefaultAvatar = (name: string) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -15,9 +42,12 @@ const getDefaultAvatar = (name: string) => {
 export const ProfileModule = () => {
   const defaultPicture = getDefaultAvatar("DekDepe");
   const [isPremium, setIsPremium] = useState(false);
+  const [session, setSession] = useState<SessionData | null>(null);
+  const router = useNavigate();
 
-  const { data: session } = authClient.useSession();
+  // const { data: session } = authClient.useSession();
 
+  // console.log(session);
   const dataDiri = {
     nama: session?.user.name,
     kelamin: session?.user.email,

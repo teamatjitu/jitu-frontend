@@ -7,9 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-import { authClient } from "./lib/auth-client";
 import { useLocation } from "react-router";
-
 import type { Route } from "./+types/root";
 import "./app.css";
 import Navbar from "./components/Navbar";
@@ -43,7 +41,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const pathname = useLocation().pathname;
 
   const hiddenRoutes = ["/login", "/register"];
-  const isHidden = hiddenRoutes.includes(pathname);
+  const isNavbarHidden = hiddenRoutes.includes(pathname);
+  const isFooterHidden =
+    hiddenRoutes.includes(pathname) || pathname.startsWith("/admin");
 
   return (
     <html lang="en">
@@ -54,11 +54,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="font-poppins">
-        {!isHidden && <Navbar />}
+        {!isNavbarHidden && <Navbar />}
         {children}
         <ScrollRestoration />
         <Scripts />
-        {!isHidden && <Footer />}
+        {!isFooterHidden && <Footer />}
       </body>
     </html>
   );
