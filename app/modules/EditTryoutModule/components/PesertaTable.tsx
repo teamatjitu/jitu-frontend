@@ -103,8 +103,8 @@ export const pesertaData = [
 
 export const PesertaTable = () => {
   return (
-    <div className="overflow-x-auto shadow-xl mt-12">
-      <table className="w-[90rem] overflow-hidden rounded-2xl text-sm text-center border-collapse">
+    <div className=" shadow-xl overflow-x-auto max-w-full mt-12">
+      <table className="w-full max-w-[90rem] overflow-hidden rounded-2xl text-sm text-center border-collapse">
         <thead>
           <tr className="bg-blue-500  text-white font-bold">
             <th className="px-4 py-3 rounded-l-xl">Nama Lengkap</th>

@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import {
+  useLoaderData,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { EditTryoutModule } from "~/modules/EditTryoutModule";
 import { EditTryoutAction } from "~/modules/EditTryoutModule/action";
 import { EditTryoutLoader } from "~/modules/EditTryoutModule/loader";
@@ -12,5 +16,6 @@ export async function action(args: ActionFunctionArgs) {
 }
 
 export default function EditTryoutPage() {
-  return <EditTryoutModule />;
+  const tryout = useLoaderData<Tryout>();
+  return <EditTryoutModule tryout={tryout} />;
 }

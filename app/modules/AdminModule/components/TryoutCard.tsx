@@ -1,10 +1,13 @@
+import { Link } from "react-router";
 type TryoutCardProps = {
+  id: string;
   nama: string;
   tanggalMulai: string;
   tanggalTutup: string;
 };
 
 export const TryoutCard = ({
+  id,
   nama,
   tanggalMulai,
   tanggalTutup,
@@ -37,9 +40,11 @@ export const TryoutCard = ({
                 <li>Penalaran Matematika</li>
               </ul>
             </div>
-            <button className="text-white mt-6 bg-[#4292FD] w-full py-2 rounded-lg hover:cursor-pointer">
-              Detail
-            </button>
+            <Link to={`/admin/edit-tryout/${id}`}>
+              <button className="text-white mt-6 bg-[#4292FD] w-full py-2 rounded-lg hover:cursor-pointer">
+                Detail
+              </button>
+            </Link>
           </div>
         </div>
       </div>

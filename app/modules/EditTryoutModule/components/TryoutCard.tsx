@@ -6,8 +6,11 @@ import { useLoaderData } from "react-router";
 import { pesertaData } from "./PesertaTable";
 import { updateTryout } from "~/api/admin";
 
-export const TryoutCard = () => {
-  const tryout = useLoaderData<Tryout>();
+type TryoutCardProps = {
+  tryout: Tryout;
+};
+
+export const TryoutCard = ({ tryout }: TryoutCardProps) => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(tryout.name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -71,7 +74,7 @@ export const TryoutCard = () => {
 
   return (
     <>
-      <div className="shadow-xl w-[90rem] mt-5 rounded-2xl">
+      <div className="shadow-xl w-full max-w-[90rem] mt-5 rounded-2xl">
         <div className="w-full bg-[#4292FD] h-10 rounded-t-2xl" />
         <div className="px-4 py-6 text-blue-800">
           <div className="flex flex-row gap-3">
@@ -109,6 +112,7 @@ export const TryoutCard = () => {
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === "Enter") handleSaveDate();
                     }}
+                    className="space-x-4"
                   >
                     <input
                       type="datetime-local"

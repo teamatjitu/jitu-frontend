@@ -3,16 +3,16 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
-import { TryOutModule } from "~/modules/TryOutModule";
-import { TryOutAction } from "~/modules/TryOutModule/action";
-import { TryOutLoader } from "~/modules/TryOutModule/loader";
+import { AddSoalModule } from "~/modules/AddSoalModule";
+import { AddSoalAction } from "~/modules/AddSoalModule/action";
+import { AddSoalLoader } from "~/modules/AddSoalModule/loader";
 
 export async function loader(args: LoaderFunctionArgs) {
-  return TryOutLoader(args);
+  return AddSoalLoader(args);
 }
 
 export async function action(args: ActionFunctionArgs) {
-  return TryOutAction(args);
+  return AddSoalAction(args);
 }
 
 export default function TryOutPage() {
@@ -20,5 +20,5 @@ export default function TryOutPage() {
     tryout: Tryout;
     tryoutAttempt: TryoutAttempt;
   }>();
-  return <TryOutModule tryout={tryout} tryoutAttempt={tryoutAttempt} />;
+  return <AddSoalModule tryout={tryout} tryoutAttempt={tryoutAttempt} />;
 }

@@ -7,8 +7,11 @@ import { TryoutCard } from "./components/TryoutCard";
 import { useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 
-export const AdminModule = () => {
-  const tryouts = useLoaderData<Tryout[]>();
+type AdminModuleProps = {
+  tryouts: Tryout[];
+};
+
+export const AdminModule = ({ tryouts }: AdminModuleProps) => {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -100,6 +103,7 @@ export const AdminModule = () => {
               return (
                 <TryoutCard
                   key={index}
+                  id={t.id}
                   nama={t.name}
                   tanggalMulai={publishedDate}
                   tanggalTutup={closedDate}

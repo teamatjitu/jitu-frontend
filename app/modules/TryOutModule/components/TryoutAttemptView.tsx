@@ -11,7 +11,15 @@ interface TryoutState {
   timeRemaining: number;
 }
 
-function QI({ soal, onAnswer, value }: {soal: Soal, onAnswer: (answer: number | string) => void, value: number | string}) {
+function QI({
+  soal,
+  onAnswer,
+  value,
+}: {
+  soal: Soal;
+  onAnswer: (answer: number | string) => void;
+  value: number | string;
+}) {
   if (soal.tipeSoal === TipeSoal.BENAR_SALAH) {
     return (
       <>
@@ -43,7 +51,7 @@ function QI({ soal, onAnswer, value }: {soal: Soal, onAnswer: (answer: number | 
           </button>
         </div>
       </>
-    )
+    );
   }
 
   if (soal.tipeSoal === TipeSoal.ISIAN_SINGKAT) {
@@ -57,9 +65,9 @@ function QI({ soal, onAnswer, value }: {soal: Soal, onAnswer: (answer: number | 
           onChange={(e) => {
             onAnswer(e.target.value);
           }}
-          />
+        />
       </div>
-    )
+    );
   }
 
   return (
@@ -88,7 +96,9 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
   });
 
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [answerStates, setAnswerStates] = useState<Record<number, number | string>>({});
+  const [answerStates, setAnswerStates] = useState<
+    Record<number, number | string>
+  >({});
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -153,7 +163,10 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
   const getQuestionStatus = (questionNum: number) => {
     if (tryoutState.markedQuestions.has(questionNum)) return "marked";
 
-    if (answerStates[questionNum] !== undefined && answerStates[questionNum] !== "")
+    if (
+      answerStates[questionNum] !== undefined &&
+      answerStates[questionNum] !== ""
+    )
       return "answered";
 
     return "unanswered";
@@ -180,7 +193,9 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
               {/* Title */}
               <div className="mb-5">
                 <h2 className="text-xl font-medium mb-0.5">Penalaran Umum</h2>
-                <p className="text-xs text-gray-400">{tryout.soal.length} Soal | {tryout.duration} Menit</p>
+                <p className="text-xs text-gray-400">
+                  {tryout.soal.length} Soal | {tryout.duration} Menit
+                </p>
               </div>
 
               {/* Timer */}
@@ -205,9 +220,9 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
                 <QuestionNumbersAndBtn
                   tryout={tryout}
                   stateStyles={{
-                    "marked": "bg-yellow-50 text-gray-800",
-                    "unanswered": "bg-gray-100 text-black",
-                    "answered": "bg-blue-50 text-gray-700",
+                    marked: "bg-yellow-50 text-gray-800",
+                    unanswered: "bg-gray-100 text-black",
+                    answered: "bg-blue-50 text-gray-700",
                   }}
                   questionToStateFn={getQuestionStatus}
                   currentQuestion={currentQuestion}
@@ -236,13 +251,12 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
               {/* Options */}
               <QuestionInput
                 soal={tryout.soal[currentQuestion - 1]}
-                onAnswer={val => {
+                onAnswer={(val) => {
                   setAnswerStates((prev) => ({
                     ...prev,
                     [currentQuestion]: val,
                   }));
                 }}
-
                 userAnswer={answerStates[currentQuestion]}
               />
 
@@ -274,7 +288,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
                   disabled={currentQuestion === 1}
                   className="w-[92px] h-[48px] px-4 py-3"
                 >
-                  <ArrowLeft1 className="text-gray-700"/>
+                  <ArrowLeft1 className="text-gray-700" />
                 </Button>
 
                 <Button
@@ -284,7 +298,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
                   disabled={currentQuestion === tryout.soal.length}
                   className="w-[92px] h-[48px] px-4 py-3"
                 >
-                  <ArrowRight1/>
+                  <ArrowRight1 />
                 </Button>
               </div>
             </div>
@@ -294,9 +308,9 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
             <QuestionNumbersAndBtn
               tryout={tryout}
               stateStyles={{
-                "marked": "bg-yellow-50 text-gray-800",
-                "unanswered": "bg-gray-100 text-black",
-                "answered": "bg-blue-50 text-gray-700",
+                marked: "bg-yellow-50 text-gray-800",
+                unanswered: "bg-gray-100 text-black",
+                answered: "bg-blue-50 text-gray-700",
               }}
               questionToStateFn={getQuestionStatus}
               currentQuestion={currentQuestion}
