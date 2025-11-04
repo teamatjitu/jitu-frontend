@@ -73,7 +73,7 @@ export const ProfileModule = () => {
             />
             <div className="space-y-1">
               <h4 className="font-bold text-2xl max-xl:text-lg">
-                Halo, Dek daka
+                Halo, Dek Depe
               </h4>
               <p className="max-lg:text-sm">DekDepe123@ui.ac.id</p>
               <div className="w-fit space-y-2">

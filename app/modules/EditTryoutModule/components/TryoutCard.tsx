@@ -1,26 +1,73 @@
+"use client";
+import { useState } from "react";
 import { Pen } from "~/components/icons";
 import { Calendar } from "lucide-react";
 import { useLoaderData } from "react-router";
 import { pesertaData } from "./PesertaTable";
+import { updateTryout } from "~/api/admin";
 
 export const TryoutCard = () => {
   const tryout = useLoaderData<Tryout>();
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(tryout.name);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
 
-  const publishedDate = new Date(tryout.publishedAt);
-  const closedDate = new Date(tryout.closedAt);
-
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  const toLocalDatetimeInput = (iso: string) => {
+    const date = new Date(iso);
+    const tzOffset = date.getTimezoneOffset() * 60000; // offset in ms
+    const localISOTime = new Date(date.getTime() - tzOffset)
+      .toISOString()
+      .slice(0, 16);
+    return localISOTime;
   };
-  const formattedPublishedDate = new Intl.DateTimeFormat(
-    "en-US",
-    options
-  ).format(publishedDate);
-  const formattedClosedDate = new Intl.DateTimeFormat("en-US", options).format(
-    closedDate
+
+  const [publishedAt, setPublishedAt] = useState(
+    toLocalDatetimeInput(tryout.publishedAt.toString())
   );
+  const [closedAt, setClosedAt] = useState(
+    toLocalDatetimeInput(tryout.closedAt.toString())
+  );
+
+  const formattedDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const handleSaveName = async () => {
+    try {
+      setLoading(!loading);
+      await updateTryout(tryout.id, {
+        name,
+      });
+      setIsEditingName(!isEditingName);
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setLoading(!loading);
+    }
+  };
+
+  const handleSaveDate = async () => {
+    setLoading(true);
+    try {
+      await updateTryout(tryout.id, {
+        publishedAt: new Date(publishedAt).toISOString(),
+        closedAt: new Date(closedAt).toISOString(),
+      });
+      setIsEditingDate(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update date";
+      alert(msg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -28,21 +75,67 @@ export const TryoutCard = () => {
         <div className="w-full bg-[#4292FD] h-10 rounded-t-2xl" />
         <div className="px-4 py-6 text-blue-800">
           <div className="flex flex-row gap-3">
-            <p className="mb-5 font-semibold text-2xl">{tryout.name}</p>
-            <Pen className="hover:cursor-pointer" />
+            {isEditingName ? (
+              <input
+                className="border rounded px-2 mb-5 text-2xl font-semibold"
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setName(e.target.value)
+                }
+                autoFocus
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") handleSaveName();
+                }}
+              />
+            ) : (
+              <p className="mb-5 font-semibold text-2xl">{name}</p>
+            )}
+            <Pen
+              className="hover:cursor-pointer"
+              onClick={() => {
+                setIsEditingName(!isEditingName);
+              }}
+            />
           </div>
           <div className="text-sm font-bold space-y-2 uppercase">
             <div>
               <p>Jumlah Peserta: {pesertaData.length}</p>
             </div>
             <div>
-              <p className="text-yellow-500 font-bold text-sm">Tanggal </p>
+              <p className="text-yellow-500 font-bold text-sm">tanggal </p>
               <div className="flex flex-row gap-3 items-center">
-                <p>
-                  {" "}
-                  {formattedPublishedDate} - {formattedClosedDate}
-                </p>
-                <Calendar color="#285898" className="hover:cursor-pointer" />
+                {isEditingDate ? (
+                  <div
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (e.key === "Enter") handleSaveDate();
+                    }}
+                  >
+                    <input
+                      type="datetime-local"
+                      className="border rounded px-2 py-1"
+                      value={publishedAt}
+                      onChange={(e) => setPublishedAt(e.target.value)}
+                      disabled={loading}
+                    />
+                    <input
+                      type="datetime-local"
+                      className="border rounded px-2 py-1"
+                      value={closedAt}
+                      onChange={(e) => setClosedAt(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                ) : (
+                  <p>
+                    {" "}
+                    {formattedDate(publishedAt)} - {formattedDate(closedAt)}
+                  </p>
+                )}
+                <Calendar
+                  color="#285898"
+                  className="hover:cursor-pointer"
+                  onClick={() => setIsEditingDate(!isEditingDate)}
+                />
               </div>
             </div>
             <div className="space-y-3">
