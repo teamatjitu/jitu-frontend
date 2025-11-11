@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuestionCard } from "./components/QuestionCard";
 import { QuestionNumbersMenu } from "./components/QuestionNumbersMenu";
 import { Button } from "~/components/ui/button";
 import { ArrowLeft1, ArrowRight1 } from "~/components/icons";
 import { TipeSoal } from "./enums";
+import { Link } from "react-router";
+
+import { useActionData, useParams } from "react-router";
 
 import {
   DropdownMenu,
@@ -21,30 +24,57 @@ import {
 } from "~/components/ui/dropdown-menu";
 
 type AddSoalModuleProps = {
-  tryout: Tryout;
-  tryoutAttempt: TryoutAttempt;
+  soalList?: Soal[];
 };
 
 type SavedQuestion = {
+  id?: string;
   pertanyaan: string;
   pembahasan?: string;
   tipe: string;
   opsi: { teks: string; is_correct: boolean }[];
 };
 
-export const AddSoalModule = ({
-  tryout,
-  tryoutAttempt,
-}: AddSoalModuleProps) => {
+export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
+  const { subtest } = useParams();
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [questionTypes, setQuestionTypes] = useState<Record<number, string>>(
     {}
   );
 
-  // NEW: saved questions map
+  const initializeSavedQuestions = (soalList: Soal[]) => {
+    const saved: Record<number, SavedQuestion> = {};
+    soalList.forEach((soal, index) => {
+      const questionNum = index + 1;
+      saved[questionNum] = {
+        id: soal.id,
+        pertanyaan: soal.question,
+        pembahasan: soal.pembahasanSoal?.pembahasan,
+        tipe:
+          soal.tipeSoal === "PILIHAN_GANDA"
+            ? "PG"
+            : soal.tipeSoal === "BENAR_SALAH"
+            ? "BS"
+            : "IS",
+        opsi: soal.opsi.map((o) => ({ teks: o.teks, is_correct: o.isCorrect })),
+      };
+    });
+    return saved;
+  };
+
   const [savedQuestions, setSavedQuestions] = useState<
     Record<number, SavedQuestion>
-  >({});
+  >(initializeSavedQuestions(soalList));
+
+  useEffect(() => {
+    setCurrentQuestion(1);
+    setSavedQuestions(initializeSavedQuestions(soalList));
+    setQuestionTypes({});
+  }, [subtest, soalList]);
+
+  const actionData = useActionData() as
+    | { success: boolean; message: string }
+    | undefined;
 
   // toast
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
@@ -56,6 +86,18 @@ export const AddSoalModule = ({
     setToast({ open: true, message });
     setTimeout(() => setToast({ open: false, message: "" }), 3000);
   };
+
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        showToast("Soal berhasil disimpan");
+
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(actionData.message || "Gagal menyimpan soal");
+      }
+    }
+  }, [actionData]);
 
   const goToQuestion = (questionNum: number) => {
     setCurrentQuestion(questionNum);
@@ -81,102 +123,95 @@ export const AddSoalModule = ({
   };
 
   const getCurrentQuestionType = () => {
-    return questionTypes[currentQuestion] || "BS"; // Default to BS if not set
-  };
-
-  // NEW: save handler (local). Replace with fetch POST to your API endpoint as needed.
-  const handleSaveQuestion = async (
-    questionNum: number,
-    payload: SavedQuestion
-  ) => {
-    // Example: send to server
-    // await fetch('/api/admin/save-soal', { method: 'POST', body: JSON.stringify({ questionNum, ...payload }) })
-
-    setSavedQuestions((prev) => ({
-      ...prev,
-      [questionNum]: payload,
-    }));
-    showToast(`Soal ${questionNum} berhasil disimpan`);
+    return questionTypes[currentQuestion] || "BS";
   };
 
   return (
-    <main className="min-h-screen flex flex-col md:flex-row px-12 gap-5 py-20">
-      <QuestionNumbersMenu
-        tipe={"soal"}
-        currentQuestion={currentQuestion}
-        onQuestionNumberClick={goToQuestion}
-        savedQuestions={savedQuestions}
-      />
-      <div className="flex w-full gap-5 flex-col">
-        <QuestionCard
+    <main className="min-h-screen flex flex-col px-12 gap-5 py-20">
+      <div>
+        <Link to={"/admin"}>
+          <Button variant={"blue"} className="px-4 py-5">
+            Kembali
+          </Button>
+        </Link>
+      </div>
+      <div className="flex flex-col md:flex-row gap-5">
+        <QuestionNumbersMenu
+          tipe={"soal"}
           currentQuestion={currentQuestion}
-          tipe={getCurrentQuestionType()}
-          onQuestionTypeChange={(type) =>
-            handleQuestionTypeChange(currentQuestion, type)
-          }
-          onSave={handleSaveQuestion}
-          savedData={savedQuestions[currentQuestion] ?? null}
+          onQuestionNumberClick={goToQuestion}
+          savedQuestions={savedQuestions}
         />
-        <div className="flex flex-row justify-between">
-          <div className="w-1/5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <p className="py-2">
-                  Tipe Soal:{" "}
-                  {getCurrentQuestionType() === "PG"
-                    ? "Pilihan Ganda"
-                    : getCurrentQuestionType() === "IS"
-                    ? "Isian Singkat"
-                    : "Benar Salah"}
-                </p>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="start">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      handleQuestionTypeChange(currentQuestion, "PG")
-                    }
-                  >
-                    Pilihan Ganda
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      handleQuestionTypeChange(currentQuestion, "IS")
-                    }
-                  >
-                    Isian Singkat
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      handleQuestionTypeChange(currentQuestion, "BS")
-                    }
-                  >
-                    Benar Salah
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="space-x-4">
-            <Button
-              onClick={prevQuestion}
-              variant="transparentBlack"
-              size="lg"
-              disabled={currentQuestion === 1}
-              className="w-[92px] h-[48px] px-4 py-3"
-            >
-              <ArrowLeft1 className="text-gray-700" />
-            </Button>
+        <div className="flex w-full gap-5 flex-col">
+          <QuestionCard
+            currentQuestion={currentQuestion}
+            tipe={getCurrentQuestionType()}
+            onQuestionTypeChange={(type) =>
+              handleQuestionTypeChange(currentQuestion, type)
+            }
+            savedData={savedQuestions[currentQuestion] ?? null}
+          />
+          <div className="flex flex-row justify-between">
+            <div className="w-1/5">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <p className="py-2">
+                    Tipe Soal:{" "}
+                    {getCurrentQuestionType() === "PG"
+                      ? "Pilihan Ganda"
+                      : getCurrentQuestionType() === "IS"
+                      ? "Isian Singkat"
+                      : "Benar Salah"}
+                  </p>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="start">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleQuestionTypeChange(currentQuestion, "PG")
+                      }
+                    >
+                      Pilihan Ganda
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleQuestionTypeChange(currentQuestion, "IS")
+                      }
+                    >
+                      Isian Singkat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleQuestionTypeChange(currentQuestion, "BS")
+                      }
+                    >
+                      Benar Salah
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="space-x-4">
+              <Button
+                onClick={prevQuestion}
+                variant="transparentBlack"
+                size="lg"
+                disabled={currentQuestion === 1}
+                className="w-[92px] h-[48px] px-4 py-3"
+              >
+                <ArrowLeft1 className="text-gray-700" />
+              </Button>
 
-            <Button
-              onClick={nextQuestion}
-              variant="transparentBlack"
-              size="lg"
-              disabled={currentQuestion === 30}
-              className="w-[92px] h-[48px] px-4 py-3"
-            >
-              <ArrowRight1 />
-            </Button>
+              <Button
+                onClick={nextQuestion}
+                variant="transparentBlack"
+                size="lg"
+                disabled={currentQuestion === 30}
+                className="w-[92px] h-[48px] px-4 py-3"
+              >
+                <ArrowRight1 />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

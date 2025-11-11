@@ -6,6 +6,7 @@ import { Sidebar } from "~/modules/AdminModule/components/Sidebar";
 import { TryoutCard } from "./components/TryoutCard";
 import { useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
 
 type AdminModuleProps = {
   tryouts: Tryout[];
@@ -27,7 +28,9 @@ export const AdminModule = ({ tryouts }: AdminModuleProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const sortedTryouts = [...tryouts].sort((a, b) => {
+  const tryoutArray = Array.isArray(tryouts) ? tryouts : [];
+
+  const sortedTryouts = [...tryoutArray].sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     return sort === "newest" ? dateB - dateA : dateA - dateB;
@@ -81,10 +84,12 @@ export const AdminModule = ({ tryouts }: AdminModuleProps) => {
               </div>
 
               {/* Add Button */}
-              <button className="border-2 gap-3 max-md:text-sm flex flex-row rounded-xl border-white bg-blue-500 px-4 py-3 text-white hover:cursor-pointer">
-                <Play />
-                Tambah TO
-              </button>
+              <Link to={"/admin/add-tryout"}>
+                <button className="border-2 gap-3 max-md:text-sm flex flex-row rounded-xl border-white bg-blue-500 px-4 py-3 text-white hover:cursor-pointer">
+                  <Play />
+                  Tambah TO
+                </button>
+              </Link>
             </div>
           </div>
         </div>

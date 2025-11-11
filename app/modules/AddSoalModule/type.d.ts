@@ -1,4 +1,4 @@
-interface Tryout {
+export interface Tryout {
   id: string;
   name: string;
   year: number;
@@ -13,7 +13,7 @@ interface Tryout {
   tryoutAttempt: TryoutAttempt[];
 }
 
-interface Soal {
+export interface Soal {
   id: string;
   tryoutId: string;
   tryout: Tryout;
@@ -28,7 +28,7 @@ interface Soal {
   soalAttempts: SoalAttempt[];
 }
 
-interface Opsi {
+export interface Opsi {
   id: string;
   soalId: string;
   soal: Soal;
@@ -38,7 +38,7 @@ interface Opsi {
   updatedAt: Date;
 }
 
-interface PembahasanSoal {
+export interface PembahasanSoal {
   id: string;
   soalId: string;
   soal: Soal;
@@ -47,7 +47,7 @@ interface PembahasanSoal {
   updatedAt: Date;
 }
 
-interface TryoutAttempt {
+export interface TryoutAttempt {
   id: string;
   userId: string;
   // user: User;

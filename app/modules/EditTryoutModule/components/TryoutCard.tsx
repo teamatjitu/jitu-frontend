@@ -165,7 +165,7 @@ export const TryoutCard = ({ tryout }: TryoutCardProps) => {
                 </ul>
               </div>
             </div>
-            <Link to={`/admin/add-soal/${tryout.id}/pu`}>
+            <Link to={`/admin/add-soal/${tryout.id}/pk`}>
               <button className="text-white mt-6 bg-[#4292FD] w-full py-2 rounded-lg hover:cursor-pointer">
                 Edit
               </button>

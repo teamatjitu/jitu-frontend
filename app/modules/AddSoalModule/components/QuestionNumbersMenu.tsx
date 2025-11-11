@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useRevalidator } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -26,7 +26,6 @@ type QuestionNumbersMenuProps = {
   tipe?: "menu" | "soal";
   currentQuestion?: number;
   onQuestionNumberClick?: (questionNum: number) => void;
-  // new prop: savedQuestions to indicate which numbers already saved
   savedQuestions?: Record<number, any>;
 };
 
@@ -41,12 +40,17 @@ export const QuestionNumbersMenu = ({
   savedQuestions = {},
 }: QuestionNumbersMenuProps) => {
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const { id, subtest } = useParams();
   const currentSubtest = subtest?.toUpperCase() || "KPU";
   const tryoutId = id;
 
-  const handleSubtestChange = (newSubtest: string) => {
+  const handleSubtestChange = async (newSubtest: string) => {
     navigate(`/admin/add-soal/${tryoutId}/${newSubtest.toLowerCase()}`);
+    // Auto-refresh data after navigation
+    setTimeout(() => {
+      revalidator.revalidate();
+    }, 100);
   };
 
   return (
@@ -93,7 +97,7 @@ export const QuestionNumbersMenu = ({
         <p
           className={`text-sm ${isActive ? "text-blue-100" : "text-gray-100"}`}
         >
-          {soal} Soal
+          {Object.keys(savedQuestions).length} Soal
         </p>
       </div>
 
@@ -119,12 +123,6 @@ export const QuestionNumbersMenu = ({
             </button>
           );
         })}
-      </div>
-
-      <div className="w-full mt-4 flex justify-center items-center">
-        <Button className="w-full py-5" variant={"blue"}>
-          Edit
-        </Button>
       </div>
     </div>
   );

@@ -87,3 +87,14 @@ export const createSoal = async (data: SoalCreate) => {
 
   return json;
 };
+
+export const getSoalByTryoutAndSubtest = async (
+  tryoutId: string,
+  subtestType: string
+) => {
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/admin/soal/tryout/${tryoutId}/subtest/${subtestType}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch soal");
+  return res.json();
+};
