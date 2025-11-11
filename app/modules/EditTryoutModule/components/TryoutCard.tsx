@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react";
 import { useLoaderData } from "react-router";
 import { pesertaData } from "./PesertaTable";
 import { updateTryout } from "~/api/admin";
+import { Link } from "react-router";
 
 type TryoutCardProps = {
   tryout: Tryout;
@@ -164,9 +165,11 @@ export const TryoutCard = ({ tryout }: TryoutCardProps) => {
                 </ul>
               </div>
             </div>
-            <button className="text-white mt-6 bg-[#4292FD] w-full py-2 rounded-lg hover:cursor-pointer">
-              Edit
-            </button>
+            <Link to={`/admin/add-soal/${tryout.id}/pu`}>
+              <button className="text-white mt-6 bg-[#4292FD] w-full py-2 rounded-lg hover:cursor-pointer">
+                Edit
+              </button>
+            </Link>
           </div>
         </div>
       </div>
