@@ -1,9 +1,9 @@
-import React from "react";
+import { TryoutAttemptView } from "./components/TryoutAttemptView";
+import { TryoutReviewView } from "./components/TryoutReviewView";
 
-export const TryOutModule = () => {
+export const TryOutModule = ({ tryout, tryoutAttempt }: { tryout: Tryout, tryoutAttempt: TryoutAttempt }) => {
+  
   return (
-    <main className="min-h-screen flex justify-center items-center">
-      Congratulations! You can access all these try outs
-    </main>
+    <TryoutReviewView tryoutAttempt={tryoutAttempt} />
   );
 };
