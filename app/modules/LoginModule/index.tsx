@@ -30,23 +30,35 @@ export const LoginModule = () => {
   }, []);
 
   return (
-    <main className="flex bg-[linear-gradient(to_bottom_right,_#FBFBFB_0%,_#FBFBFB_60%,_#FEBD03_200%)]  justify-between items-center min-h-screen">
-      <div className="w-1/2 h-screen flex items-center justify-center bg-blue-500">
-        INGFO COPYWRITING CO
+    <main className="flex p-4 md:p-6 relative bg-blue-500 max-lg:justify-center justify-between max-lg:items-center min-h-screen">
+      <div className="font-semibold flex mt-32 ml-12 text-white max-lg:hidden flex-col">
+        <h1 className="text-4xl">Masuk ke Akun Anda</h1>
+        <p className="text-2xl">Raih kampus impianmu bersama JituPTN</p>
       </div>
-      <div className="w-full md:px-24">
-        <Form method="post" className="flex flex-col items-center gap-4 px-8  ">
-          <img src="/logo/jitu.png" alt="jitu logo" className="w-40" />
+      <img
+        src={"/pattern_login.webp"}
+        alt="bg-wallpaper"
+        className="object-cover absolute left-0 h-screen"
+      />
+      <div className="min-w-1/2 rounded-3xl max-md:h-1/2 px-2 py-16  md:p-20 h-screen justify-center flex items-center bg-white md:px-24 ">
+        <Form
+          method="post"
+          className="flex  z-50 flex-col w-full items-start gap-4 px-8  "
+        >
+          <img src="/logo/jitu.png" alt="jitu logo" className=" w-20 md:w-40" />
           <div className="flex flex-col w-full gap-4 text-sm ">
             {actionData?.error && (
               <div className="bg-red-400/50 text-center rounded-sm py-1 items-center flex justify-center w-full ">
                 <p className="text-black text-sm ">{actionData.error}</p>
               </div>
             )}
-            <h2 className="text-xl font-medium  ">Login Akun</h2>
+            <h2 className=" text-lg font-medium md:text-xl md:font-semibold  ">
+              Masuk
+            </h2>
 
             <div className="space-y-2">
-              <p>Email</p>
+              <p className="text-sm md:text-lg font-medium">Email</p>
+
               <Input
                 type="email"
                 name="email"
@@ -54,11 +66,11 @@ export const LoginModule = () => {
                 value={loginForm.email}
                 onChange={handleChange}
                 required
-                className="px-6 py-6 border-2 rounded-lg w-full"
+                className="p-1.5 md:p-6 border-2 border-gray-300 rounded-lg w-full"
               />
             </div>
             <div className="space-y-2">
-              <p>Password</p>
+              <p className="text-sm md:text-lg font-medium">Password</p>
               <Input
                 type="password"
                 name="password"
@@ -66,21 +78,25 @@ export const LoginModule = () => {
                 onChange={handleChange}
                 placeholder="Password"
                 required
-                className="px-6 py-6 border-2 rounded-lg w-full"
+                className="p-1.5 md:p-6 border-2 border-gray-300 rounded-lg w-full"
               />
+              <Link to={"#"}>
+                <span className="text-blue-500">Lupa password?</span>
+              </Link>
             </div>
+
             <div className="w-full gap-2 flex flex-col  items-center justify-center">
               <Button
                 variant={"blue"}
                 type="submit"
-                className="px-12 py-5 text-sm font-bold"
+                className="px-12 py-5 bg-blue-500 z-1 text-sm font-bold"
               >
                 Daftar
               </Button>
-              <p>
+              <p className="font-medium text-sm">
                 Belum memiliki akun?{" "}
                 <Link to={"/register"}>
-                  <span className="text-blue-500">Register</span>
+                  <span className="text-blue-500">Daftar</span>
                 </Link>
               </p>
             </div>
