@@ -57,7 +57,7 @@ export default function App() {
   return (
     <>
       <Outlet />
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

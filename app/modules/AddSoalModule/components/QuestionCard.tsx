@@ -430,7 +430,6 @@ export const QuestionCard = ({
           </h2>
           {/* ... (select tipe soal tetap sama) ... */}
         </div>
-
         <textarea
           placeholder="Masukkan pertanyaan disini..."
           name="pertanyaan"
