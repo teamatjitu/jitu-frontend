@@ -3,14 +3,24 @@ import { useState } from "react";
 import { Form } from "react-router";
 
 import { QuestionNumbersMenu } from "./components/QuestionNumbersMenu";
+import { ArrowLeft1 } from "~/components/icons";
 import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
 
 export const AddTryoutModule = () => {
   const [isActiveMenu, setActiveMenu] = useState<number | null>(null);
   return (
-    <main className="min-h-screen px-20 mt-8 gap-44 flex justify-center">
+    <main className="min-h-screen px-20 mt-8 items-start gap-4 flex flex-col ">
+      <Link to={"/admin"}>
+        <div className="flex flex-row items-start mt-10 ml-10">
+          <button className="w-8 h-8 flex items-center justify-center">
+            <ArrowLeft1 className="w-8 h-8" strokeWidth={1.5} />
+          </button>
+          <h1 className="text-xl font-medium">Kembali Ke Menu Tryout</h1>
+        </div>
+      </Link>
       <div className="w-full shadow-md h-fit rounded-2xl ">
-        <div className="w-full  bg-[#4292FD] h-10 rounded-t-2xl" />
+        <div className="w-full bg-[#4292FD] h-10 rounded-t-2xl" />
         <div className="text-center">
           <h1 className="font-semibold font-poppins my-5 text-3xl text-blue-800">
             Buat Tryout Baru

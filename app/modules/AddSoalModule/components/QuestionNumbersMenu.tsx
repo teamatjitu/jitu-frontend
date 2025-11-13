@@ -9,12 +9,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
@@ -27,17 +21,19 @@ type QuestionNumbersMenuProps = {
   currentQuestion?: number;
   onQuestionNumberClick?: (questionNum: number) => void;
   savedQuestions?: Record<number, any>;
+  pendingQuestion?: number | null;
 };
 
 export const QuestionNumbersMenu = ({
   judul = "",
-  soal = 0,
+  soal = 1,
   isActive = false,
   tipe = "menu",
   onClickMenu = () => {},
   currentQuestion = 1,
   onQuestionNumberClick = () => {},
   savedQuestions = {},
+  pendingQuestion = null,
 }: QuestionNumbersMenuProps) => {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
@@ -97,12 +93,12 @@ export const QuestionNumbersMenu = ({
         <p
           className={`text-sm ${isActive ? "text-blue-100" : "text-gray-100"}`}
         >
-          {Object.keys(savedQuestions).length} Soal
+          {soal + (pendingQuestion ? 1 : 0)} Soal
         </p>
       </div>
 
-      <div className="flex flex-wrap w-full justify-center py-4 gap-2">
-        {Array.from({ length: 30 }).map((_, index) => {
+      <div className="grid grid-cols-5  w-full justify-center py-4 gap-4">
+        {Array.from({ length: soal }).map((_, index) => {
           const num = index + 1;
           const isSaved = !!savedQuestions[num];
           const isCurrent = num === currentQuestion && tipe === "soal";
@@ -123,7 +119,34 @@ export const QuestionNumbersMenu = ({
             </button>
           );
         })}
+        {/* Render pending question box */}
+        {pendingQuestion && (
+          <button
+            key={`pending-${pendingQuestion}`}
+            onClick={() => onQuestionNumberClick(pendingQuestion)}
+            className={`w-[45.6px] h-[45.6px] cursor-pointer rounded-lg flex items-center justify-center text-base transition-all border-2 border-dashed
+              ${
+                pendingQuestion === currentQuestion && tipe === "soal"
+                  ? "border-blue-500 bg-blue-50 text-blue-600"
+                  : "border-gray-400 bg-gray-100 text-gray-600 hover:border-blue-300"
+              }
+            `}
+          >
+            {pendingQuestion}
+          </button>
+        )}
       </div>
+      <Button
+        key={"add-new"}
+        onClick={() =>
+          pendingQuestion === null && onQuestionNumberClick(soal + 1)
+        }
+        variant={"blue"}
+        className="w-full"
+        disabled={pendingQuestion !== null}
+      >
+        Add Soal
+      </Button>
     </div>
   );
 };

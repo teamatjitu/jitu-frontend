@@ -13,13 +13,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
@@ -41,6 +34,7 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
   const [questionTypes, setQuestionTypes] = useState<Record<number, string>>(
     {}
   );
+  const [pendingQuestion, setPendingQuestion] = useState<number | null>(null);
 
   const initializeSavedQuestions = (soalList: Soal[]) => {
     const saved: Record<number, SavedQuestion> = {};
@@ -70,6 +64,12 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
     setCurrentQuestion(1);
     setSavedQuestions(initializeSavedQuestions(soalList));
     setQuestionTypes({});
+    setPendingQuestion(null);
+
+    if (soalList.length === 0) {
+      setPendingQuestion(1);
+      setCurrentQuestion(1);
+    }
   }, [subtest, soalList]);
 
   const actionData = useActionData() as
@@ -92,15 +92,36 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
       if (actionData.success) {
         showToast("Soal berhasil disimpan");
 
+        // Remove from pending question
+        setPendingQuestion(null);
+
         setTimeout(() => window.location.reload(), 1000);
       } else {
         showToast(actionData.message || "Gagal menyimpan soal");
       }
     }
-  }, [actionData]);
+  }, [actionData, currentQuestion]);
 
   const goToQuestion = (questionNum: number) => {
-    setCurrentQuestion(questionNum);
+    // If clicking on "Add Soal" button (questionNum > saved questions count)
+    if (questionNum > soalList.length) {
+      // Only allow one pending question at a time
+      if (pendingQuestion === null) {
+        const newPendingNum = soalList.length + 1;
+        setPendingQuestion(newPendingNum);
+        setCurrentQuestion(newPendingNum);
+      } else if (questionNum === pendingQuestion) {
+        setCurrentQuestion(pendingQuestion);
+      }
+    } else {
+      // Jika klik pending question box, navigate ke pending question
+      if (pendingQuestion === questionNum) {
+        setCurrentQuestion(questionNum);
+      } else {
+        // Navigate ke soal yang sudah ada
+        setCurrentQuestion(questionNum);
+      }
+    }
   };
 
   const nextQuestion = () => {
@@ -120,6 +141,15 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
       ...prev,
       [questionNum]: type,
     }));
+    setCurrentQuestion(0);
+  };
+
+  const handleCancelPending = () => {
+    setPendingQuestion(null);
+    // Navigate to first saved question or stay if there are saved questions
+    if (soalList.length > 0) {
+      setCurrentQuestion(1);
+    }
   };
 
   const getCurrentQuestionType = () => {
@@ -141,6 +171,8 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
           currentQuestion={currentQuestion}
           onQuestionNumberClick={goToQuestion}
           savedQuestions={savedQuestions}
+          pendingQuestion={pendingQuestion}
+          soal={soalList.length}
         />
         <div className="flex w-full gap-5 flex-col">
           <QuestionCard
@@ -150,6 +182,8 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
               handleQuestionTypeChange(currentQuestion, type)
             }
             savedData={savedQuestions[currentQuestion] ?? null}
+            onCancel={handleCancelPending}
+            isPending={pendingQuestion === currentQuestion}
           />
           <div className="flex flex-row justify-between">
             <div className="w-1/5">

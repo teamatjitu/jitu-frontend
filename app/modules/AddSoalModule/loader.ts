@@ -24,15 +24,11 @@ export async function AddSoalLoader({ request, params }: LoaderFunctionArgs) {
     return new Response(dataString, {
       status: 200, // 200 OK
       headers: {
-        // 3. Set header Content-Type agar React Router tahu ini JSON
         "Content-Type": "application/json; charset=utf-8",
       },
     });
   } catch (error) {
-    // 6. Tangani error (jika fetch gagal, dll.)
     console.error("AddSoalLoader gagal:", error);
-    // Lempar error 500 (Internal Server Error) atau 502 (Bad Gateway)
-    // Ini akan menampilkan ErrorBoundary di Remix
     throw new Response("Gagal mengambil data dari server backend", {
       status: 502,
     });

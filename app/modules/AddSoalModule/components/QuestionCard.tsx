@@ -139,7 +139,7 @@ const QuestionTypeEditor = ({
               setTotalOption((prev) => (prev < 5 ? prev + 1 : prev))
             }
             className={`rounded-md hover:cursor-pointer px-1 py-1 ${
-              totalOption === 5 ? "bg-gray-300" : "bg-yellow-300"
+              totalOption === 5 ? "bg-white" : "bg-yellow-300"
             } `}
             disabled={totalOption === 5}
           >
@@ -191,12 +191,16 @@ export const QuestionCard = ({
   // HAPUS onSave, kita tidak lagi menyimpan ke state lokal
   // onSave,
   savedData,
+  onCancel,
+  isPending = false,
 }: {
   tipe?: string;
   currentQuestion?: number;
   onQuestionTypeChange?: (type: string) => void;
   // onSave?: (qnum: number, payload: SavedQuestion) => void; // HAPUS
   savedData?: SavedQuestion | null;
+  onCancel?: () => void;
+  isPending?: boolean;
 }) => {
   const { id, subtest } = useParams();
   const [editing, setEditing] = useState<boolean>(savedData ? false : true);
@@ -254,7 +258,7 @@ export const QuestionCard = ({
                   className={`p-3 rounded-xl border transition-all ${
                     opsi.is_correct
                       ? "bg-green-50 border-green-300 text-green-800"
-                      : "bg-gray-50 border-gray-200 text-gray-700"
+                      : "bg-white border-1 border-gray-50 text-gray-700"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -282,7 +286,7 @@ export const QuestionCard = ({
                   className={`p-3 rounded-xl border transition-all ${
                     opsi.is_correct
                       ? "bg-green-50 border-green-300 text-green-800"
-                      : "bg-gray-50 border-gray-200 text-gray-700"
+                      : "bg-white border-1 border-gray-50  text-gray-700"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -318,14 +322,24 @@ export const QuestionCard = ({
     };
 
     return (
-      <div className="p-6 w-full rounded-xl shadow-sm h-fit bg-gray-50 border border-gray-200">
+      <div className="p-6 w-full rounded-xl shadow-sm h-fit bg-white border-2">
         {/* Header dengan info soal */}
         <div className="w-full pb-4 border-b border-gray-300">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">
               Soal {currentQuestion || 1}
             </h2>
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span
+              className={`px-3 py-1 ${
+                savedData.tipe === "PG"
+                  ? "bg-blue-300"
+                  : savedData.tipe === "BS"
+                  ? "bg-yellow-300"
+                  : savedData.tipe === "IS"
+                  ? "bg-green-300"
+                  : ""
+              } text-white rounded-full text-sm font-medium`}
+            >
               {getTipeSoalLabel(savedData.tipe)}
             </span>
           </div>
@@ -334,7 +348,7 @@ export const QuestionCard = ({
         {/* Pertanyaan */}
         <div className="mt-5">
           <h1 className="font-semibold text-lg mb-3">Pertanyaan</h1>
-          <div className="p-4 bg-white rounded-xl border border-gray-200">
+          <div className="p-4 bg-white rounded-xl border-2">
             <p className="text-gray-800 whitespace-pre-wrap">
               {savedData.pertanyaan}
             </p>
@@ -348,7 +362,7 @@ export const QuestionCard = ({
         {savedData.pembahasan && (
           <div className="mt-5">
             <h1 className="font-semibold text-lg mb-3">Pembahasan</h1>
-            <div className="p-4 bg-white rounded-xl border border-gray-200">
+            <div className="p-4 bg-white rounded-xl border">
               <p className="text-gray-700 whitespace-pre-wrap">
                 {savedData.pembahasan}
               </p>
@@ -426,11 +440,18 @@ export const QuestionCard = ({
           className="w-full px-9 py-5 border border-gray-300 rounded-xl h-40"
         />
       </div>
-      <div className="w-full flex justify-end mt-5">
-        {/* Tombol ini sekarang akan otomatis men-submit <Form> ke 'action' */}
-        <Button type="submit" variant={"blue"}>
-          Simpan Soal & Opsi
-        </Button>
+      <div className="w-full flex justify-between mt-5">
+        {isPending && (
+          <Button type="button" variant={"transparentBlack"} onClick={onCancel}>
+            Batal
+          </Button>
+        )}
+        <div className="ml-auto">
+          {/* Tombol ini sekarang akan otomatis men-submit <Form> ke 'action' */}
+          <Button type="submit" variant={"blue"}>
+            Simpan Soal & Opsi
+          </Button>
+        </div>
       </div>
     </Form>
   );

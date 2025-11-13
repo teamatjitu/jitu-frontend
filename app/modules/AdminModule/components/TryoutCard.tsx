@@ -20,7 +20,7 @@ export const TryoutCard = ({
           <p className="mb-5 font-semibold text-2xl">{nama}</p>
           <div>
             <div className="text-sm font-bold mb-4">
-              <p>Jumlah Peserta: jumlah</p>
+              <p>Jumlah Peserta: XX</p>
               <p>
                 {tanggalMulai} - {tanggalTutup}
               </p>
