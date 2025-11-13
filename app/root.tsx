@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -36,6 +37,8 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const route = useLocation();
+  const differentBgImageRoute = ["/login", "/register"];
   return (
     <html lang="en">
       <head>
@@ -44,7 +47,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="font-poppins">
+      <body
+        className={`font-poppins ${
+          !differentBgImageRoute.includes(route.pathname) &&
+          "bg-[url(/pattern-color.webp)]"
+        }  bg-left bg-cover`}
+      >
         {children}
         <ScrollRestoration />
         <Scripts />
