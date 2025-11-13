@@ -27,6 +27,7 @@ function DropdownMenuPortal({
 function DropdownMenuTrigger({
   className,
   children,
+  asChild,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
   return (

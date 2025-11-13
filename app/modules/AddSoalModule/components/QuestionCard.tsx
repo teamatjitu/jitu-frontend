@@ -14,6 +14,7 @@ import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
 import { PlusGolden } from "~/components/icons";
+import { deleteSoal } from "~/api/admin";
 
 type Opsi = { teks: string; is_correct: boolean };
 
@@ -228,6 +229,16 @@ export const QuestionCard = ({
     setLocalTipe(savedData?.tipe ?? tipe);
   }, [savedData, tipe]);
 
+  const handleDeleteQuestion = async () => {
+    console.log("Help help");
+    try {
+      await deleteSoal(savedData?.id);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   // HAPUS FUNGSI handleSubmit
   // const handleSubmit = async (e: React.FormEvent) => { ... }
 
@@ -348,8 +359,10 @@ export const QuestionCard = ({
         {/* Pertanyaan */}
         <div className="mt-5">
           <h1 className="font-semibold text-lg mb-3">Pertanyaan</h1>
-          <div className="p-4 bg-white rounded-xl border-2">
-            <p className="text-gray-800 whitespace-pre-wrap">
+
+          {/* Tambahkan 'break-words' di sini */}
+          <div className="p-4 bg-white rounded-xl  border-2">
+            <p className="text-gray-800 whitespace-pre-wrap break-words">
               {savedData.pertanyaan}
             </p>
           </div>
@@ -371,9 +384,15 @@ export const QuestionCard = ({
         )}
 
         {/* Action Button */}
-        <div className="w-full flex justify-end mt-6">
+        <div className="w-full flex gap-5 justify-end mt-6">
           <Button onClick={() => setEditing(true)} variant={"transparentBlack"}>
             Edit Soal
+          </Button>
+          <Button
+            onClick={() => handleDeleteQuestion()}
+            className="bg-red-400 hover:bg-red-700 border-red-400 hover:border-red-700 "
+          >
+            Hapus Soal
           </Button>
         </div>
       </div>

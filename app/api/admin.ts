@@ -26,6 +26,11 @@ type SoalCreate = {
   pembahasanSoal?: PembahasanCreate;
 };
 
+interface SoalUpdate extends Partial<SoalCreate> {}
+type SoalDelete = {
+  soalId: string | undefined | null;
+};
+
 export const getTryout = async () => {
   const res = await fetch(`${process.env.BACKEND_URL}/admin/tryout`);
   if (!res.ok) throw new Error("Failed to fetch tryouts");
@@ -85,6 +90,40 @@ export const createSoal = async (data: SoalCreate) => {
     if (json?.message) json.message;
   }
 
+  return json;
+};
+
+export const editSoal = async (soalId: string, data: SoalUpdate) => {
+  const res = await fetch(`${process.env.BACKEND_URL}/admin/soal/${soalId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    if (json?.message) throw new Error(json.message);
+    throw new Error("Failed to update soal");
+  }
+
+  return json;
+};
+
+export const deleteSoal = async (soalId: string | undefined) => {
+  const res = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/admin/soal/${soalId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    if (json?.message) throw new Error(json.message);
+    throw new Error("Failed to delete soal");
+  }
   return json;
 };
 

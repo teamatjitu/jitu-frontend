@@ -174,17 +174,19 @@ export const AddSoalModule = ({ soalList = [] }: AddSoalModuleProps) => {
           pendingQuestion={pendingQuestion}
           soal={soalList.length}
         />
-        <div className="flex w-full gap-5 flex-col">
-          <QuestionCard
-            currentQuestion={currentQuestion}
-            tipe={getCurrentQuestionType()}
-            onQuestionTypeChange={(type) =>
-              handleQuestionTypeChange(currentQuestion, type)
-            }
-            savedData={savedQuestions[currentQuestion] ?? null}
-            onCancel={handleCancelPending}
-            isPending={pendingQuestion === currentQuestion}
-          />
+        <div className="flex w-full justify-center gap-5 flex-col">
+          <div className="max-w-[77rem]">
+            <QuestionCard
+              currentQuestion={currentQuestion}
+              tipe={getCurrentQuestionType()}
+              onQuestionTypeChange={(type) =>
+                handleQuestionTypeChange(currentQuestion, type)
+              }
+              savedData={savedQuestions[currentQuestion] ?? null}
+              onCancel={handleCancelPending}
+              isPending={pendingQuestion === currentQuestion}
+            />
+          </div>
           <div className="flex flex-row justify-between">
             <div className="w-1/5">
               <DropdownMenu>

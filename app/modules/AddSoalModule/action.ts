@@ -1,6 +1,6 @@
 import { error } from "console";
 import type { ActionFunctionArgs } from "react-router";
-import { createSoal } from "~/api/admin";
+import { createSoal, editSoal } from "~/api/admin";
 
 export async function AddSoalAction({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -46,11 +46,7 @@ export async function AddSoalAction({ request }: ActionFunctionArgs) {
   try {
     let result;
     if (isEdit && soalId) {
-      result = await fetch(`${process.env.BACKEND_URL}/admin/soal/${soalId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(soalData),
-      }).then((res) => res.json());
+      result = await editSoal(soalId, soalData);
     } else {
       result = await createSoal(soalData);
     }
