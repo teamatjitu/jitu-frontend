@@ -1,18 +1,25 @@
 interface Props {
-    tryout: Tryout;
-    stateStyles: Record<string, string>;
-    questionToStateFn: (questionIndex: number) => string;
-    currentQuestion: number;
-    onQuestionNumberClick: (questionIndex: number) => void;
-    btnElement?: React.ReactNode;
+  soals: Soal[];
+  stateStyles: Record<string, string>;
+  questionToStateFn: (questionIndex: number) => string;
+  currentQuestion: number;
+  onQuestionNumberClick: (questionIndex: number) => void;
+  btnElement?: React.ReactNode;
 }
 
-export function QuestionNumbersAndBtn({ tryout, stateStyles, questionToStateFn, currentQuestion, onQuestionNumberClick, btnElement }: Props) {
+export function QuestionNumbersAndBtn({ 
+  soals, 
+  stateStyles, 
+  questionToStateFn, 
+  currentQuestion, 
+  onQuestionNumberClick, 
+  btnElement 
+}: Props) {
   return (
     <>
       {/* Question Numbers */}
       <div className="flex flex-wrap gap-2 mb-5">
-        {Array.from({ length: tryout.soal.length }, (_, i) => i + 1).map(
+        {Array.from({ length: soals.length }, (_, i) => i + 1).map(
           (num) => {
             const state = questionToStateFn(num);
             const className = stateStyles[state];

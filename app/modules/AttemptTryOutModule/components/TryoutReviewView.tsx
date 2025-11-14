@@ -6,14 +6,25 @@ import { QuestionNumbersAndBtn } from "./QuestionNumbersAndBtn";
 import { QuestionInput } from "./QuestionInput";
 import { TipeSoal } from "../enums";
 
-export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttempt }) {
-  const [currentQuestion, setCurrentQuestion] = useState(1);
-  const correctCount = tryoutAttempt.soalAttempt.filter(attempt => attempt.isCorrect).length;
+interface SubtestReviewViewProps {
+  subtestAttempt: SubtestAttempt;
+}
 
-  const tryout = tryoutAttempt.tryout;
+export function TryoutReviewView({ subtestAttempt }: SubtestReviewViewProps) {
+  const [currentQuestion, setCurrentQuestion] = useState(1);
+  
+  const subtest = subtestAttempt.subtest;
+  const soals = subtest.soal;
+  
+  // Create a map for faster lookup
+  const soalAttemptMap = new Map(
+    subtestAttempt.soalAttempt?.map(attempt => [attempt.soalId, attempt]) || []
+  );
+
+  const correctCount = subtestAttempt.soalAttempt?.filter(attempt => attempt.isCorrect).length || 0;
 
   const nextQuestion = () => {
-    if (currentQuestion < tryout.soal.length) {
+    if (currentQuestion < soals.length) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -24,6 +35,33 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
     }
   };
 
+  const getQuestionStatus = (questionIndex: number): string => {
+    const soal = soals[questionIndex - 1];
+    const attempt = soalAttemptMap.get(soal.id);
+    return attempt?.isCorrect ? "correct" : "incorrect";
+  };
+
+  const getCurrentSoalAttempt = () => {
+    const currentSoal = soals[currentQuestion - 1];
+    return soalAttemptMap.get(currentSoal.id);
+  };
+
+  const getCorrectAnswer = (soal: Soal): string => {
+    if (soal.tipeSoal === TipeSoal.BENAR_SALAH) {
+      const correctOpsi = soal.opsi.find(o => o.isCorrect);
+      return correctOpsi?.teks || "";
+    }
+    
+    if (soal.tipeSoal === TipeSoal.PILIHAN_GANDA) {
+      const correctOpsi = soal.opsi.find(o => o.isCorrect);
+      return correctOpsi?.id || "";
+    }
+    
+    // For ISIAN_SINGKAT, we need the correct answer from opsi or pembahasan
+    const correctOpsi = soal.opsi.find(o => o.isCorrect);
+    return correctOpsi?.teks || "";
+  };
+
   return (
     <div className="min-h-screen bg-bg-white font-['Poppins',sans-serif]">
       {/* Navbar */}
@@ -32,7 +70,7 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
           <button className="w-8 h-8 flex items-center justify-center">
             <ArrowLeft1 className="w-8 h-8" strokeWidth={1.5} />
           </button>
-          <h1 className="text-xl font-medium">{tryout.name}</h1>
+          <h1 className="text-xl font-medium">{subtest.name}</h1>
         </div>
       </nav>
 
@@ -44,30 +82,26 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
             <div className="bg-white rounded-xl p-6 shadow-[0_0_4px_rgba(0,0,0,0.15)]">
               {/* Title */}
               <div className="mb-5">
-                <h2 className="text-xl font-medium mb-0.5">Penalaran Umum</h2>
-                <p className="text-xs text-gray-400">{tryout.soal.length} Soal | {tryout.duration} Menit</p>
+                <h2 className="text-xl font-medium mb-0.5">{subtest.name}</h2>
+                <p className="text-xs text-gray-400">{soals.length} Soal | {subtest.duration} Menit</p>
               </div>
 
               {/* Correct Answers */}
               <div className="mb-5">
                 <p className="text-xs text-gray-400">Jawaban benar</p>
-
-                <p className="font-semibold text-3xl">{correctCount}/{tryout.soal.length}</p>
+                <p className="font-semibold text-3xl">{correctCount}/{soals.length}</p>
               </div>
 
               {/* Divider */}
               <div className="h-px bg-gray-100 mb-5"></div>
 
               <QuestionNumbersAndBtn
-                tryout={tryout}
+                soals={soals}
                 stateStyles={{
                   correct: "bg-[#35CA89]/50 text-gray-800",
                   incorrect: "bg-[#D75353]/50 text-gray-800",
                 }}
-                questionToStateFn={(questionIndex) => {
-                  const isCorrect = tryoutAttempt.soalAttempt[questionIndex - 1]?.isCorrect;
-                  return isCorrect ? "correct" : "incorrect";
-                }}
+                questionToStateFn={getQuestionStatus}
                 currentQuestion={currentQuestion}
                 onQuestionNumberClick={(questionIndex) => setCurrentQuestion(questionIndex)}
                 btnElement={<Button variant="default" size="lg" className="w-full">Tutup pembahasan</Button>}
@@ -80,20 +114,17 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
             <div className="bg-white rounded-xl p-6 shadow-[0_0_4px_rgba(0,0,0,0.15)] mb-4">
               {/* Question Text */}
               <div className="text-lg mb-5 whitespace-pre-line">
-                {tryout.soal[currentQuestion-1].question}
+                {soals[currentQuestion - 1].question}
               </div>
 
               {/* Divider */}
               <div className="h-px bg-gradient-to-r from-[rgba(0,0,0,0.2)] to-[rgba(0,0,0,0.2)] mb-5"></div>
 
               <QuestionInput
-                soal={tryout.soal[currentQuestion-1]}
+                soal={soals[currentQuestion - 1]}
                 isReviewMode={true}
-                userAnswer={tryoutAttempt.soalAttempt[currentQuestion - 1]?.jawaban || ""}
-                correctAnswer={tryout.soal[currentQuestion-1].tipeSoal === TipeSoal.ISIAN_SINGKAT
-                  ? "Correct Answer"
-                  : tryout.soal[currentQuestion-1].opsi.find(opsi => opsi.isCorrect)?.teks || ""
-                }
+                userAnswer={getCurrentSoalAttempt()?.jawaban || ""}
+                correctAnswer={getCorrectAnswer(soals[currentQuestion - 1])}
               />
 
               {/* Divider */}
@@ -103,7 +134,7 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
               <div>
                 <h3 className="text-lg font-medium mb-2">Pembahasan</h3>
                 <div className="text-base whitespace-pre-line">
-                  {tryout.soal[currentQuestion-1].pembahasanSoal?.pembahasan || "Tidak ada pembahasan untuk soal ini."}
+                  {soals[currentQuestion - 1].pembahasanSoal?.pembahasan || "Tidak ada pembahasan untuk soal ini."}
                 </div>
               </div>
             </div>
@@ -125,7 +156,7 @@ export function TryoutReviewView({ tryoutAttempt }: { tryoutAttempt: TryoutAttem
                   onClick={nextQuestion}
                   variant="transparentBlack"
                   size="lg"
-                  disabled={currentQuestion === tryout.soal.length}
+                  disabled={currentQuestion === soals.length}
                   className="w-[92px] h-[48px] px-4 py-3"
                 >
                   <ArrowRight1/>

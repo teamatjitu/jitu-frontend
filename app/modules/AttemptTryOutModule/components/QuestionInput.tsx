@@ -2,11 +2,11 @@ import { Check, Close } from "~/components/icons";
 import { TipeSoal } from "../enums";
 
 interface Props<R extends boolean = false> {
-    soal: Soal;
-    isReviewMode?: R;
-    onAnswer?: R extends true ? undefined : (answer: number | string) => void;
-    userAnswer?: number | string;
-    correctAnswer?: R extends true ? number | string : undefined;
+  soal: Soal;
+  isReviewMode?: R;
+  onAnswer?: R extends true ? undefined : (answer: string) => void;
+  userAnswer?: string;
+  correctAnswer?: R extends true ? string : undefined;
 }
 
 export function QuestionInput<R extends boolean = false>({
@@ -17,55 +17,58 @@ export function QuestionInput<R extends boolean = false>({
   correctAnswer,
 }: Props<R>) {
   if (soal.tipeSoal === TipeSoal.BENAR_SALAH) {
-    return (
-      <>
-        <div className="flex flex-col gap-2 mb-5">
-          {/* True Option */}
-          <button
-            disabled={isReviewMode ?? false}
-            onClick={() => onAnswer?.(0)}
-            className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
-              isReviewMode
-                ? correctAnswer === "Benar"
-                  ? "border-2 border-success bg-[#35CA89]/30"
-                  : userAnswer === "Benar"
-                    ? "border-2 border-error bg-[#D75353]/30"
-                    : "border border-gray-300"
-                : userAnswer === "Benar"
-                  ? "border-2 border-blue-500 bg-[#4292FD]/10"
-                  : "border border-gray-300"
-            }`}
-          >
-            <Check />
-            <p>Benar</p>
-          </button>
+    const benarOpsi = soal.opsi.find(o => o.teks === "Benar" || o.isCorrect);
+    const salahOpsi = soal.opsi.find(o => o.teks === "Salah" || !o.isCorrect);
 
-          {/* False Option */}
-          <button
-            disabled={isReviewMode ?? false}
-            onClick={() => onAnswer?.(1)}
-            className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
-              isReviewMode
-                ? correctAnswer === "Salah"
-                  ? "border-2 border-success bg-[#35CA89]/30"
-                  : userAnswer === "Salah"
-                    ? "border-2 border-error bg-[#D75353]/30"
-                    : "border border-gray-300"
-                : userAnswer === "Salah"
-                  ? "border-2 border-blue-500 bg-[#4292FD]/10"
+    return (
+      <div className="flex flex-col gap-2 mb-5">
+        {/* True Option */}
+        <button
+          disabled={isReviewMode ?? false}
+          onClick={() => onAnswer?.(benarOpsi?.id || "")}
+          className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
+            isReviewMode
+              ? correctAnswer === benarOpsi?.id
+                ? "border-2 border-success bg-[#35CA89]/30"
+                : userAnswer === benarOpsi?.id
+                  ? "border-2 border-error bg-[#D75353]/30"
                   : "border border-gray-300"
-            }`}
-          >
-            <Close />
-            <p>Salah</p>
-          </button>
-        </div>
-      </>
+              : userAnswer === benarOpsi?.id
+                ? "border-2 border-blue-500 bg-[#4292FD]/10"
+                : "border border-gray-300"
+          }`}
+        >
+          <Check />
+          <p>Benar</p>
+        </button>
+
+        {/* False Option */}
+        <button
+          disabled={isReviewMode ?? false}
+          onClick={() => onAnswer?.(salahOpsi?.id || "")}
+          className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
+            isReviewMode
+              ? correctAnswer === salahOpsi?.id
+                ? "border-2 border-success bg-[#35CA89]/30"
+                : userAnswer === salahOpsi?.id
+                  ? "border-2 border-error bg-[#D75353]/30"
+                  : "border border-gray-300"
+              : userAnswer === salahOpsi?.id
+                ? "border-2 border-blue-500 bg-[#4292FD]/10"
+                : "border border-gray-300"
+          }`}
+        >
+          <Close />
+          <p>Salah</p>
+        </button>
+      </div>
     );
   }
 
   if (soal.tipeSoal === TipeSoal.ISIAN_SINGKAT) {
-    if (isReviewMode)
+    if (isReviewMode) {
+      const correctText = soal.opsi.find(o => o.id === correctAnswer)?.teks || correctAnswer || "";
+      
       return (
         <>
           <div className="flex flex-col gap-5 mb-5">
@@ -78,7 +81,7 @@ export function QuestionInput<R extends boolean = false>({
                   ? "border-2 border-success bg-[#35CA89]/30"
                   : "border-2 border-error bg-[#D75353]/30"
               }`}
-              value={typeof userAnswer === "string" ? userAnswer : ""}
+              value={userAnswer || ""}
             />
           </div>
 
@@ -91,11 +94,12 @@ export function QuestionInput<R extends boolean = false>({
               type="text"
               disabled
               className="w-full p-3 rounded-xl text-left text-base border-2 border-success bg-[#35CA89]/30"
-              value={typeof correctAnswer === "string" ? correctAnswer : ""}
+              value={correctText}
             />
           </div>
         </>
       );
+    }
 
     return (
       <div className="mb-5 w-full p-3 rounded-xl text-left text-base border border-gray-300">
@@ -104,30 +108,30 @@ export function QuestionInput<R extends boolean = false>({
           disabled={isReviewMode ?? false}
           className="w-full bg-transparent outline-none"
           placeholder="Tuliskan jawaban anda di sini"
-          value={typeof userAnswer === "string" ? userAnswer : ""}
+          value={userAnswer || ""}
           onChange={(e) => {
             onAnswer?.(e.target.value);
           }}
-          />
+        />
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex flex-col gap-2 mb-5">
-      {soal.opsi.map((opsi, index) => (
+      {soal.opsi.map((opsi) => (
         <button
-          key={index}
+          key={opsi.id}
           disabled={isReviewMode ?? false}
-          onClick={() => onAnswer?.(index)}
+          onClick={() => onAnswer?.(opsi.id)}
           className={`w-full p-3 rounded-xl text-left text-base transition-all ${
             isReviewMode
               ? opsi.isCorrect
                 ? "border-2 border-success bg-[#35CA89]/30"
-                : typeof userAnswer === "string" && userAnswer === opsi.teks
+                : userAnswer === opsi.id
                   ? "border-2 border-error bg-[#D75353]/30"
                   : "border border-gray-300"
-              : userAnswer === index
+              : userAnswer === opsi.id
                 ? "border-2 border-blue-500 bg-[#4292FD]/10"
                 : "border border-gray-300"
           }`}

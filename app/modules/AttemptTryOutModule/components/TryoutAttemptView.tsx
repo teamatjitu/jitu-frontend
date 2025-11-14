@@ -1,105 +1,37 @@
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { ArrowLeft1, ArrowRight1, Check, Close } from "~/components/icons";
-import { QuestionInput } from "./QuestionInput";
+import { ArrowLeft1, ArrowRight1 } from "~/components/icons";
 
 import { QuestionNumbersAndBtn } from "./QuestionNumbersAndBtn";
+import { QuestionInput } from "./QuestionInput";
 import { TipeSoal } from "../enums";
 
-interface TryoutState {
-  markedQuestions: Set<number>;
-  timeRemaining: number;
+interface SubtestAttemptViewProps {
+  subtestAttempt: SubtestAttempt;
 }
 
-function QI({ soal, onAnswer, value }: {soal: Soal, onAnswer: (answer: number | string) => void, value: number | string}) {
-  if (soal.tipeSoal === TipeSoal.BENAR_SALAH) {
-    return (
-      <>
-        <div className="flex flex-col gap-2 mb-5">
-          {/* True Option */}
-          <button
-            onClick={() => onAnswer(0)}
-            className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
-              value === 0
-                ? "border-2 border-blue-500 bg-[#4292FD]/10"
-                : "border border-gray-300"
-            }`}
-          >
-            <Check />
-            <p>Benar</p>
-          </button>
-
-          {/* False Option */}
-          <button
-            onClick={() => onAnswer(1)}
-            className={`w-full cursor-pointer p-3 rounded-xl flex items-center gap-2 text-left text-base transition-all ${
-              value === 1
-                ? "border-2 border-blue-500 bg-[#4292FD]/10"
-                : "border border-gray-300"
-            }`}
-          >
-            <Close />
-            <p>Salah</p>
-          </button>
-        </div>
-      </>
-    )
-  }
-
-  if (soal.tipeSoal === TipeSoal.ISIAN_SINGKAT) {
-    return (
-      <div className="mb-5 w-full p-3 rounded-xl text-left text-base border border-gray-300">
-        <input
-          type="text"
-          className="w-full bg-transparent outline-none"
-          placeholder="Tuliskan jawaban anda di sini"
-          value={typeof value === "string" ? value : ""}
-          onChange={(e) => {
-            onAnswer(e.target.value);
-          }}
-          />
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-2 mb-5">
-      {soal.opsi.map((opsi, index) => (
-        <button
-          key={index}
-          onClick={() => onAnswer(index)}
-          className={`w-full p-3 rounded-xl text-left text-base transition-all ${
-            value === index
-              ? "border-2 border-blue-500 bg-[#4292FD]/10"
-              : "border border-gray-300"
-          }`}
-        >
-          {opsi.teks}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
-  const [tryoutState, setTryoutState] = useState<TryoutState>({
-    markedQuestions: new Set([4]),
-    timeRemaining: tryout.duration,
-  });
-
+export function TryoutAttemptView({ subtestAttempt }: SubtestAttemptViewProps) {
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [answerStates, setAnswerStates] = useState<Record<number, number | string>>({});
+  const [answerStates, setAnswerStates] = useState<Record<number, string>>({});
+  const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(new Set());
+
+  const subtest = subtestAttempt.subtest;
+  const soals = subtest.soal;
 
   useEffect(() => {
+    // Calculate initial time remaining
+    if (subtestAttempt.expiresAt) {
+      const remaining = Math.max(0, new Date(subtestAttempt.expiresAt).getTime() - Date.now());
+      setTimeRemaining(Math.floor(remaining / 1000));
+    }
+
     const timer = setInterval(() => {
-      setTryoutState((prev) => ({
-        ...prev,
-        timeRemaining: Math.max(0, prev.timeRemaining - 1),
-      }));
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [subtestAttempt.expiresAt]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -112,7 +44,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
     };
   };
 
-  const time = formatTime(tryoutState.timeRemaining);
+  const time = formatTime(timeRemaining);
 
   const clearAnswer = () => {
     setAnswerStates((prev) => {
@@ -123,14 +55,14 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
   };
 
   const toggleMark = () => {
-    setTryoutState((prev) => {
-      const newMarked = new Set(prev.markedQuestions);
+    setMarkedQuestions((prev) => {
+      const newMarked = new Set(prev);
       if (newMarked.has(currentQuestion)) {
         newMarked.delete(currentQuestion);
       } else {
         newMarked.add(currentQuestion);
       }
-      return { ...prev, markedQuestions: newMarked };
+      return newMarked;
     });
   };
 
@@ -139,7 +71,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
   };
 
   const nextQuestion = () => {
-    if (currentQuestion < tryout.soal.length) {
+    if (currentQuestion < soals.length) {
       goToQuestion(currentQuestion + 1);
     }
   };
@@ -151,11 +83,9 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
   };
 
   const getQuestionStatus = (questionNum: number) => {
-    if (tryoutState.markedQuestions.has(questionNum)) return "marked";
-
+    if (markedQuestions.has(questionNum)) return "marked";
     if (answerStates[questionNum] !== undefined && answerStates[questionNum] !== "")
       return "answered";
-
     return "unanswered";
   };
 
@@ -167,7 +97,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
           <button className="w-8 h-8 flex items-center justify-center">
             <ArrowLeft1 className="w-8 h-8" strokeWidth={1.5} />
           </button>
-          <h1 className="text-xl font-medium">{tryout.name}</h1>
+          <h1 className="text-xl font-medium">{subtest.name}</h1>
         </div>
       </nav>
 
@@ -179,8 +109,8 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
             <div className="bg-white rounded-xl p-6 shadow-[0_0_4px_rgba(0,0,0,0.15)]">
               {/* Title */}
               <div className="mb-5">
-                <h2 className="text-xl font-medium mb-0.5">Penalaran Umum</h2>
-                <p className="text-xs text-gray-400">{tryout.soal.length} Soal | {tryout.duration} Menit</p>
+                <h2 className="text-xl font-medium mb-0.5">{subtest.name}</h2>
+                <p className="text-xs text-gray-400">{soals.length} Soal | {subtest.duration} Menit</p>
               </div>
 
               {/* Timer */}
@@ -203,7 +133,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
 
               <div className="hidden lg:block">
                 <QuestionNumbersAndBtn
-                  tryout={tryout}
+                  soals={soals}
                   stateStyles={{
                     "marked": "bg-yellow-50 text-gray-800",
                     "unanswered": "bg-gray-100 text-black",
@@ -227,7 +157,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
             <div className="bg-white rounded-xl p-6 shadow-[0_0_4px_rgba(0,0,0,0.15)] mb-4">
               {/* Question Text */}
               <div className="text-lg mb-5 whitespace-pre-line">
-                {tryout.soal[currentQuestion - 1].question}
+                {soals[currentQuestion - 1].question}
               </div>
 
               {/* Divider */}
@@ -235,14 +165,13 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
 
               {/* Options */}
               <QuestionInput
-                soal={tryout.soal[currentQuestion - 1]}
+                soal={soals[currentQuestion - 1]}
                 onAnswer={val => {
                   setAnswerStates((prev) => ({
                     ...prev,
                     [currentQuestion]: val,
                   }));
                 }}
-
                 userAnswer={answerStates[currentQuestion]}
               />
 
@@ -261,7 +190,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
                 onClick={toggleMark}
                 variant="transparentBlack"
                 size="lg"
-                className={`px-4 py-3 w-48 h-12 border-yellow-800 text-yellow-800 hover:border-yellow-800 hover:bg-yellow-800 hover:text-white`}
+                className="px-4 py-3 w-48 h-12 border-yellow-800 text-yellow-800 hover:border-yellow-800 hover:bg-yellow-800 hover:text-white"
               >
                 Tandai soal
               </Button>
@@ -281,7 +210,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
                   onClick={nextQuestion}
                   variant="transparentBlack"
                   size="lg"
-                  disabled={currentQuestion === tryout.soal.length}
+                  disabled={currentQuestion === soals.length}
                   className="w-[92px] h-[48px] px-4 py-3"
                 >
                   <ArrowRight1/>
@@ -292,7 +221,7 @@ export function TryoutAttemptView({ tryout }: { tryout: Tryout }) {
 
           <div className="lg:hidden rounded-xl p-6 shadow-[0_0_4px_rgba(0,0,0,0.15)]">
             <QuestionNumbersAndBtn
-              tryout={tryout}
+              soals={soals}
               stateStyles={{
                 "marked": "bg-yellow-50 text-gray-800",
                 "unanswered": "bg-gray-100 text-black",
