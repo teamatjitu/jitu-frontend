@@ -117,6 +117,69 @@ export interface GetSubtestAttemptResponse {
   }>;
 }
 
+export interface CreateTryoutRequest {
+  name: string;
+  year: number;
+  publishedAt?: string;
+  closedAt?: string;
+  isClosed?: boolean;
+}
+
+export interface SubtestInfo {
+  id: string;
+  name: string;
+  type: string;
+  kategori: string;
+  duration: number;
+  _count?: {
+    soal: number;
+  };
+}
+
+export interface TryoutListItem {
+  id: string;
+  name: string;
+  year: number;
+  publishedAt: string;
+  closedAt: string;
+  isClosed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  subtest: SubtestInfo[];
+  _count: {
+    tryoutAttempt: number;
+    soal: number;
+  };
+}
+
+export interface GetAllTryoutsResponse {
+  data: TryoutListItem[];
+  totalPages: number;
+  currentPage: number;
+  total: number;
+}
+
+export interface TryoutDetailsResponse {
+  id: string;
+  name: string;
+  year: number;
+  publishedAt: string;
+  closedAt: string;
+  isClosed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  subtest: SubtestInfo[];
+  subtestByCategory: {
+    TES_POTENSI_SKOLASTIK: SubtestInfo[];
+    TES_LITERASI_BAHASA: SubtestInfo[];
+    PENALARAN_MATEMATIKA: SubtestInfo[];
+  };
+  _count: {
+    tryoutAttempt: number;
+    soal: number;
+  };
+}
+
 export const tryoutService = {
   startTryout(tryoutId: string) {
     return apiClient.post<StartTryoutResponse>(
@@ -170,5 +233,19 @@ export const tryoutService = {
     return apiClient.get<GetSubtestAttemptResponse>(
       `/tryouts/subtest/attempt/${subtestAttemptId}/details`
     );
+  },
+
+  getAllTryouts(params?: { page?: number; limit?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+
+    return apiClient.get<GetAllTryoutsResponse>(
+      `/tryouts?${searchParams.toString()}`
+    );
+  },
+
+  getTryoutDetails(tryoutId: string) {
+    return apiClient.get<TryoutDetailsResponse>(`/tryouts/${tryoutId}`);
   },
 };

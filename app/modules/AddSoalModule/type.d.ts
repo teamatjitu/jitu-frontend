@@ -16,35 +16,30 @@ export interface Tryout {
 export interface Soal {
   id: string;
   tryoutId: string;
-  tryout: Tryout;
-  subtestType: Subtest;
-  tipeSoal: TipeSoal;
+  subtestId: string;
+  tipeSoal: string; // "PILIHAN_GANDA" | "ISIAN_SINGKAT" | "BENAR_SALAH"
   question: string;
-  createdAt: Date;
-  updatedAt: Date;
-
+  createdAt: string;
+  updatedAt: string;
   opsi: Opsi[];
   pembahasanSoal?: PembahasanSoal;
-  soalAttempts: SoalAttempt[];
 }
 
 export interface Opsi {
   id: string;
   soalId: string;
-  soal: Soal;
   teks: string;
   isCorrect: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PembahasanSoal {
   id: string;
   soalId: string;
-  soal: Soal;
   pembahasan: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TryoutAttempt {
@@ -72,4 +67,19 @@ interface SoalAttempt {
   isCorrect?: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface SubtestInfo {
+  id: string;
+  name: string;
+  type: string;
+  kategori: string;
+  duration: number;
+  questionCount: number;
+}
+
+export interface GetSoalBySubtestResponse {
+  subtest: SubtestInfo;
+  soal: Soal[];
+  total: number;
 }

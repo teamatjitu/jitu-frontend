@@ -132,7 +132,7 @@ export const getSoalByTryoutAndSubtest = async (
   subtestType: string
 ) => {
   const res = await fetch(
-    `${process.env.BACKEND_URL}/admin/soal/tryout/${tryoutId}/subtest/${subtestType}`
+    `${import.meta.env.VITE_BACKEND_URL}/admin/soal/tryout/${tryoutId}/subtest/${subtestType}`
   );
   if (!res.ok) throw new Error("Failed to fetch soal");
   return res.json();

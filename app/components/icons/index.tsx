@@ -60,6 +60,7 @@ export { default as Note } from "./Note";
 export { default as Notification2 } from "./Notification2";
 export { default as Play } from "./Play";
 export { default as Plus } from "./Plus";
+export { default as PlusGolden } from "./PlusGolden";
 export { default as Question } from "./Question";
 export { default as Report } from "./Report";
 export { default as RotateLeft } from "./RotateLeft";

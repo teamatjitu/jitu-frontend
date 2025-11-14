@@ -1,25 +1,4 @@
-interface Subtest {
-  id: string;
-  name: string;
-  duration: number;
-  tryoutId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  soal: Soal[];
-}
-
-interface Tryout {
-  id: string;
-  name: string;
-  year: number;
-  publishedAt: Date;
-  closedAt: Date;
-  isClosed: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  subtest: Subtest[];
-}
-
+// Base types without references
 interface Opsi {
   id: string;
   soalId: string;
@@ -37,6 +16,7 @@ interface PembahasanSoal {
   updatedAt: Date;
 }
 
+// Soal with only forward references (no backward references)
 interface Soal {
   id: string;
   tryoutId: string;
@@ -49,6 +29,31 @@ interface Soal {
   pembahasanSoal?: PembahasanSoal;
 }
 
+// Subtest with only Soal array (no backward references)
+interface Subtest {
+  id: string;
+  name: string;
+  duration: number;
+  tryoutId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  soal: Soal[];
+}
+
+// Tryout with only forward references
+interface Tryout {
+  id: string;
+  name: string;
+  year: number;
+  publishedAt: Date;
+  closedAt: Date;
+  isClosed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  subtest: Subtest[];
+}
+
+// SoalAttempt references Soal but Soal doesn't reference back
 interface SoalAttempt {
   id: string;
   tryoutAttemptId: string;
@@ -61,6 +66,7 @@ interface SoalAttempt {
   soal: Soal;
 }
 
+// SubtestAttempt references Subtest but Subtest doesn't reference back
 interface SubtestAttempt {
   id: string;
   attemptId: string;
@@ -75,6 +81,7 @@ interface SubtestAttempt {
   soalAttempt: SoalAttempt[];
 }
 
+// TryoutAttempt references everything but nothing references back
 interface TryoutAttempt {
   id: string;
   userId: string;

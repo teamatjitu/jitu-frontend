@@ -1,4 +1,3 @@
-import { error } from "console";
 import type { ActionFunctionArgs } from "react-router";
 import { createSoal, editSoal } from "~/api/admin";
 
@@ -39,10 +38,9 @@ export async function AddSoalAction({ request }: ActionFunctionArgs) {
     tipeSoal: tipeSoalEnum,
     question: pertanyaan,
     opsi: opsiPayload,
-    pembahasan: pembahasanTeks ? { pembahasan: pembahasanTeks } : undefined,
+    pembahasanSoal: pembahasanTeks ? { pembahasan: pembahasanTeks } : undefined,
   };
 
-  console.log("Payload to Backend:", JSON.stringify(soalData, null, 2));
   try {
     let result;
     if (isEdit && soalId) {

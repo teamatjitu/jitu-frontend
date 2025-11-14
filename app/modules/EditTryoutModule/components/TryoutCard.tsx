@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Pen } from "~/components/icons";
+import { Pen } from "lucide-react";
 import { Calendar } from "lucide-react";
 import { useLoaderData } from "react-router";
 import { pesertaData } from "./PesertaTable";

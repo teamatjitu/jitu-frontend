@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import type { Soal } from "./type";
 
 type AddSoalModuleProps = {
   soalList?: Soal[];
