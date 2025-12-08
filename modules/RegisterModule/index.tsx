@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
 
 interface RegisterData {
   name: string;
@@ -37,22 +40,24 @@ export default function RegisterModule() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen py-16 bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-[#1A7BFF] rounded-lg flex items-center justify-center">
-              <div className="w-6 h-6 bg-white rounded-full"></div>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">SainsIn</h1>
+          <div className="relative h-12 mb-6">
+            <Image
+              src="/jitu-logo.png"
+              alt="title"
+              fill
+              className="object-contain"
+            />
           </div>
 
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Daftar Sekarang
+            Mulai Petualangan Barumu!
           </h2>
           <p className="text-gray-500 text-sm">
-            Buat akun untuk mulai perjalanan belajarmu
+            Buat akun gratis dan segera tingkatkan kemampuanmu.
           </p>
         </div>
 
@@ -61,42 +66,57 @@ export default function RegisterModule() {
           <div className="space-y-4">
             {/* Name Input */}
             <div>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+              <label
+                htmlFor="name"
+                className="text-sm font-semibold text-[#0057CD] mb-2"
+              >
+                Nama Lengkap
+              </label>
+              <div className="relative mt-1">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                <Input
                   type="text"
                   placeholder="Nama lengkap"
                   value={registerData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A7BFF] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Email Input */}
             <div>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+              <label
+                htmlFor="email"
+                className="text-sm font-semibold text-[#0057CD] mb-2"
+              >
+                Email
+              </label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                <Input
                   type="email"
-                  placeholder="Email kamu"
+                  placeholder="Email Kamu"
                   value={registerData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A7BFF] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Password Input */}
             <div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+              <label
+                htmlFor="password"
+                className="text-sm font-semibold text-[#0057CD] mb-2"
+              >
+                Password
+              </label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={registerData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A7BFF] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
@@ -104,9 +124,9 @@ export default function RegisterModule() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="size-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="size-5" />
                   )}
                 </button>
               </div>
@@ -114,16 +134,21 @@ export default function RegisterModule() {
 
             {/* Confirm Password Input */}
             <div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+              <label
+                htmlFor="confirm-password"
+                className="text-sm font-semibold text-[#0057CD] mb-2"
+              >
+                Konfirmasi Password
+              </label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                <Input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Konfirmasi password"
                   value={registerData.confirmPassword}
                   onChange={(e) =>
                     handleChange("confirmPassword", e.target.value)
                   }
-                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A7BFF] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
@@ -131,34 +156,18 @@ export default function RegisterModule() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="size-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="size-5" />
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Terms and Conditions */}
-            <div className="text-xs text-gray-500 text-center px-2">
-              Dengan mendaftar, kamu menyetujui{" "}
-              <button className="text-[#1A7BFF] hover:underline">
-                Syarat & Ketentuan
-              </button>{" "}
-              dan{" "}
-              <button className="text-[#1A7BFF] hover:underline">
-                Kebijakan Privasi
-              </button>{" "}
-              kami
-            </div>
-
             {/* Register Button */}
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-[#1A7BFF] text-white py-3 rounded-lg font-medium hover:bg-[#1568E6] transition-colors shadow-sm"
-            >
+            <Button onClick={handleSubmit} className="w-full">
               Daftar
-            </button>
+            </Button>
 
             {/* Divider */}
             <div className="relative my-6">
@@ -173,22 +182,26 @@ export default function RegisterModule() {
             </div>
 
             {/* Google Register Button */}
-            <button
+            <Button
               onClick={handleGoogleRegister}
-              className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              variant={"outline"}
+              className="w-full"
             >
               Google
-            </button>
+            </Button>
           </div>
-        </div>
 
-        {/* Sign In Link */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Sudah punya akun?{" "}
-          <button className="text-[#1A7BFF] font-medium hover:underline">
-            Masuk Sekarang
-          </button>
-        </p>
+          {/* Sign In Link */}
+          <p className="text-center text-sm text-gray-600 mt-6">
+            Sudah punya akun?{" "}
+            <a
+              href="login"
+              className="text-[#1A7BFF] font-medium hover:underline"
+            >
+              Masuk Sekarang
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
