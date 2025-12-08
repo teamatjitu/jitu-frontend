@@ -50,6 +50,7 @@ export default function RegisterModule() {
               alt="title"
               fill
               className="object-contain"
+              priority
             />
           </div>
 
@@ -175,9 +176,7 @@ export default function RegisterModule() {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">
-                  atau daftar dengan
-                </span>
+                <span className="px-4 bg-white text-gray-500">Akses Cepat</span>
               </div>
             </div>
 
@@ -187,7 +186,13 @@ export default function RegisterModule() {
               variant={"outline"}
               className="w-full"
             >
-              Google
+              <Image
+                src="/icons/google.svg"
+                alt="google"
+                width={20}
+                height={20}
+              />
+              Masuk dengan Google
             </Button>
           </div>
 
