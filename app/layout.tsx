@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import Navbar from "@/components/elements/Navbar/Navbar";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -9,8 +11,8 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "JITUPTN",
-  description: "Website Resmi JITUPTN",
+  title: "JituPTN",
+  description: "Website Resmi JituPTN",
 };
 
 export default function RootLayout({
@@ -21,7 +23,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${openSans.variable} antialiased`}>
-        <div className="font-open-sans min-h-screen">{children}</div>
+        <SidebarProvider defaultOpen={false}>
+          <div className="font-open-sans min-h-screen w-full">
+            <Navbar />
+            <SidebarTrigger className="bg-black" />
+            {children}
+          </div>
+        </SidebarProvider>
       </body>
     </html>
   );

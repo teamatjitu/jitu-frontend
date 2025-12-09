@@ -10,7 +10,7 @@ interface LoginData {
   password: string;
 }
 
-export default function LoginModule() {
+const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [loginData, setLoginData] = useState<LoginData>({
@@ -163,4 +163,6 @@ export default function LoginModule() {
       </div>
     </div>
   );
-}
+};
+
+export default LoginModule;

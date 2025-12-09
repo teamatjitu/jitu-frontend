@@ -12,7 +12,7 @@ interface RegisterData {
   confirmPassword: string;
 }
 
-export default function RegisterModule() {
+const RegisterModule = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
@@ -210,4 +210,6 @@ export default function RegisterModule() {
       </div>
     </div>
   );
-}
+};
+
+export default RegisterModule;
