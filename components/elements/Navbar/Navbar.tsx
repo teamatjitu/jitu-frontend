@@ -62,6 +62,11 @@ const Navbar = () => {
   const { open, setOpen } = useSidebar();
 
   const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
+  const hidden = ["/login", "/register"];
+
+  if (hidden.includes(path)) {
+    return null;
+  }
 
   return (
     <div>

@@ -7,17 +7,22 @@ import {
   ChevronRight,
   TrendingUp,
   BookOpen,
-  FileText,
   Ticket,
+  FileText,
 } from "lucide-react";
+import { useState } from "react";
 import { stats, subjects, tryOutData } from "./payload";
+import { Stat, Subject, TryOutCard } from "@/types";
 
 const TryoutModule = () => {
+  const { open } = useSidebar();
+  const [searchTerm, setSearchTerm] = useState("");
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ml-20 mt-24 p-8">
         {/* Profile Card */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden">
+        <div className="lg:col-span-2 bg-linear-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-24 -mb-24"></div>
 
@@ -51,11 +56,11 @@ const TryoutModule = () => {
 
         {/* Stats Cards */}
         <div className="space-y-4">
-          {stats.map((stat, index) => (
+          {stats.map((stat: Stat, index) => (
             <div key={index} className="bg-white rounded-2xl shadow-sm p-8">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}
+                  className={`w-12 h-12 bg-linear-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}
                 >
                   <stat.icon className="w-6 h-6 text-white" />
                 </div>
@@ -71,7 +76,7 @@ const TryoutModule = () => {
         </div>
 
         {/* CTA Banner */}
-        <div className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-3xl p-8 mb-8 text-white relative overflow-hidden shadow-2xl shadow-orange-500/30">
+        <div className="bg-linear-to-r from-orange-500 to-pink-500 rounded-3xl p-8 mb-8 text-white relative overflow-hidden shadow-2xl shadow-orange-500/30">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div className="max-w-2xl">
@@ -122,19 +127,19 @@ const TryoutModule = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {tryOutData.map((item) => (
+            {tryOutData.map((item: TryOutCard) => (
               <div
                 key={item.id}
                 className="group bg-white rounded-2xl shadow-sm p-8"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-blue-100 group-hover:to-blue-200 rounded-2xl flex items-center justify-center transition-all">
+                    <div className="w-16 h-16 bg-linear-to-br from-gray-100 to-gray-200 group-hover:from-blue-100 group-hover:to-blue-200 rounded-2xl flex items-center justify-center transition-all">
                       <span className="text-3xl font-black text-gray-700 group-hover:text-[#1A7BFF]">
                         {item.number}
                       </span>
                     </div>
-                    <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="bg-linear-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                       {item.badge}
                     </span>
                   </div>
@@ -182,13 +187,13 @@ const TryoutModule = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {subjects.map((subject) => (
+            {subjects.map((subject: Subject) => (
               <div
                 key={subject.id}
                 className="group bg-white rounded-2xl shadow-sm p-8"
               >
                 <div
-                  className={`w-full aspect-square bg-gradient-to-br ${subject.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
+                  className={`w-full aspect-square bg-linear-to-br ${subject.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
                 >
                   <subject.icon className="w-10 h-10 text-white" />
                 </div>

@@ -124,6 +124,23 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
+  /* CHIPS */
+  --chips-blue-background: oklch(0.486 0.198 262.3);
+  --chips-blue-foreground: oklch(1 0 0);
+  --chips-purple-background: oklch(0.624 0.182 284);
+  --chips-purple-foreground: oklch(1 0 0);
+  --chips-green-background: oklch(0.59 0.155 158.4);
+  --chips-green-foreground: oklch(1 0 0);
+  --chips-orange-background: oklch(0.643 0.189 44.8);
+  --chips-orange-foreground: oklch(1 0 0);
+  --chips-red-background: oklch(0.584 0.219 23.9);
+  --chips-red-foreground: oklch(1 0 0);
+  --chips-yellow-background: oklch(0.825 0.165 91.8);
+  --chips-yellow-foreground: oklch(1 0 0);
+  --chips-indigo-background: oklch(0.52 0.18 274.6);
+  --chips-indigo-foreground: oklch(1 0 0);
+
+
   /* PRIMARY */
   --primary-100: oklch(0.858 0.071 256.4);
   --primary-200: oklch(0.723 0.145 256.4);

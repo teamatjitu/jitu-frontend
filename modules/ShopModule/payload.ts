@@ -1,4 +1,4 @@
-import { Package } from "./interface";
+import { Package } from "@/types";
 
 export const bundlePackages: Package[] = [
   {

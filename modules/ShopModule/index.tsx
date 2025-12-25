@@ -2,6 +2,7 @@
 import { useSidebar } from "@/components/ui/sidebar";
 import BundleCard from "./components/BundleCard";
 import { belajarPackages, bundlePackages, tryOutPackages } from "./payload";
+import { Package } from "@/types";
 
 const ShopModule = () => {
   const { open } = useSidebar();

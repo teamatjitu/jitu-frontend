@@ -1,11 +1,12 @@
 import { Check } from "lucide-react";
-import { Package } from "../interface";
+import { Package } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const BundleCard = ({ pkg }: { pkg: Package }) => (
-  <div className="group bg-white rounded-2xl shadow-sm p-8">
+  <Card className="group bg-white rounded-2xl shadow-sm p-0 overflow-hidden">
     <div
-      className={`bg-gradient-to-r ${pkg.categoryBg} p-6 text-white relative overflow-hidden`}
+      className={`bg-linear-to-r ${pkg.categoryBg} p-6 text-white relative overflow-hidden`}
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
       <div className="relative z-10">
@@ -26,14 +27,14 @@ const BundleCard = ({ pkg }: { pkg: Package }) => (
       </div>
     </div>
 
-    <div className="p-6">
+    <CardContent className="p-6">
       <ul className="space-y-3 mb-6">
         {pkg.features.map((feature, index) => (
           <li
             key={index}
             className="flex items-start gap-3 text-sm text-gray-700"
           >
-            <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
               <Check className="w-3 h-3 text-emerald-600" />
             </div>
             <span className="leading-relaxed">{feature}</span>
@@ -63,11 +64,11 @@ const BundleCard = ({ pkg }: { pkg: Package }) => (
         </div>
       </div>
 
-      <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105">
+      <Button className="w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105">
         Lihat Paket
       </Button>
-    </div>
-  </div>
+    </CardContent>
+  </Card>
 );
 
 export default BundleCard;

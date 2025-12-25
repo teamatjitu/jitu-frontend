@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { menuItems, scoreHistory, stats, subtests, weekDays } from "./payload";
-import { ScoreData } from "./interface";
+import { ScoreData, Subtest, MenuItem, StatCard } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ProfileModule = () => {
   const [selectedSubtests, setSelectedSubtests] = useState<string[]>(["total"]);
@@ -48,7 +49,7 @@ const ProfileModule = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="ml-20 mt-24 p-8">
         {/* Profile Card */}
-        <div className="bg-gradient-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-8 mb-8 text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden">
+        <Card className="bg-linear-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-8 mb-8 text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden border-0">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -ml-32 -mb-32"></div>
 
@@ -86,7 +87,7 @@ const ProfileModule = () => {
               Edit Profil
             </Button>
           </div>
-        </div>
+        </Card>
 
         {/* Progress Snapshot */}
         <section className="mb-8">
@@ -100,8 +101,8 @@ const ProfileModule = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-            {stats.map((stat, index) => (
-              <div
+            {stats.map((stat: StatCard, index) => (
+              <Card
                 key={index}
                 className="bg-white rounded-2xl border-2 border-gray-100 p-6 hover:shadow-xl hover:border-[#1A7BFF] transition-all"
               >
@@ -126,17 +127,17 @@ const ProfileModule = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
           {/* Activity Chart */}
-          <div className="bg-white rounded-2xl shadow-sm p-8">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="bg-white rounded-2xl shadow-sm p-8">
+            <CardHeader className="flex items-center justify-between mb-6 p-0">
               <div>
-                <h3 className="font-bold text-gray-900 mb-1">
+                <CardTitle className="font-bold text-gray-900 mb-1">
                   Target Personal Best
-                </h3>
+                </CardTitle>
                 <p className="text-sm text-gray-500">
                   7 hari terakhir • Target:{" "}
                   <span className="text-emerald-600 font-semibold">500</span>
@@ -152,62 +153,66 @@ const ProfileModule = () => {
                   <span className="text-xs text-gray-600">Banyak</span>
                 </div>
               </div>
-            </div>
+            </CardHeader>
 
-            <div className="flex items-end justify-between gap-4 h-32">
-              {weekDays.map((day, index) => {
-                const isToday = index === 6;
-                const height = Math.random() * 100;
-                return (
-                  <div
-                    key={day}
-                    className="flex-1 flex flex-col items-center gap-2"
-                  >
+            <CardContent className="p-0">
+              <div className="flex items-end justify-between gap-4 h-32">
+                {weekDays.map((day, index) => {
+                  const isToday = index === 6;
+                  const height = Math.random() * 100;
+                  return (
                     <div
-                      className="w-full bg-gray-100 rounded-t-xl overflow-hidden"
-                      style={{ height: "100%" }}
+                      key={day}
+                      className="flex-1 flex flex-col items-center gap-2"
                     >
                       <div
-                        className={`w-full ${
-                          isToday ? "bg-orange-500" : "bg-emerald-500"
-                        } rounded-t-xl transition-all hover:opacity-80`}
-                        style={{ height: `${height}%`, marginTop: "auto" }}
-                      ></div>
+                        className="w-full bg-gray-100 rounded-t-xl overflow-hidden"
+                        style={{ height: "100%" }}
+                      >
+                        <div
+                          className={`w-full ${
+                            isToday ? "bg-orange-500" : "bg-emerald-500"
+                          } rounded-t-xl transition-all hover:opacity-80`}
+                          style={{ height: `${height}%`, marginTop: "auto" }}
+                        ></div>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold ${
+                          isToday ? "text-orange-600" : "text-gray-600"
+                        }`}
+                      >
+                        {day}
+                      </span>
                     </div>
-                    <span
-                      className={`text-xs font-semibold ${
-                        isToday ? "text-orange-600" : "text-gray-600"
-                      }`}
-                    >
-                      {day}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-sm">
-                <Target className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">
-                  Terakhir aktif:{" "}
-                  <span className="font-semibold text-gray-900">Belum ada</span>
-                </span>
+                  );
+                })}
               </div>
-              <button className="text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center gap-1">
-                Lihat Insight Lengkap
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100">
+                <div className="flex items-center gap-2 text-sm">
+                  <Target className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-600">
+                    Terakhir aktif:{" "}
+                    <span className="font-semibold text-gray-900">
+                      Belum ada
+                    </span>
+                  </span>
+                </div>
+                <button className="text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center gap-1">
+                  Lihat Insight Lengkap
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Score Statistics Chart */}
-          <div className="bg-white rounded-2xl shadow-sm p-8">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="bg-white rounded-2xl shadow-sm p-8">
+            <CardHeader className="flex items-center justify-between mb-6 p-0">
               <div>
-                <h3 className="font-bold text-gray-900 mb-1">
+                <CardTitle className="font-bold text-gray-900 mb-1">
                   Statistik Skor Try Out
-                </h3>
+                </CardTitle>
                 <p className="text-sm text-gray-500">
                   Perkembangan skor dari TO 1 hingga TO 5
                 </p>
@@ -219,223 +224,231 @@ const ProfileModule = () => {
                 <Filter className="w-4 h-4" />
                 <span className="text-sm font-semibold">Filter</span>
               </Button>
-            </div>
+            </CardHeader>
 
-            {/* Subtest Filter Chips */}
-            <div className="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-100">
-              {subtests.map((subtest) => (
-                <Button
-                  key={subtest.id}
-                  onClick={() => toggleSubtest(subtest.id)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    selectedSubtests.includes(subtest.id)
-                      ? `${subtest.color} text-white shadow-lg`
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {subtest.label}
-                </Button>
-              ))}
-            </div>
-
-            {/* Chart */}
-            <div className="relative h-80">
-              {/* Y-axis labels */}
-              <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-500 font-semibold">
-                {[
-                  maxScore,
-                  maxScore * 0.75,
-                  maxScore * 0.5,
-                  maxScore * 0.25,
-                  0,
-                ].map((value) => (
-                  <div key={value}>{Math.round(value)}</div>
+            <CardContent className="p-0">
+              {/* Subtest Filter Chips */}
+              <div className="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-100">
+                {subtests.map((subtest: Subtest) => (
+                  <Button
+                    key={subtest.id}
+                    onClick={() => toggleSubtest(subtest.id)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      selectedSubtests.includes(subtest.id)
+                        ? `${subtest.color} text-white shadow-lg`
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {subtest.label}
+                  </Button>
                 ))}
               </div>
 
-              {/* Grid lines */}
-              <div className="absolute left-12 right-0 top-0 bottom-8 flex flex-col justify-between">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className="border-t border-gray-200"></div>
-                ))}
-              </div>
+              {/* Chart */}
+              <div className="relative h-80">
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-500 font-semibold">
+                  {[
+                    maxScore,
+                    maxScore * 0.75,
+                    maxScore * 0.5,
+                    maxScore * 0.25,
+                    0,
+                  ].map((value) => (
+                    <div key={value}>{Math.round(value)}</div>
+                  ))}
+                </div>
 
-              {/* Chart area */}
-              <div className="absolute left-12 right-0 top-0 bottom-8">
-                <svg className="w-full h-full" preserveAspectRatio="none">
-                  {selectedSubtests.map((subtestId) => {
-                    const subtest = subtests.find((s) => s.id === subtestId);
-                    if (!subtest) return null;
+                {/* Grid lines */}
+                <div className="absolute left-12 right-0 top-0 bottom-8 flex flex-col justify-between">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div key={i} className="border-t border-gray-200"></div>
+                  ))}
+                </div>
 
-                    const points = scoreHistory
-                      .map((score, index) => {
-                        const x = (index / (scoreHistory.length - 1)) * 100;
-                        const value = score[
-                          subtestId as keyof ScoreData
-                        ] as number;
-                        const y = 100 - (value / maxScore) * 100;
-                        return `${x},${y}`;
-                      })
-                      .join(" ");
+                {/* Chart area */}
+                <div className="absolute left-12 right-0 top-0 bottom-8">
+                  <svg className="w-full h-full" preserveAspectRatio="none">
+                    {selectedSubtests.map((subtestId) => {
+                      const subtest = subtests.find((s) => s.id === subtestId);
+                      if (!subtest) return null;
 
-                    const color = subtest.color
-                      .replace("bg-", "")
-                      .replace("-500", "");
-                    const colorMap: { [key: string]: string } = {
-                      blue: "#3B82F6",
-                      purple: "#A855F7",
-                      green: "#10B981",
-                      orange: "#F97316",
-                      red: "#EF4444",
-                      yellow: "#EAB308",
-                      indigo: "#6366F1",
-                    };
-
-                    return (
-                      <g key={subtestId}>
-                        <polyline
-                          points={points}
-                          fill="none"
-                          stroke={colorMap[color]}
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          vectorEffect="non-scaling-stroke"
-                        />
-                        {scoreHistory.map((score, index) => {
+                      const points = scoreHistory
+                        .map((score, index) => {
                           const x = (index / (scoreHistory.length - 1)) * 100;
                           const value = score[
                             subtestId as keyof ScoreData
                           ] as number;
                           const y = 100 - (value / maxScore) * 100;
-                          return (
-                            <circle
-                              key={index}
-                              cx={`${x}%`}
-                              cy={`${y}%`}
-                              r="4"
-                              fill={colorMap[color]}
-                              className="hover:r-6 transition-all cursor-pointer"
-                            />
-                          );
-                        })}
-                      </g>
-                    );
-                  })}
-                </svg>
+                          return `${x},${y}`;
+                        })
+                        .join(" ");
+
+                      const color = subtest.color
+                        .replace("bg-", "")
+                        .replace("-500", "");
+                      const colorMap: { [key: string]: string } = {
+                        blue: "#3B82F6",
+                        purple: "#A855F7",
+                        green: "#10B981",
+                        orange: "#F97316",
+                        red: "#EF4444",
+                        yellow: "#EAB308",
+                        indigo: "#6366F1",
+                      };
+
+                      return (
+                        <g key={subtestId}>
+                          <polyline
+                            points={points}
+                            fill="none"
+                            stroke={colorMap[color]}
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                          {scoreHistory.map((score, index) => {
+                            const x = (index / (scoreHistory.length - 1)) * 100;
+                            const value = score[
+                              subtestId as keyof ScoreData
+                            ] as number;
+                            const y = 100 - (value / maxScore) * 100;
+                            return (
+                              <circle
+                                key={index}
+                                cx={`${x}%`}
+                                cy={`${y}%`}
+                                r="4"
+                                fill={colorMap[color]}
+                                className="hover:r-6 transition-all cursor-pointer"
+                              />
+                            );
+                          })}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+
+                {/* X-axis labels */}
+                <div className="absolute left-12 right-0 bottom-0 flex justify-between text-xs text-gray-600 font-semibold">
+                  {scoreHistory.map((score) => (
+                    <div key={score.to} className="text-center">
+                      {score.to}
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* X-axis labels */}
-              <div className="absolute left-12 right-0 bottom-0 flex justify-between text-xs text-gray-600 font-semibold">
-                {scoreHistory.map((score) => (
-                  <div key={score.to} className="text-center">
-                    {score.to}
-                  </div>
+              {/* Score Summary */}
+              <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {scoreHistory.map((score, index) => (
+                  <Card
+                    key={score.to}
+                    className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all"
+                  >
+                    <div className="text-xs text-gray-500 font-semibold mb-1">
+                      {score.to}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {score.total}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {index > 0 && (
+                        <span
+                          className={
+                            score.total > scoreHistory[index - 1].total
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                          }
+                        >
+                          {score.total > scoreHistory[index - 1].total
+                            ? "↑"
+                            : "↓"}
+                          {Math.abs(
+                            score.total - scoreHistory[index - 1].total
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </Card>
                 ))}
               </div>
-            </div>
-
-            {/* Score Summary */}
-            <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {scoreHistory.map((score, index) => (
-                <div
-                  key={score.to}
-                  className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all"
-                >
-                  <div className="text-xs text-gray-500 font-semibold mb-1">
-                    {score.to}
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {score.total}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {index > 0 && (
-                      <span
-                        className={
-                          score.total > scoreHistory[index - 1].total
-                            ? "text-emerald-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {score.total > scoreHistory[index - 1].total
-                          ? "↑"
-                          : "↓"}
-                        {Math.abs(score.total - scoreHistory[index - 1].total)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Menu Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {menuItems.map((menu, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-sm p-8">
-              <div className="flex items-center gap-4 mb-6">
+          {menuItems.map((menu: MenuItem, index) => (
+            <Card key={index} className="bg-white rounded-2xl shadow-sm p-8">
+              <CardHeader className="flex items-center gap-4 mb-6 p-0">
                 <div
                   className={`w-14 h-14 ${menu.bgColor} rounded-2xl flex items-center justify-center shadow-lg`}
                 >
                   <menu.icon className={`w-7 h-7 ${menu.color}`} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 mb-1">{menu.label}</h3>
+                  <CardTitle className="font-bold text-gray-900 mb-1">
+                    {menu.label}
+                  </CardTitle>
                   <p className="text-sm text-gray-500">{menu.description}</p>
                 </div>
-              </div>
+              </CardHeader>
 
-              {menu.items && (
-                <div className="space-y-3">
-                  {menu.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">
-                            {item.label}
-                          </div>
-                          {item.description && (
-                            <div className="text-xs text-gray-500">
-                              {item.description}
+              <CardContent className="p-0">
+                {menu.items && (
+                  <div className="space-y-3">
+                    {menu.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="w-5 h-5 text-gray-400" />
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {item.label}
                             </div>
-                          )}
+                            {item.description && (
+                              <div className="text-xs text-gray-500">
+                                {item.description}
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        {item.toggle && (
+                          <div className="w-11 h-6 bg-gray-300 rounded-full relative cursor-pointer">
+                            <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all"></div>
+                          </div>
+                        )}
+                        {item.link && (
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        )}
                       </div>
-                      {item.toggle && (
-                        <div className="w-11 h-6 bg-gray-300 rounded-full relative cursor-pointer">
-                          <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all"></div>
-                        </div>
-                      )}
-                      {item.link && (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {menu.action && (
-                <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl flex items-center justify-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  {menu.action}
-                </Button>
-              )}
+                {menu.action && (
+                  <Button className="w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl flex items-center justify-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    {menu.action}
+                  </Button>
+                )}
 
-              {index === menuItems.length - 1 && (
-                <Button
-                  variant={"ghost"}
-                  className="w-full mt-3 text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center justify-center gap-1 p-3 hover:bg-emerald-50 rounded-xl transition-all"
-                >
-                  Pengaturan lengkap
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+                {index === menuItems.length - 1 && (
+                  <Button
+                    variant={"ghost"}
+                    className="w-full mt-3 text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center justify-center gap-1 p-3 hover:bg-emerald-50 rounded-xl transition-all"
+                  >
+                    Pengaturan lengkap
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
 

@@ -9,7 +9,13 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { ScoreData, StatCard } from "./interface";
+import {
+  ScoreData,
+  StatCard,
+  Subtest,
+  MenuItem,
+  DailyProblem,
+} from "./interface";
 
 export const stats: StatCard[] = [
   {
@@ -44,7 +50,15 @@ export const stats: StatCard[] = [
   },
 ];
 
-export const weekDays = ["Kam", "Jum", "Sab", "Min", "Sen", "Sel", "Rab"];
+export const weekDays: string[] = [
+  "Kam",
+  "Jum",
+  "Sab",
+  "Min",
+  "Sen",
+  "Sel",
+  "Rab",
+];
 
 export const scoreHistory: ScoreData[] = [
   {
@@ -99,7 +113,7 @@ export const scoreHistory: ScoreData[] = [
   },
 ];
 
-export const subtests = [
+export const subtests: Subtest[] = [
   {
     id: "total",
     label: "Total Skor",
@@ -144,7 +158,7 @@ export const subtests = [
   },
 ];
 
-export const menuItems = [
+export const menuItems: MenuItem[] = [
   {
     icon: Settings,
     label: "Pengaturan Cepat",
@@ -184,5 +198,44 @@ export const menuItems = [
       { icon: Info, label: "Tentang JituPTN", link: true },
       { icon: BarChart3, label: "Lihat Insight Lengkap", link: true },
     ],
+  },
+];
+
+export const dailyProblems: DailyProblem[] = [
+  {
+    question:
+      "Manakah di antara kalimat berikut yang merupakan kalimat efektif?",
+    options: [
+      "Budi adalah merupakan seorang anak yang pintar.",
+      "Meskipun lelah, tetapi dia tetap melanjutkan pekerjaannya.",
+      "Para hadirin dimohon untuk duduk kembali.",
+      "Dia menjelaskan tentang masalah itu secara rinci.",
+    ],
+    answer: 3,
+  },
+  {
+    question: "Sinonim dari kata 'andal' adalah...",
+    options: ["Terpercaya", "Lemah", "Ragu-ragu", "Sombong"],
+    answer: 0,
+  },
+  {
+    question: "Antonim dari kata 'abstrak' adalah...",
+    options: ["Nyata", "Gaib", "Imajinasi", "Konsep"],
+    answer: 0,
+  },
+  {
+    question: "Penulisan kata serapan yang benar adalah...",
+    options: ["Analisa", "Apotic", "System", "Praktik"],
+    answer: 3,
+  },
+  {
+    question: "Struktur yang benar dalam sebuah teks prosedur adalah...",
+    options: [
+      "Tujuan - Langkah-langkah - Penegasan ulang",
+      "Orientasi - Komplikasi - Resolusi",
+      "Tesis - Argumentasi - Rekomendasi",
+      "Identifikasi fenomena - Proses kejadian - Ulasan",
+    ],
+    answer: 0,
   },
 ];
