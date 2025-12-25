@@ -11,6 +11,8 @@ import {
   TrendingUp,
   ShoppingBag,
   NotebookPen,
+  Ticket,
+  History,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +26,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 // Menu items.
 const items = [
@@ -38,20 +41,27 @@ const items = [
     icon: NotebookPen,
   },
   {
-    title: "Progress",
-    path: "progress",
-    icon: TrendingUp,
+    title: "History",
+    path: "history",
+    icon: History,
   },
   {
-    title: "Toko",
-    path: "toko",
+    title: "Shop",
+    path: "shop",
     icon: ShoppingBag,
+  },
+  {
+    title: "Referral",
+    path: "referral",
+    icon: Ticket,
   },
 ];
 
 const Navbar = () => {
   const path = usePathname();
   const { open, setOpen } = useSidebar();
+
+  const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
 
   return (
     <div>
@@ -63,9 +73,16 @@ const Navbar = () => {
       >
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem className="mt-2 mb-6">
+                  <SidebarMenuButton>
+                    <Image src="/logo.png" alt="logo" width={48} height={48} />
+                    <span className="text-2xl font-bold text-neutral-800">
+                      JituPTN
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 {items.map((item) => {
                   const isPath = path.endsWith(item.path);
 
@@ -108,12 +125,14 @@ const Navbar = () => {
       <header
         className={`${
           open ? "w-[calc(100%-16rem)]" : "w-[calc(100%-5rem)]"
-        } bg-white border-b border-gray-200 fixed right-0 z-9999 transition-[left,right,width] duration-200 ease-linear`}
+        } bg-sidebar border-b border-gray-200 fixed right-0 z-9999 transition-[left,right,width] duration-200 ease-linear`}
       >
-        <div className="px-8 py-4">
-          <div className="flex items-center justify-between">
+        <div className="px-8">
+          <div className="h-24 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {state.title}
+              </h1>
               <p className="text-sm text-gray-500">
                 Selamat datang kembali, Hakim! 👋
               </p>

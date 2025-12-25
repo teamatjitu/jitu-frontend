@@ -4,13 +4,7 @@ import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-
-interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+import { RegisterData } from "./interface";
 
 const RegisterModule = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -69,7 +63,7 @@ const RegisterModule = () => {
             <div>
               <label
                 htmlFor="name"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Nama Lengkap
               </label>
@@ -88,7 +82,7 @@ const RegisterModule = () => {
             <div>
               <label
                 htmlFor="email"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Email
               </label>
@@ -107,7 +101,7 @@ const RegisterModule = () => {
             <div>
               <label
                 htmlFor="password"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Password
               </label>
@@ -137,7 +131,7 @@ const RegisterModule = () => {
             <div>
               <label
                 htmlFor="confirm-password"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Konfirmasi Password
               </label>
@@ -201,7 +195,7 @@ const RegisterModule = () => {
             Sudah punya akun?{" "}
             <a
               href="login"
-              className="text-[#1A7BFF] font-medium hover:underline"
+              className="text-primary-300 font-medium hover:underline"
             >
               Masuk Sekarang
             </a>

@@ -4,11 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-
-interface LoginData {
-  email: string;
-  password: string;
-}
+import { LoginData } from "./interface";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +59,7 @@ const LoginModule = () => {
             <div>
               <label
                 htmlFor="email"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Email
               </label>
@@ -82,7 +78,7 @@ const LoginModule = () => {
             <div>
               <label
                 htmlFor="password"
-                className="text-sm font-semibold text-[#0057CD] mb-2"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Password
               </label>
@@ -112,7 +108,7 @@ const LoginModule = () => {
             <div className="text-right">
               <button
                 type="button"
-                className="text-sm text-[#1A7BFF] hover:underline"
+                className="text-sm text-primary-300 hover:underline"
               >
                 Lupa password?
               </button>
@@ -154,7 +150,7 @@ const LoginModule = () => {
             Belum punya akun?{" "}
             <a
               href="register"
-              className="text-[#1A7BFF] font-medium hover:underline"
+              className="text-primary-300 font-medium hover:underline"
             >
               Daftar Sekarang
             </a>

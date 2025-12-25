@@ -1,5 +1,5 @@
-export default function DesktopPage() {
-  return (
-    <main className="flex justify-center items-center">Dashboard Page</main>
-  );
+import DashboardModule from "@/modules/DashboardModule";
+
+export default function DashboardPage() {
+  return <DashboardModule />;
 }

@@ -26,7 +26,6 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={false}>
           <div className="font-open-sans min-h-screen w-full">
             <Navbar />
-            <SidebarTrigger className="bg-black" />
             {children}
           </div>
         </SidebarProvider>
