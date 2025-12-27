@@ -13,8 +13,15 @@ import {
 } from "lucide-react";
 import { stats, subjects, tryOutData } from "./payload";
 import { Stat, Subject, TryOutCard } from "./interface";
+import { useRouter } from "next/navigation";
 
 const TryoutModule = () => {
+  const router = useRouter();
+
+  const handleTryoutClick = (id: number) => {
+    router.push(`/tryout/${id}`);
+  };
+
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -153,7 +160,8 @@ const TryoutModule = () => {
             {tryOutData.map((item: TryOutCard) => (
               <Card
                 key={item.id}
-                className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
+                onClick={() => handleTryoutClick(item.id)}
+                className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
               >
                 <CardContent className="p-6 sm:p-8">
                   <div className="flex items-center justify-between mb-4">
