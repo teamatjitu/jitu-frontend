@@ -50,11 +50,6 @@ const items = [
     path: "shop",
     icon: ShoppingBag,
   },
-  {
-    title: "Referral",
-    path: "referral",
-    icon: Ticket,
-  },
 ];
 
 const Navbar = () => {

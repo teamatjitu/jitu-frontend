@@ -127,7 +127,6 @@ const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => router.back()}
               className="text-gray-600 hover:text-gray-900"
             >
