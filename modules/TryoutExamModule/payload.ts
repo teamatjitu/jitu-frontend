@@ -1,5 +1,63 @@
 import { SubtestExam } from "./interface";
 
+/**
+ * EXAMPLE PAYLOAD STRUCTURE
+ *
+ * Example of a complete SubtestExam object with solution in markdown format:
+ *
+ * {
+ *   subtestId: 1,
+ *   subtestName: "Penalaran Umum",
+ *   tryoutId: 1,
+ *   tryoutTitle: "Try Out UTBK SNBT 4 2026",
+ *   duration: 30,
+ *   questions: [
+ *     {
+ *       id: 1,
+ *       questionText: "Jika semua A adalah B, dan semua B adalah C...",
+ *       options: [
+ *         "Semua A adalah C",
+ *         "Tidak semua A adalah C",
+ *         "Semua C adalah A",
+ *         "Tidak ada A yang merupakan C",
+ *         "Tidak dapat disimpulkan"
+ *       ],
+ *       correctAnswer: 0, // Index 0 = Opsi A
+ *       solution: `## Pembahasan Soal 1
+ *
+ * ### Analisis Soal
+ * Soal ini menguji pemahaman tentang **silogisme** dan **logika deduktif**.
+ *
+ * ### Langkah Penyelesaian
+ *
+ * **Langkah 1:** Identifikasi premis
+ * - Premis 1: Semua A adalah B
+ * - Premis 2: Semua B adalah C
+ *
+ * **Langkah 2:** Analisis setiap opsi
+ * - **Opsi A (✓):** **BENAR** - Kesimpulan valid dari silogisme
+ * - **Opsi B (❌):** Bertentangan dengan premis
+ * - **Opsi C (❌):** Salah arah kesimpulan
+ * - **Opsi D (❌):** Bertentangan dengan premis
+ * - **Opsi E (❌):** Kesimpulan dapat ditarik
+ *
+ * ### Jawaban yang Benar
+ * **Jawaban: A - Semua A adalah C**
+ *
+ * ### Penjelasan Detail
+ * Dalam logika silogisme, jika A⊆B dan B⊆C, maka A⊆C (transitif).
+ *
+ * > 💡 **Tips:** Untuk soal logika, buat diagram Venn untuk visualisasi!
+ *
+ * ### Konsep Penting yang Perlu Diingat
+ * - Sifat transitif dalam himpunan
+ * - Aturan silogisme kategoris
+ * - Validitas argumen deduktif`
+ *     }
+ *   ]
+ * }
+ */
+
 // Mock questions - using "Meong ipsum" as shown in the reference
 const generateMockQuestions = (count: number, startId: number = 1) => {
   return Array.from({ length: count }, (_, i) => ({
@@ -13,6 +71,9 @@ const generateMockQuestions = (count: number, startId: number = 1) => {
       "Meong ipsum",
     ],
     correctAnswer: Math.floor(Math.random() * 5), // Random correct answer for demo
+    solution: `## Pembahasan Soal ${
+      startId + i
+    }\n\n### Analisis Soal\nSoal ini menguji pemahaman tentang **konsep dasar meong ipsum**. Untuk menjawab soal ini, kita perlu memahami:\n\n1. Konsep utama dari meong ipsum dolor sit amet\n2. Hubungan antara felis pulvinar dan tincidunt felis\n3. Penerapan meong curabitur dalam konteks soal\n\n### Langkah Penyelesaian\n\n**Langkah 1:** Identifikasi kata kunci dalam soal\n- Meong felis sit amet\n- Felis pulvinar\n- Tincidunt felis meong\n\n**Langkah 2:** Analisis setiap opsi jawaban\n- **Opsi A (❌):** Tidak sesuai karena tidak mempertimbangkan aspek meong curabitur\n- **Opsi B (❌):** Kurang tepat karena mengabaikan felis vehicula\n- **Opsi C (✓):** **BENAR** - Opsi ini paling tepat karena mencakup semua aspek penting\n- **Opsi D (❌):** Salah interpretasi tentang eiusmod tempor\n- **Opsi E (❌):** Tidak relevan dengan konteks soal\n\n### Jawaban yang Benar\n**Jawaban: C**\n\n### Penjelasan Detail\nOpsi C adalah jawaban yang paling tepat karena:\n\n1. **Konsep Meong Ipsum**: Memahami bahwa meong ipsum dolor sit amet adalah fondasi dari pemahaman materi ini\n2. **Analisis Kontekstual**: Dalam konteks soal, felis pulvinar memiliki hubungan langsung dengan tincidunt felis meong\n3. **Penerapan Praktis**: Meong curabitur tristique menunjukkan aplikasi dari konsep yang diuji\n\n> 💡 **Tips:** Untuk soal sejenis, selalu perhatikan hubungan antara meong felis dan aspek lainnya dalam konteks yang diberikan.\n\n### Konsep Penting yang Perlu Diingat\n- Meong ipsum ≠ Lorem ipsum biasa\n- Felis pulvinar selalu terkait dengan tincidunt\n- Dalam soal UTBK, konteks sangat penting untuk menentukan jawaban yang tepat`,
   }));
 };
 

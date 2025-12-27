@@ -3,6 +3,7 @@ export interface Question {
   questionText: string;
   options: string[];
   correctAnswer?: number; // 0-based index
+  solution?: string; // Markdown formatted solution/explanation
 }
 
 export interface ExamState {

@@ -22,4 +22,5 @@ export interface CategoryDetail {
   name: string;
   questionCount: number;
   duration: number;
+  isCompleted?: boolean; // Track if subtest is completed
 }
