@@ -5,7 +5,7 @@ export interface TryoutDetail {
   badge: string;
   participants: number;
   description: string;
-  duration: number; // in minutes
+  duration: number;
   totalQuestions: number;
   startDate: string;
   endDate: string;
@@ -21,5 +21,5 @@ export interface CategoryDetail {
   id: number;
   name: string;
   questionCount: number;
-  duration: number; // in minutes
+  duration: number;
 }

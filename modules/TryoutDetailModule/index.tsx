@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Clock,
   Calendar,
@@ -19,6 +26,7 @@ import {
   TrendingUp,
   Award,
   Video,
+  Lock,
 } from "lucide-react";
 import { TryoutDetail } from "./interface";
 
@@ -27,9 +35,14 @@ interface TryoutDetailModuleProps {
   tryoutData: TryoutDetail;
 }
 
-const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) => {
+const TryoutDetailModule = ({
+  tryoutId,
+  tryoutData,
+}: TryoutDetailModuleProps) => {
   const router = useRouter();
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [completedSubtests, setCompletedSubtests] = useState<number[]>([]);
 
   const handleRegister = async () => {
     setIsRegistering(true);
@@ -41,8 +54,21 @@ const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) =
   };
 
   const handleStart = () => {
-    // Navigate to tryout execution page
-    router.push(`/tryout/${tryoutId}/start`);
+    // Show modal with subtest selection
+    setShowStartModal(true);
+  };
+
+  const handleStartSubtest = (subtestId: number) => {
+    // Navigate to specific subtest
+    router.push(`/tryout/${tryoutId}/exam/${subtestId}`);
+  };
+
+  const isSubtestLocked = (subtestIndex: number) => {
+    // First subtest is always unlocked
+    if (subtestIndex === 0) return false;
+    // Check if previous subtest is completed
+    const previousSubtestId = tryoutData.categories[subtestIndex - 1].id;
+    return !completedSubtests.includes(previousSubtestId);
   };
 
   const formatDate = (dateString: string) => {
@@ -137,7 +163,9 @@ const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) =
                       <span className="text-xs font-medium">Biaya</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
-                      {tryoutData.isFree ? "FREE" : `${tryoutData.tokenCost} Token`}
+                      {tryoutData.isFree
+                        ? "FREE"
+                        : `${tryoutData.tokenCost} Token`}
                     </div>
                   </div>
                 </div>
@@ -176,7 +204,8 @@ const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) =
                       </h3>
                       <p className="text-gray-600">
                         Daftar sekarang untuk mengikuti try out ini
-                        {!tryoutData.isFree && ` (${tryoutData.tokenCost} Token)`}
+                        {!tryoutData.isFree &&
+                          ` (${tryoutData.tokenCost} Token)`}
                       </p>
                     </div>
                   </>
@@ -339,9 +368,7 @@ const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) =
               <CardContent className="p-6 relative z-10">
                 <div className="text-center text-white">
                   <Video className="w-12 h-12 mx-auto mb-3 opacity-90" />
-                  <h3 className="font-bold text-lg mb-2">
-                    Video Pembahasan
-                  </h3>
+                  <h3 className="font-bold text-lg mb-2">Video Pembahasan</h3>
                   <p className="text-sm text-orange-100 leading-relaxed">
                     Dapatkan akses video pembahasan lengkap setelah mengerjakan
                     try out
@@ -382,6 +409,140 @@ const TryoutDetailModule = ({ tryoutId, tryoutData }: TryoutDetailModuleProps) =
             </Card>
           </div>
         </div>
+
+        {/* Start Tryout Modal */}
+        <Dialog open={showStartModal} onOpenChange={setShowStartModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-gray-900">
+                Mulai Try Out
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Pilih subtes untuk memulai. Subtes harus dikerjakan secara
+                berurutan.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 mt-4">
+              {tryoutData.categories.map((category, index) => {
+                const isLocked = isSubtestLocked(index);
+                const isCompleted = completedSubtests.includes(category.id);
+
+                return (
+                  <Card
+                    key={category.id}
+                    className={`border-2 transition-all ${
+                      isLocked
+                        ? "border-gray-200 bg-gray-50 opacity-60"
+                        : isCompleted
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                    }`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                isLocked
+                                  ? "bg-gray-300"
+                                  : isCompleted
+                                  ? "bg-emerald-500"
+                                  : "bg-blue-500"
+                              }`}
+                            >
+                              {isLocked ? (
+                                <Lock className="w-5 h-5 text-white" />
+                              ) : isCompleted ? (
+                                <CheckCircle2 className="w-5 h-5 text-white" />
+                              ) : (
+                                <span className="text-white font-bold">
+                                  {index + 1}
+                                </span>
+                              )}
+                            </div>
+                            <div>
+                              <h3
+                                className={`font-bold ${
+                                  isLocked ? "text-gray-500" : "text-gray-900"
+                                }`}
+                              >
+                                {category.name}
+                              </h3>
+                              <div
+                                className={`flex items-center gap-4 text-sm ${
+                                  isLocked ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
+                                <span className="flex items-center gap-1">
+                                  <FileText className="w-4 h-4" />
+                                  {category.questionCount} Soal
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {category.duration} Menit
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          {isLocked && (
+                            <p className="text-xs text-gray-500 ml-13">
+                              Selesaikan subtes sebelumnya terlebih dahulu
+                            </p>
+                          )}
+                          {isCompleted && (
+                            <p className="text-xs text-emerald-600 ml-13 font-medium">
+                              ✓ Subtes sudah selesai dikerjakan
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          onClick={() => handleStartSubtest(category.id)}
+                          disabled={isLocked}
+                          className={`${
+                            isLocked
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : isCompleted
+                              ? "bg-emerald-500 hover:bg-emerald-600"
+                              : "bg-blue-500 hover:bg-blue-600"
+                          } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
+                        >
+                          {isCompleted ? (
+                            <>
+                              <Play className="w-4 h-4" />
+                              Kerjakan Ulang
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4" />
+                              Mulai
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-semibold mb-1">Catatan Penting:</p>
+                  <ul className="space-y-1 text-blue-800">
+                    <li>• Subtes harus dikerjakan secara berurutan</li>
+                    <li>• Pastikan koneksi internet stabil</li>
+                    <li>• Jawaban akan tersimpan otomatis</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
