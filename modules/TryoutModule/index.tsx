@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,8 @@ import { ReferralCheckResult } from "@/modules/ReferralModule/interface";
 
 const TryoutModule = () => {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
+
   const [referralCode, setReferralCode] = useState<string>("");
   const [checkResult, setCheckResult] = useState<ReferralCheckResult | null>(
     null
@@ -65,15 +68,15 @@ const TryoutModule = () => {
         </div>
 
         {/* Profile Card */}
-        <Card className="bg-gradient-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden border-0 hover:shadow-blue-500/30 transition-shadow duration-300">
+        <Card className="bg-linear-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden border-0 hover:shadow-blue-500/30 transition-shadow duration-300">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-24 -mb-24"></div>
 
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <div className="w-20 h-20 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white/30 shadow-xl">
-                  H
+                  {session?.user.name.charAt(0)}
                 </div>
                 <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -81,7 +84,7 @@ const TryoutModule = () => {
               </div>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-                  Hakim Nizami
+                  {session?.user.name}
                 </h2>
                 <p className="text-blue-100 flex items-center gap-2 text-sm sm:text-base mb-2">
                   <Target className="w-4 h-4" />

@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { RegisterData } from "./interface";
+import { signUp, signIn } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const RegisterModule = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
@@ -25,12 +28,34 @@ const RegisterModule = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    console.log("Register submitted:", registerData);
+  const handleSubmit = async () => {
+    if (registerData.password != registerData.confirmPassword) {
+      alert("Password tidak cocok!");
+      return;
+    }
+
+    await signUp.email(
+      {
+        email: registerData.email,
+        password: registerData.password,
+        name: registerData.name,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+        },
+        onError: (ctx) => {
+          alert(ctx.error.message);
+        },
+      }
+    );
   };
 
-  const handleGoogleRegister = () => {
-    console.log("Google register clicked");
+  const handleGoogleRegister = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
+    });
   };
 
   return (

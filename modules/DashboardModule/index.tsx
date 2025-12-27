@@ -1,4 +1,6 @@
 "use client";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import {
   TrendingUp,
   Edit,
@@ -42,6 +44,26 @@ ChartJS.register(
 const DashboardModule = () => {
   const router = useRouter();
   const [activeSubtests, setActiveSubtests] = useState<string[]>(["total"]);
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push("/login");
+    }
+  }, [session, isPending, router]);
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
 
   // Mock registered tryouts data
   const registeredTryouts = [
@@ -123,6 +145,16 @@ const DashboardModule = () => {
     },
   };
 
+  const handleLogoutButton = async () => {
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -135,15 +167,15 @@ const DashboardModule = () => {
         </div>
 
         {/* Profile Card */}
-        <Card className="bg-gradient-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden border-0 hover:shadow-blue-500/30 transition-shadow duration-300">
+        <Card className="bg-linear-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden border-0 hover:shadow-blue-500/30 transition-shadow duration-300">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -ml-32 -mb-32"></div>
 
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full lg:w-auto">
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold ring-4 ring-white/30 shadow-xl">
-                  H
+                  {session.user.name.charAt(0)}
                 </div>
                 <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -151,10 +183,10 @@ const DashboardModule = () => {
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-                  Hakim Nizami
+                  {session.user.name}
                 </h2>
                 <p className="text-blue-100 mb-3 text-sm sm:text-base">
-                  hakimnizami15@gmail.com
+                  {session.user.email}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="bg-blue-400/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg">
@@ -163,19 +195,28 @@ const DashboardModule = () => {
                   </span>
                   <span className="bg-blue-400/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    Terakhir aktif: Hari ini
+                    Terakhir aktif: {session.session.updatedAt.toDateString()}
                   </span>
                 </div>
               </div>
             </div>
 
-            <Button
-              variant={"outline"}
-              className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
-            >
-              <Edit className="w-5 h-5" />
-              Edit Profil
-            </Button>
+            <div className="flex lg:flex-col gap-5">
+              <Button
+                variant={"outline"}
+                className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                <Edit className="w-5 h-5" />
+                Edit Profil
+              </Button>
+              <Button
+                onClick={handleLogoutButton}
+                variant={"outline"}
+                className="bg-red-500/70 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                Keluar Akun
+              </Button>
+            </div>
           </div>
         </Card>
 

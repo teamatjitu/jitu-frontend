@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { LoginData } from "./interface";
+import { signIn } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const [loginData, setLoginData] = useState<LoginData>({
     email: "",
@@ -21,12 +24,29 @@ const LoginModule = () => {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    await signIn.email(
+      {
+        email: loginData.email,
+        password: loginData.password,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+        },
+        onError: (ctx) => {
+          alert(ctx.error.message);
+        },
+      }
+    );
     console.log("Login submitted:", loginData);
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+  const handleGoogleLogin = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
+    });
   };
 
   return (
