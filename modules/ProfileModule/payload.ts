@@ -9,7 +9,7 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { ScoreData, StatCard } from "./interface";
+import { ScoreData, StatCard, Subtest, MenuItem } from "./interface";
 
 export const stats: StatCard[] = [
   {

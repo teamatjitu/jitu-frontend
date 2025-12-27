@@ -134,14 +134,7 @@ const Navbar = () => {
       >
         <div className="px-8">
           <div className="h-24 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {state.title}
-              </h1>
-              <p className="text-sm text-gray-500">
-                Selamat datang kembali, Hakim! 👋
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900">{state.title}</h1>
 
             <div className="flex items-center gap-4">
               <div className="relative">

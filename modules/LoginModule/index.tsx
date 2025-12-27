@@ -4,7 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { LoginData } from "@/types";
+import { LoginData } from "./interface";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);

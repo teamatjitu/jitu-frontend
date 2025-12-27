@@ -8,6 +8,7 @@ import {
   BarChart3,
   Award,
 } from "lucide-react";
+import { TryOutCard, Stat, Subject } from "./interface";
 
 export const tryOutData = [
   {
