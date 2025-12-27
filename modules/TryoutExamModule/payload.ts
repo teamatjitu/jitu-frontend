@@ -16,115 +16,75 @@ const generateMockQuestions = (count: number, startId: number = 1) => {
   }));
 };
 
+// Helper function to generate all 7 subtests for a tryout
+const generateTryoutSubtests = (tryoutId: number, tryoutTitle: string) => {
+  return {
+    [`${tryoutId}-1`]: {
+      subtestId: 1,
+      subtestName: "Penalaran Umum",
+      tryoutId,
+      tryoutTitle,
+      duration: 30,
+      questions: generateMockQuestions(30, 1),
+    },
+    [`${tryoutId}-2`]: {
+      subtestId: 2,
+      subtestName: "Pengetahuan dan Pemahaman Umum",
+      tryoutId,
+      tryoutTitle,
+      duration: 15,
+      questions: generateMockQuestions(20, 31),
+    },
+    [`${tryoutId}-3`]: {
+      subtestId: 3,
+      subtestName: "Kemampuan Memahami Bacaan dan Menulis",
+      tryoutId,
+      tryoutTitle,
+      duration: 25,
+      questions: generateMockQuestions(20, 51),
+    },
+    [`${tryoutId}-4`]: {
+      subtestId: 4,
+      subtestName: "Pengetahuan Kuantitatif",
+      tryoutId,
+      tryoutTitle,
+      duration: 20,
+      questions: generateMockQuestions(20, 71),
+    },
+    [`${tryoutId}-5`]: {
+      subtestId: 5,
+      subtestName: "Literasi dalam Bahasa Indonesia",
+      tryoutId,
+      tryoutTitle,
+      duration: 43,
+      questions: generateMockQuestions(30, 91),
+    },
+    [`${tryoutId}-6`]: {
+      subtestId: 6,
+      subtestName: "Literasi dalam Bahasa Inggris",
+      tryoutId,
+      tryoutTitle,
+      duration: 20,
+      questions: generateMockQuestions(20, 121),
+    },
+    [`${tryoutId}-7`]: {
+      subtestId: 7,
+      subtestName: "Penalaran Matematika",
+      tryoutId,
+      tryoutTitle,
+      duration: 43,
+      questions: generateMockQuestions(20, 141),
+    },
+  };
+};
+
 export const subtestExams: { [key: string]: SubtestExam } = {
-  // Tryout 1 - Subtest 1 (TPS)
-  "1-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 1,
-    tryoutTitle: "Try Out UTBK SNBT 4 2026",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 1 - Subtest 2 (Literasi)
-  "1-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 1,
-    tryoutTitle: "Try Out UTBK SNBT 4 2026",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
-  // Tryout 2 - Subtest 1 (TPS)
-  "2-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 2,
-    tryoutTitle: "Try Out UTBK SNBT 3 2026",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 2 - Subtest 2 (Literasi)
-  "2-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 2,
-    tryoutTitle: "Try Out UTBK SNBT 3 2026",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
-  // Tryout 3 - Subtest 1 (TPS)
-  "3-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 3,
-    tryoutTitle: "Try Out UTBK SNBT 2 2026",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 3 - Subtest 2 (Literasi)
-  "3-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 3,
-    tryoutTitle: "Try Out UTBK SNBT 2 2026",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
-  // Tryout 4 - Subtest 1 (TPS)
-  "4-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 4,
-    tryoutTitle: "Try Out UTBK SNBT 1 2026",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 4 - Subtest 2 (Literasi)
-  "4-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 4,
-    tryoutTitle: "Try Out UTBK SNBT 1 2026",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
-  // Tryout 5 - Subtest 1 (TPS)
-  "5-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 5,
-    tryoutTitle: "Try Out UTBK SNBT 14 2025",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 5 - Subtest 2 (Literasi)
-  "5-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 5,
-    tryoutTitle: "Try Out UTBK SNBT 14 2025",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
-  // Tryout 6 - Subtest 1 (TPS)
-  "6-1": {
-    subtestId: 1,
-    subtestName: "Tes Potensi Skolastik",
-    tryoutId: 6,
-    tryoutTitle: "Try Out UTBK SNBT 13 2025",
-    duration: 110,
-    questions: generateMockQuestions(90, 1),
-  },
-  // Tryout 6 - Subtest 2 (Literasi)
-  "6-2": {
-    subtestId: 2,
-    subtestName: "Tes Literasi",
-    tryoutId: 6,
-    tryoutTitle: "Try Out UTBK SNBT 13 2025",
-    duration: 85,
-    questions: generateMockQuestions(60, 91),
-  },
+  ...generateTryoutSubtests(1, "Try Out UTBK SNBT 4 2026"),
+  ...generateTryoutSubtests(2, "Try Out UTBK SNBT 3 2026"),
+  ...generateTryoutSubtests(3, "Try Out UTBK SNBT 2 2026"),
+  ...generateTryoutSubtests(4, "Try Out UTBK SNBT 1 2026"),
+  ...generateTryoutSubtests(5, "Try Out UTBK SNBT 14 2025"),
+  ...generateTryoutSubtests(6, "Try Out UTBK SNBT 13 2025"),
 };
 
 export const getSubtestExam = (

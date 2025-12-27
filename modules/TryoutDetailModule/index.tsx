@@ -423,109 +423,237 @@ const TryoutDetailModule = ({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-3 mt-4">
-              {tryoutData.categories.map((category, index) => {
-                const isLocked = isSubtestLocked(index);
-                const isCompleted = completedSubtests.includes(category.id);
+            <div className="space-y-6 mt-4">
+              {/* Tes Potensi Skolastik Group */}
+              <div>
+                <h3 className="text-lg font-bold text-emerald-700 mb-3">
+                  Tes Potensi Skolastik
+                </h3>
+                <div className="space-y-3">
+                  {tryoutData.categories.slice(0, 4).map((category, index) => {
+                    const isLocked = isSubtestLocked(index);
+                    const isCompleted = completedSubtests.includes(category.id);
 
-                return (
-                  <Card
-                    key={category.id}
-                    className={`border-2 transition-all ${
-                      isLocked
-                        ? "border-gray-200 bg-gray-50 opacity-60"
-                        : isCompleted
-                        ? "border-emerald-200 bg-emerald-50"
-                        : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
-                    }`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                isLocked
-                                  ? "bg-gray-300"
-                                  : isCompleted
-                                  ? "bg-emerald-500"
-                                  : "bg-blue-500"
-                              }`}
-                            >
-                              {isLocked ? (
-                                <Lock className="w-5 h-5 text-white" />
-                              ) : isCompleted ? (
-                                <CheckCircle2 className="w-5 h-5 text-white" />
-                              ) : (
-                                <span className="text-white font-bold">
-                                  {index + 1}
-                                </span>
+                    return (
+                      <Card
+                        key={category.id}
+                        className={`border-2 transition-all ${
+                          isLocked
+                            ? "border-gray-200 bg-gray-50 opacity-60"
+                            : isCompleted
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div
+                                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                    isLocked
+                                      ? "bg-gray-300"
+                                      : isCompleted
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                  }`}
+                                >
+                                  {isLocked ? (
+                                    <Lock className="w-5 h-5 text-white" />
+                                  ) : isCompleted ? (
+                                    <CheckCircle2 className="w-5 h-5 text-white" />
+                                  ) : (
+                                    <span className="text-white font-bold">
+                                      {index + 1}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <h3
+                                    className={`font-bold ${
+                                      isLocked
+                                        ? "text-gray-500"
+                                        : "text-gray-900"
+                                    }`}
+                                  >
+                                    {category.name}
+                                  </h3>
+                                  <div
+                                    className={`flex items-center gap-4 text-sm ${
+                                      isLocked
+                                        ? "text-gray-400"
+                                        : "text-gray-600"
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      <FileText className="w-4 h-4" />
+                                      {category.questionCount} Soal
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-4 h-4" />
+                                      {category.duration} Menit
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              {isLocked && (
+                                <p className="text-xs text-gray-500 ml-13">
+                                  Selesaikan subtes sebelumnya terlebih dahulu
+                                </p>
+                              )}
+                              {isCompleted && (
+                                <p className="text-xs text-emerald-600 ml-13 font-medium">
+                                  ✓ Subtes sudah selesai dikerjakan
+                                </p>
                               )}
                             </div>
-                            <div>
-                              <h3
-                                className={`font-bold ${
-                                  isLocked ? "text-gray-500" : "text-gray-900"
-                                }`}
-                              >
-                                {category.name}
-                              </h3>
-                              <div
-                                className={`flex items-center gap-4 text-sm ${
-                                  isLocked ? "text-gray-400" : "text-gray-600"
-                                }`}
-                              >
-                                <span className="flex items-center gap-1">
-                                  <FileText className="w-4 h-4" />
-                                  {category.questionCount} Soal
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {category.duration} Menit
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          {isLocked && (
-                            <p className="text-xs text-gray-500 ml-13">
-                              Selesaikan subtes sebelumnya terlebih dahulu
-                            </p>
-                          )}
-                          {isCompleted && (
-                            <p className="text-xs text-emerald-600 ml-13 font-medium">
-                              ✓ Subtes sudah selesai dikerjakan
-                            </p>
-                          )}
-                        </div>
 
-                        <Button
-                          onClick={() => handleStartSubtest(category.id)}
-                          disabled={isLocked}
-                          className={`${
-                            isLocked
-                              ? "bg-gray-300 cursor-not-allowed"
-                              : isCompleted
-                              ? "bg-emerald-500 hover:bg-emerald-600"
-                              : "bg-blue-500 hover:bg-blue-600"
-                          } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
-                        >
-                          {isCompleted ? (
-                            <>
-                              <Play className="w-4 h-4" />
-                              Kerjakan Ulang
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4" />
-                              Mulai
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                            <Button
+                              onClick={() => handleStartSubtest(category.id)}
+                              disabled={isLocked}
+                              className={`${
+                                isLocked
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : isCompleted
+                                  ? "bg-emerald-500 hover:bg-emerald-600"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
+                            >
+                              {isCompleted ? (
+                                <>
+                                  <Play className="w-4 h-4" />
+                                  Kerjakan Ulang
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-4 h-4" />
+                                  Mulai
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Tes Literasi Group */}
+              <div>
+                <h3 className="text-lg font-bold text-emerald-700 mb-3">
+                  Tes Literasi
+                </h3>
+                <div className="space-y-3">
+                  {tryoutData.categories.slice(4, 7).map((category, index) => {
+                    const actualIndex = index + 4;
+                    const isLocked = isSubtestLocked(actualIndex);
+                    const isCompleted = completedSubtests.includes(category.id);
+
+                    return (
+                      <Card
+                        key={category.id}
+                        className={`border-2 transition-all ${
+                          isLocked
+                            ? "border-gray-200 bg-gray-50 opacity-60"
+                            : isCompleted
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div
+                                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                    isLocked
+                                      ? "bg-gray-300"
+                                      : isCompleted
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                  }`}
+                                >
+                                  {isLocked ? (
+                                    <Lock className="w-5 h-5 text-white" />
+                                  ) : isCompleted ? (
+                                    <CheckCircle2 className="w-5 h-5 text-white" />
+                                  ) : (
+                                    <span className="text-white font-bold">
+                                      {actualIndex + 1}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <h3
+                                    className={`font-bold ${
+                                      isLocked
+                                        ? "text-gray-500"
+                                        : "text-gray-900"
+                                    }`}
+                                  >
+                                    {category.name}
+                                  </h3>
+                                  <div
+                                    className={`flex items-center gap-4 text-sm ${
+                                      isLocked
+                                        ? "text-gray-400"
+                                        : "text-gray-600"
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      <FileText className="w-4 h-4" />
+                                      {category.questionCount} Soal
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-4 h-4" />
+                                      {category.duration} Menit
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              {isLocked && (
+                                <p className="text-xs text-gray-500 ml-13">
+                                  Selesaikan subtes sebelumnya terlebih dahulu
+                                </p>
+                              )}
+                              {isCompleted && (
+                                <p className="text-xs text-emerald-600 ml-13 font-medium">
+                                  ✓ Subtes sudah selesai dikerjakan
+                                </p>
+                              )}
+                            </div>
+
+                            <Button
+                              onClick={() => handleStartSubtest(category.id)}
+                              disabled={isLocked}
+                              className={`${
+                                isLocked
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : isCompleted
+                                  ? "bg-emerald-500 hover:bg-emerald-600"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
+                            >
+                              {isCompleted ? (
+                                <>
+                                  <Play className="w-4 h-4" />
+                                  Kerjakan Ulang
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-4 h-4" />
+                                  Mulai
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">

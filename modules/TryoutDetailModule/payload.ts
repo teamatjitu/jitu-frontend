@@ -1,5 +1,51 @@
 import { TryoutDetail } from "./interface";
 
+// Standard 7 subtests for all tryouts
+const standardCategories = [
+  {
+    id: 1,
+    name: "Penalaran Umum",
+    questionCount: 30,
+    duration: 30,
+  },
+  {
+    id: 2,
+    name: "Pengetahuan dan Pemahaman Umum",
+    questionCount: 20,
+    duration: 15,
+  },
+  {
+    id: 3,
+    name: "Kemampuan Memahami Bacaan dan Menulis",
+    questionCount: 20,
+    duration: 25,
+  },
+  {
+    id: 4,
+    name: "Pengetahuan Kuantitatif",
+    questionCount: 20,
+    duration: 20,
+  },
+  {
+    id: 5,
+    name: "Literasi dalam Bahasa Indonesia",
+    questionCount: 30,
+    duration: 43,
+  },
+  {
+    id: 6,
+    name: "Literasi dalam Bahasa Inggris",
+    questionCount: 20,
+    duration: 20,
+  },
+  {
+    id: 7,
+    name: "Penalaran Matematika",
+    questionCount: 20,
+    duration: 43,
+  },
+];
+
 export const tryoutDetails: { [key: number]: TryoutDetail } = {
   1: {
     id: 1,
@@ -16,20 +62,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     isRegistered: false,
     isFree: false,
     tokenCost: 1,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",
@@ -60,20 +93,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     isRegistered: true,
     isFree: false,
     tokenCost: 1,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",
@@ -103,20 +123,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     endDate: "2025-12-31",
     isRegistered: false,
     isFree: true,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",
@@ -145,20 +152,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     endDate: "2025-11-30",
     isRegistered: true,
     isFree: true,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",
@@ -188,20 +182,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     isRegistered: false,
     isFree: false,
     tokenCost: 1,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",
@@ -232,20 +213,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     isRegistered: false,
     isFree: false,
     tokenCost: 1,
-    categories: [
-      {
-        id: 1,
-        name: "Tes Potensi Skolastik",
-        questionCount: 90,
-        duration: 110,
-      },
-      {
-        id: 2,
-        name: "Tes Literasi",
-        questionCount: 60,
-        duration: 85,
-      },
-    ],
+    categories: standardCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",

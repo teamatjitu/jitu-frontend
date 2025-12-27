@@ -25,7 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 
 // Menu items.
@@ -59,6 +59,7 @@ const items = [
 
 const Navbar = () => {
   const path = usePathname();
+  const router = useRouter();
   const { open, setOpen } = useSidebar();
 
   const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
@@ -97,8 +98,8 @@ const Navbar = () => {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <a
-                          href={item.path}
+                        <button
+                          onClick={() => router.push(`/${item.path}`)}
                           aria-disabled={isPath}
                           className={`${
                             isPath
@@ -118,7 +119,7 @@ const Navbar = () => {
                           <span className="text-base font-semibold">
                             {item.title}
                           </span>
-                        </a>
+                        </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
