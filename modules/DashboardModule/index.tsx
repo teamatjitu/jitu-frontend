@@ -1,7 +1,14 @@
 "use client";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { TrendingUp, Edit, Target, BarChart3, Filter } from "lucide-react";
+import {
+  TrendingUp,
+  Edit,
+  Target,
+  BarChart3,
+  Filter,
+  LogOut,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Line } from "react-chartjs-2";
@@ -120,6 +127,16 @@ const DashboardModule = () => {
     },
   };
 
+  const handleLogoutButton = async () => {
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -140,7 +157,7 @@ const DashboardModule = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full lg:w-auto">
               <div className="relative shrink-0">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold ring-4 ring-white/30 shadow-xl">
-                  H
+                  {session.user.name.charAt(0)}
                 </div>
                 <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -166,13 +183,22 @@ const DashboardModule = () => {
               </div>
             </div>
 
-            <Button
-              variant={"outline"}
-              className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
-            >
-              <Edit className="w-5 h-5" />
-              Edit Profil
-            </Button>
+            <div className="flex lg:flex-col gap-5">
+              <Button
+                variant={"outline"}
+                className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                <Edit className="w-5 h-5" />
+                Edit Profil
+              </Button>
+              <Button
+                onClick={handleLogoutButton}
+                variant={"outline"}
+                className="bg-red-500/70 backdrop-blur-sm text-white border-white/30 px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                Keluar Akun
+              </Button>
+            </div>
           </div>
         </Card>
 
