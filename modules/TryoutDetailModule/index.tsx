@@ -42,7 +42,10 @@ const TryoutDetailModule = ({
   const router = useRouter();
   const [isRegistering, setIsRegistering] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
-  const [completedSubtests, setCompletedSubtests] = useState<number[]>([]);
+  // Initialize completedSubtests from categories
+  const [completedSubtests, setCompletedSubtests] = useState<number[]>(
+    tryoutData.categories.filter((cat) => cat.isCompleted).map((cat) => cat.id)
+  );
 
   const handleRegister = async () => {
     setIsRegistering(true);
@@ -58,9 +61,12 @@ const TryoutDetailModule = ({
     setShowStartModal(true);
   };
 
-  const handleStartSubtest = (subtestId: number) => {
-    // Navigate to specific subtest
-    router.push(`/tryout/${tryoutId}/exam/${subtestId}`);
+  const handleStartSubtest = (subtestId: number, isReview = false) => {
+    // Navigate to specific subtest with review mode if completed
+    const url = `/tryout/${tryoutId}/exam/${subtestId}${
+      isReview ? "?review=true" : ""
+    }`;
+    router.push(url);
   };
 
   const isSubtestLocked = (subtestIndex: number) => {
@@ -509,7 +515,9 @@ const TryoutDetailModule = ({
                             </div>
 
                             <Button
-                              onClick={() => handleStartSubtest(category.id)}
+                              onClick={() =>
+                                handleStartSubtest(category.id, isCompleted)
+                              }
                               disabled={isLocked}
                               className={`${
                                 isLocked
@@ -521,8 +529,8 @@ const TryoutDetailModule = ({
                             >
                               {isCompleted ? (
                                 <>
-                                  <Play className="w-4 h-4" />
-                                  Kerjakan Ulang
+                                  <BookOpen className="w-4 h-4" />
+                                  Lihat Pembahasan
                                 </>
                               ) : (
                                 <>
@@ -625,7 +633,9 @@ const TryoutDetailModule = ({
                             </div>
 
                             <Button
-                              onClick={() => handleStartSubtest(category.id)}
+                              onClick={() =>
+                                handleStartSubtest(category.id, isCompleted)
+                              }
                               disabled={isLocked}
                               className={`${
                                 isLocked
@@ -637,8 +647,8 @@ const TryoutDetailModule = ({
                             >
                               {isCompleted ? (
                                 <>
-                                  <Play className="w-4 h-4" />
-                                  Kerjakan Ulang
+                                  <BookOpen className="w-4 h-4" />
+                                  Lihat Pembahasan
                                 </>
                               ) : (
                                 <>

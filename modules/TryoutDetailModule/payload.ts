@@ -7,42 +7,102 @@ const standardCategories = [
     name: "Penalaran Umum",
     questionCount: 30,
     duration: 30,
+    isCompleted: false,
   },
   {
     id: 2,
     name: "Pengetahuan dan Pemahaman Umum",
     questionCount: 20,
     duration: 15,
+    isCompleted: false,
   },
   {
     id: 3,
     name: "Kemampuan Memahami Bacaan dan Menulis",
     questionCount: 20,
     duration: 25,
+    isCompleted: false,
   },
   {
     id: 4,
     name: "Pengetahuan Kuantitatif",
     questionCount: 20,
     duration: 20,
+    isCompleted: false,
   },
   {
     id: 5,
     name: "Literasi dalam Bahasa Indonesia",
     questionCount: 30,
     duration: 43,
+    isCompleted: false,
   },
   {
     id: 6,
     name: "Literasi dalam Bahasa Inggris",
     questionCount: 20,
     duration: 20,
+    isCompleted: false,
   },
   {
     id: 7,
     name: "Penalaran Matematika",
     questionCount: 20,
     duration: 43,
+    isCompleted: false,
+  },
+];
+
+// Completed categories for testing (for tryout #2)
+const completedCategories = [
+  {
+    id: 1,
+    name: "Penalaran Umum",
+    questionCount: 30,
+    duration: 30,
+    isCompleted: true,
+  },
+  {
+    id: 2,
+    name: "Pengetahuan dan Pemahaman Umum",
+    questionCount: 20,
+    duration: 15,
+    isCompleted: true,
+  },
+  {
+    id: 3,
+    name: "Kemampuan Memahami Bacaan dan Menulis",
+    questionCount: 20,
+    duration: 25,
+    isCompleted: false,
+  },
+  {
+    id: 4,
+    name: "Pengetahuan Kuantitatif",
+    questionCount: 20,
+    duration: 20,
+    isCompleted: false,
+  },
+  {
+    id: 5,
+    name: "Literasi dalam Bahasa Indonesia",
+    questionCount: 30,
+    duration: 43,
+    isCompleted: false,
+  },
+  {
+    id: 6,
+    name: "Literasi dalam Bahasa Inggris",
+    questionCount: 20,
+    duration: 20,
+    isCompleted: false,
+  },
+  {
+    id: 7,
+    name: "Penalaran Matematika",
+    questionCount: 20,
+    duration: 43,
+    isCompleted: false,
   },
 ];
 
@@ -93,7 +153,7 @@ export const tryoutDetails: { [key: number]: TryoutDetail } = {
     isRegistered: true,
     isFree: false,
     tokenCost: 1,
-    categories: standardCategories,
+    categories: completedCategories,
     benefits: [
       "Pembahasan lengkap untuk setiap soal",
       "Analisis mendalam terhadap hasil try out",

@@ -7,9 +7,12 @@ import {
   Target,
   BarChart3,
   Filter,
-  LogOut,
+  Calendar,
+  Users,
+  PlayCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Line } from "react-chartjs-2";
 import {
@@ -39,6 +42,7 @@ ChartJS.register(
 );
 
 const DashboardModule = () => {
+  const router = useRouter();
   const [activeSubtests, setActiveSubtests] = useState<string[]>(["total"]);
   const { data: session, isPending } = useSession();
   const router = useRouter();
@@ -60,6 +64,20 @@ const DashboardModule = () => {
   if (!session) {
     return null;
   }
+
+  // Mock registered tryouts data
+  const registeredTryouts = [
+    {
+      id: 2,
+      title: "Try Out UTBK SNBT 3 2026",
+      number: "3",
+      badge: "SNBT",
+      participants: 18048,
+      progress: 2, // 2 out of 7 subtests completed
+      totalSubtests: 7,
+      endDate: "2026-01-31",
+    },
+  ];
 
   const toggleSubtest = (id: string) => {
     setActiveSubtests((prev) => {
@@ -252,6 +270,127 @@ const DashboardModule = () => {
             </Card>
           </div>
         </div>
+
+        {/* Registered Try Out Section */}
+        {registeredTryouts.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  Try Out Terdaftar
+                </h2>
+                <p className="text-gray-600">
+                  Try out yang sedang kamu kerjakan
+                </p>
+              </div>
+              <Button
+                onClick={() => router.push("/tryout")}
+                variant="outline"
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                Lihat Semua
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {registeredTryouts.map((tryout) => {
+                const progressPercentage =
+                  (tryout.progress / tryout.totalSubtests) * 100;
+                const daysRemaining = Math.ceil(
+                  (new Date(tryout.endDate).getTime() - new Date().getTime()) /
+                    (1000 * 60 * 60 * 24)
+                );
+
+                return (
+                  <Card
+                    key={tryout.id}
+                    className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group cursor-pointer"
+                    onClick={() => router.push(`/tryout/${tryout.id}`)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                        {/* Left Section - Try Out Info */}
+                        <div className="flex-1 space-y-4 w-full">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="flex items-center gap-3 mb-2">
+                                <Badge className="bg-blue-500 text-white px-3 py-1 text-xs font-bold">
+                                  {tryout.badge}
+                                </Badge>
+                                <span className="text-sm text-gray-500 font-medium">
+                                  Try Out #{tryout.number}
+                                </span>
+                              </div>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                                {tryout.title}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="w-4 h-4 text-gray-400" />
+                                  <span>
+                                    {tryout.participants.toLocaleString()}{" "}
+                                    peserta
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Calendar className="w-4 h-4 text-gray-400" />
+                                  <span>
+                                    {daysRemaining > 0
+                                      ? `${daysRemaining} hari lagi`
+                                      : "Berakhir hari ini"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600 font-medium">
+                                Progress Pengerjaan
+                              </span>
+                              <span className="text-blue-600 font-bold">
+                                {tryout.progress}/{tryout.totalSubtests} Subtes
+                              </span>
+                            </div>
+                            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500"
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {progressPercentage === 100
+                                ? "✓ Semua subtes selesai!"
+                                : `${Math.round(progressPercentage)}% selesai`}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right Section - Action Button */}
+                        <div className="w-full lg:w-auto">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/tryout/${tryout.id}`);
+                            }}
+                            className="w-full lg:w-auto bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded-xl font-bold text-base shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 group-hover:scale-105"
+                          >
+                            <PlayCircle className="w-5 h-5" />
+                            {progressPercentage === 100
+                              ? "Lihat Pembahasan"
+                              : "Lanjutkan"}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Progress Chart Section */}
         <section className="space-y-6">
