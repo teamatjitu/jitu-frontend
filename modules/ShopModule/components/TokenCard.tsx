@@ -3,7 +3,13 @@ import { TokenPackage } from "../interface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const TokenCard = ({ pkg }: { pkg: TokenPackage }) => (
+const TokenCard = ({
+  pkg,
+  onPressBuy,
+}: {
+  pkg: TokenPackage;
+  onPressBuy?: () => void;
+}) => (
   <Card
     className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-0 overflow-hidden border-2 ${
       pkg.popular
@@ -86,6 +92,7 @@ const TokenCard = ({ pkg }: { pkg: TokenPackage }) => (
       {/* Buy Button */}
       <Button
         className={`w-full bg-gradient-to-r ${pkg.categoryBg} hover:opacity-90 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105`}
+        onClick={onPressBuy}
       >
         Beli Sekarang
       </Button>

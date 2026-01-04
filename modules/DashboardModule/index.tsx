@@ -11,8 +11,7 @@ import {
   Users,
   PlayCircle,
 } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Line } from "react-chartjs-2";
 import {
@@ -38,14 +37,13 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 const DashboardModule = () => {
   const router = useRouter();
   const [activeSubtests, setActiveSubtests] = useState<string[]>(["total"]);
   const { data: session, isPending } = useSession();
-  const router = useRouter();
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -99,7 +97,7 @@ const DashboardModule = () => {
       .filter(
         (subtest) =>
           activeSubtests.includes(subtest.id) ||
-          activeSubtests.includes("total")
+          activeSubtests.includes("total"),
       )
       .map((subtest) => {
         const color = subtest.color.replace("bg-", "").replace("-500", "");
@@ -115,7 +113,7 @@ const DashboardModule = () => {
         return {
           label: subtest.label,
           data: scoreHistory.map(
-            (score) => score[subtest.id as keyof ScoreData]
+            (score) => score[subtest.id as keyof ScoreData],
           ),
           borderColor: colorMap[color as keyof typeof colorMap] || "blue",
           backgroundColor:
@@ -298,7 +296,7 @@ const DashboardModule = () => {
                   (tryout.progress / tryout.totalSubtests) * 100;
                 const daysRemaining = Math.ceil(
                   (new Date(tryout.endDate).getTime() - new Date().getTime()) /
-                    (1000 * 60 * 60 * 24)
+                    (1000 * 60 * 60 * 24),
                 );
 
                 return (
@@ -471,7 +469,7 @@ const DashboardModule = () => {
                               ? "↑ +"
                               : "↓ "}
                             {Math.abs(
-                              score.total - scoreHistory[index - 1].total
+                              score.total - scoreHistory[index - 1].total,
                             )}
                           </span>
                         )}
