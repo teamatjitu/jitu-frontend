@@ -20,6 +20,7 @@ const ShopModule = () => {
   const [selectedPkg, setSelectedPkg] = useState<number | null>(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState("");
 
   const [alerts, setAlerts] = useState<
     { type: "success" | "error"; title: string; message: string }[]
@@ -28,7 +29,7 @@ const ShopModule = () => {
   function showAlert(
     type: "success" | "error",
     title: string,
-    message: string,
+    message: string
   ) {
     setAlerts((prev) => [...prev, { type, title, message }]);
 
@@ -129,11 +130,13 @@ const ShopModule = () => {
                     setIsModalLoading(true);
 
                     fetch(
-                      `${BACKEND_URL}/api/shop/create/${tokenPackages[selectedPkg!].id}`,
+                      `${BACKEND_URL}/api/shop/create/${
+                        tokenPackages[selectedPkg!].id
+                      }`,
                       {
                         method: "POST",
                         credentials: "include",
-                      },
+                      }
                     )
                       .then((res) => {
                         if (!res.ok) {
@@ -142,10 +145,11 @@ const ShopModule = () => {
 
                         return res.json();
                       })
-                      .then((data: { id: string }) => {
+                      .then((data: { id: string; qris: string }) => {
                         console.log(data);
                         setIsModalLoading(false);
                         setTransactionId(data.id);
+                        setQrCode(data.qris);
                       })
                       .catch((e: Error) => {
                         // console.error(e);
@@ -153,7 +157,7 @@ const ShopModule = () => {
                         showAlert(
                           "error",
                           "Gagal Membuat Transaksi",
-                          "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi.",
+                          "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi."
                         );
                       });
                   }}
@@ -177,8 +181,18 @@ const ShopModule = () => {
                 Silahkan Lakukan Pembayaran
               </h2>
               <div className="flex flex-col items-center gap-2">
-                <div className="flex justify-center items-center py-32 w-full border border-black">
-                  Ini gambar QRIS ceritanya
+                <div className="flex justify-center items-center py-12 w-full border border-black">
+                  {qrCode ? (
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
+                        qrCode
+                      )}`}
+                      alt="QRIS code"
+                      className="w-48 h-48"
+                    />
+                  ) : (
+                    <p>QRIS tidak tersedia</p>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500">
                   Transaction ID: {transactionId}
@@ -201,7 +215,7 @@ const ShopModule = () => {
                         showAlert(
                           "success",
                           "Pembayaran Berhasil",
-                          "Terima kasih! Pembayaran kamu telah kami terima dan token sudah ditambahkan ke akun kamu.",
+                          "Terima kasih! Pembayaran kamu telah kami terima dan token sudah ditambahkan ke akun kamu."
                         );
                         setIsModalOpened(false);
                         setTransactionId(null);
@@ -210,7 +224,7 @@ const ShopModule = () => {
                         showAlert(
                           "error",
                           "Pembayaran Belum Diterima",
-                          "Pembayaran kamu belum kami terima. Silahkan pastikan kamu sudah melakukan pembayaran dengan benar.",
+                          "Pembayaran kamu belum kami terima. Silahkan pastikan kamu sudah melakukan pembayaran dengan benar."
                         );
                       }
                     })
@@ -220,7 +234,7 @@ const ShopModule = () => {
                       showAlert(
                         "error",
                         "Gagal Memeriksa Status Transaksi",
-                        "Terjadi kesalahan saat memeriksa status transaksi. Silahkan coba lagi.",
+                        "Terjadi kesalahan saat memeriksa status transaksi. Silahkan coba lagi."
                       );
                     });
                 }}
