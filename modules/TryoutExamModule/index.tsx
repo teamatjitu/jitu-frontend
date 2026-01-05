@@ -21,16 +21,17 @@ const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
   const generateMockUserAnswers = () => {
     const answers: { [key: number]: number } = {};
     examData.questions.forEach((question, index) => {
+      const safeCorrectAnswer = question.correctAnswer ?? 0;
       // Make some answers correct, some wrong for demonstration
       if (index % 3 === 0) {
         // Every 3rd question: correct answer
-        answers[question.id] = question.correctAnswer;
+        answers[question.id] = safeCorrectAnswer;
       } else if (index % 3 === 1) {
         // Every 3rd + 1 question: wrong answer
-        answers[question.id] = (question.correctAnswer + 1) % 5;
+        answers[question.id] = (safeCorrectAnswer + 1) % 5;
       } else {
         // Every 3rd + 2 question: another wrong answer
-        answers[question.id] = (question.correctAnswer + 2) % 5;
+        answers[question.id] = (safeCorrectAnswer + 2) % 5;
       }
     });
     return answers;
