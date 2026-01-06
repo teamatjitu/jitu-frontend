@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import Navbar from "@/components/elements/Navbar/Navbar";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -22,14 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${openSans.variable} antialiased`}>
-        <SidebarProvider defaultOpen={false}>
-          <div className="font-open-sans min-h-screen w-full">
-            <Navbar />
-            {children}
-          </div>
-        </SidebarProvider>
-      </body>
+      <body className={`${openSans.variable} antialiased`}>{children}</body>
     </html>
   );
 }
