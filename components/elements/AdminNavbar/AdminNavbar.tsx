@@ -1,19 +1,5 @@
 "use client";
-import {
-  Menu,
-  Bell,
-  Search,
-  Calendar,
-  Home,
-  Inbox,
-  Settings,
-  BookOpen,
-  TrendingUp,
-  ShoppingBag,
-  NotebookPen,
-  Ticket,
-  History,
-} from "lucide-react";
+import { NotebookPenIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -31,46 +17,20 @@ import Image from "next/image";
 // Menu items.
 const items = [
   {
-    title: "Dashboard",
-    path: "dashboard",
-    icon: Home,
-  },
-  {
-    title: "Tryout",
-    path: "tryout",
-    icon: NotebookPen,
-  },
-  {
-    title: "History",
-    path: "history",
-    icon: History,
-  },
-  {
-    title: "Shop",
-    path: "shop",
-    icon: ShoppingBag,
+    title: "Kelola Tryout",
+    path: "",
+    icon: NotebookPenIcon,
   },
 ];
 
-const Navbar = () => {
+const AdminNavbar = () => {
   const path = usePathname();
   const router = useRouter();
   const { open, setOpen } = useSidebar();
 
-  const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
-  const hidden = ["/login", "/register", "/admin"];
-
-  // Hide navbar on exam pages
-  const isExamPage = path.includes("/exam/");
-
-  if (hidden.includes(path) || isExamPage) {
-    return null;
-  }
-
   return (
     <div>
       <Sidebar
-        className="z-9999"
         collapsible="icon"
         onMouseOver={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -124,39 +84,8 @@ const Navbar = () => {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-
-      {/* Top Bar */}
-      <header
-        className={`${
-          open ? "w-[calc(100%-16rem)]" : "w-[calc(100%-5rem)]"
-        } bg-sidebar border-b border-gray-200 fixed right-0 z-9999 transition-[left,right,width] duration-200 ease-linear`}
-      >
-        <div className="px-8">
-          <div className="h-24 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">{state.title}</h1>
-
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Cari try out..."
-                  className="w-80 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A7BFF] focus:bg-white transition-all"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-              <button className="relative p-2 hover:bg-gray-100 rounded-xl transition-all">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">
-                <Menu className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
     </div>
   );
 };
 
-export default Navbar;
+export default AdminNavbar;
