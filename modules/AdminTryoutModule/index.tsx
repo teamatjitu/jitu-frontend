@@ -65,11 +65,59 @@ const AdminTryoutModule = () => {
           </Card>
         ))}
       </div>
-      <div>
-        <h2>Daftar Tryout</h2>
-        {tryouts.map((tryout) => (
-          <p>{tryout.title}</p>
-        ))}
+      <div className="">
+        <h2 className="text-2xl font-semibold">Daftar Tryout</h2>
+        <div className="relative w-full overflow-x-auto rounded-lg border border-gray-200">
+          <table className="w-full text-sm text-left text-gray-700">
+            <thead className="bg-gray-100 text-xs uppercase tracking-wide text-gray-600">
+              <tr>
+                <th className="px-4 py-3">Id</th>
+                <th className="px-4 py-3">Nama Tryout</th>
+                <th className="px-4 py-3">Harga (Token)</th>
+                <th className="px-4 py-3">Tanggal Rilis</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {tryouts.map((tryout) => {
+                const date = new Date(tryout.releaseDate).toLocaleDateString(
+                  "id-ID"
+                );
+
+                return (
+                  <tr
+                    key={tryout.code}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                      {tryout.code}
+                    </td>
+
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {tryout.title}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {tryout.solutionPrice.toLocaleString("id-ID")}
+                    </td>
+
+                    <td className="px-4 py-3 whitespace-nowrap">{date}</td>
+
+                    <td className="px-4 py-3">{tryout.status}</td>
+
+                    <td className="px-4 py-3 text-center">
+                      <button className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+                        Detail
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
