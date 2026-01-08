@@ -1,6 +1,5 @@
 export interface StatCard {
   label: string;
-  value: string | number;
   icon: React.ElementType;
   color: string;
   bgColor: string;
@@ -11,4 +10,13 @@ export interface AdminTryoutStatsResponse {
   totalTryout: number;
   totalActiveTryout: number;
   totalUpcomingTryout: number;
+  totalEndedTryout: number;
+}
+
+export interface AdminTryoutResponse {
+  code: number;
+  title: string;
+  solutionPrice: number;
+  releaseDate: Date;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "ENDED";
 }
