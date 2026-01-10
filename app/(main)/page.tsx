@@ -1,3 +1,5 @@
+import LandingPageModule from "@/modules/LandingPageModule";
+
 export default function Home() {
-  return <main className="flex justify-center items-center">Landing Page</main>;
+  return <LandingPageModule />;
 }
