@@ -26,7 +26,6 @@ import {
 } from "chart.js";
 import { menuItems, scoreHistory, stats, subtests } from "./payload";
 import { ScoreData, StatCard, Subtest, MenuItem } from "./interface";
-import DailyStreak from "./components/DailyStreak";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -37,7 +36,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 );
 
 const DashboardModule = () => {
@@ -97,7 +96,7 @@ const DashboardModule = () => {
       .filter(
         (subtest) =>
           activeSubtests.includes(subtest.id) ||
-          activeSubtests.includes("total"),
+          activeSubtests.includes("total")
       )
       .map((subtest) => {
         const color = subtest.color.replace("bg-", "").replace("-500", "");
@@ -113,7 +112,7 @@ const DashboardModule = () => {
         return {
           label: subtest.label,
           data: scoreHistory.map(
-            (score) => score[subtest.id as keyof ScoreData],
+            (score) => score[subtest.id as keyof ScoreData]
           ),
           borderColor: colorMap[color as keyof typeof colorMap] || "blue",
           backgroundColor:
@@ -219,9 +218,9 @@ const DashboardModule = () => {
         </Card>
 
         {/* Stats Grid & Daily Streak */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Stats Cards - 2 columns on xl screens */}
-          <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Stats Cards - full width */}
+          <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat, index) => (
               <Card
                 key={index}
@@ -249,23 +248,6 @@ const DashboardModule = () => {
                 </div>
               </Card>
             ))}
-          </div>
-
-          {/* Daily Streak - 1 column on xl screens */}
-          <div className="xl:col-span-1">
-            <Card className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-orange-100">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    🔥
-                  </div>
-                  Daily Streak
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DailyStreak />
-              </CardContent>
-            </Card>
           </div>
         </div>
 
@@ -296,7 +278,7 @@ const DashboardModule = () => {
                   (tryout.progress / tryout.totalSubtests) * 100;
                 const daysRemaining = Math.ceil(
                   (new Date(tryout.endDate).getTime() - new Date().getTime()) /
-                    (1000 * 60 * 60 * 24),
+                    (1000 * 60 * 60 * 24)
                 );
 
                 return (
@@ -469,7 +451,7 @@ const DashboardModule = () => {
                               ? "↑ +"
                               : "↓ "}
                             {Math.abs(
-                              score.total - scoreHistory[index - 1].total,
+                              score.total - scoreHistory[index - 1].total
                             )}
                           </span>
                         )}
