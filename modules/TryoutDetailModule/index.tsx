@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { BACKEND_URL } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,42 +28,139 @@ import {
   Award,
   Video,
   Lock,
+  Loader2, // Tambah icon loader
 } from "lucide-react";
 import { TryoutDetail } from "./interface";
 
-interface TryoutDetailModuleProps {
-  tryoutId: number;
-  tryoutData: TryoutDetail;
-}
+// Interface Props dihapus karena kita fetch internal
+// interface TryoutDetailModuleProps { ... }
 
-const TryoutDetailModule = ({
-  tryoutId,
-  tryoutData,
-}: TryoutDetailModuleProps) => {
+const TryoutDetailModule = () => {
   const router = useRouter();
+  const params = useParams();
+  const tryoutId = params.id; // Ambil ID dari URL
+
+  // 1. STATE MANAGEMENT
+  const [tryoutData, setTryoutData] = useState<TryoutDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // UI States
   const [isRegistering, setIsRegistering] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
-  // Initialize completedSubtests from categories
-  const [completedSubtests, setCompletedSubtests] = useState<number[]>(
-    tryoutData.categories.filter((cat) => cat.isCompleted).map((cat) => cat.id)
-  );
+  const [completedSubtests, setCompletedSubtests] = useState<number[]>([]);
+
+  // 2. FETCH DATA FROM BACKEND
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!tryoutId) return;
+
+      try {
+        setIsLoading(true);
+        const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // PENTING: Supaya backend tau user login
+        });
+
+        if (!res.ok) throw new Error("Gagal mengambil data try out");
+
+        const data = await res.json();
+
+        // 3. MAPPING DATA (Backend -> UI)
+        // Karena struktur DB kamu simple, kita lengkapi data yang kurang di sini
+        // agar UI kompleks kamu tetap jalan.
+        const mappedData: TryoutDetail = {
+          id: data.id,
+          title: data.title,
+          description: data.description || "Tidak ada deskripsi",
+          badge: data.badge || "UTBK", // Backend kirim 'badge', bukan 'category'
+          number: data.number || "1",
+          isFree: data.isFree,        // Backend sudah kirim boolean isFree
+          tokenCost: data.tokenCost,  // Backend sudah kirim tokenCost
+          participants: data.participants,
+          totalQuestions: data.totalQuestions,
+          duration: data.duration,    // Backend sudah kirim total durasi kalkulasi
+          startDate: data.startDate,
+          endDate: data.endDate,
+          isRegistered: data.isRegistered, // Backend sudah kirim status register user
+          
+          benefits: data.benefits || [],     // Gunakan data backend
+          requirements: data.requirements || [], // Gunakan data backend
+          
+          // 👇 INI YANG PENTING: Ubah data.subtests jadi data.categories
+          categories: data.categories || [] 
+        };
+
+        setTryoutData(mappedData);
+        
+        // Update completed subtests state
+        const finishedIds = mappedData.categories
+            .filter((cat: any) => cat.isCompleted)
+            .map((cat: any) => cat.id);
+        setCompletedSubtests(finishedIds);
+
+      } catch (err: any) {
+        console.error("Fetch Error:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [tryoutId]);
+
+  // --- HANDLERS ---
 
   const handleRegister = async () => {
-    setIsRegistering(true);
-    // Simulate registration API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsRegistering(false);
-    // Reload or update state
+  if (!tryoutId) return;
+  setIsRegistering(true);
+
+  try {
+    // 1. Panggil Endpoint Register di Backend
+    // Pastikan endpoint ini sesuai dengan backend kamu, biasanya POST /tryout/:id/register
+    const res = await fetch(`${BACKEND_URL}/api/exam/${tryoutId}/start`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Handle jika Token Habis
+      if (res.status === 402 || data.message?.includes("token")) {
+        alert("Token tidak cukup! Silakan beli token di menu Shop.");
+        router.push("/shop");
+        return;
+      }
+      throw new Error(data.message || "Gagal mendaftar tryout");
+    }
+
+    // 2. Sukses
+    alert("Berhasil mendaftar! Selamat mengerjakan.");
+    
+    // Refresh halaman agar status berubah jadi "Terdaftar" & tombol berubah jadi "Mulai"
     window.location.reload();
-  };
+
+  } catch (err: any) {
+    console.error("Register Error:", err);
+    alert(err.message);
+  } finally {
+    setIsRegistering(false);
+  }
+};
 
   const handleStart = () => {
-    // Show modal with subtest selection
     setShowStartModal(true);
   };
 
   const handleStartSubtest = (subtestId: number, isReview = false) => {
-    // Navigate to specific subtest with review mode if completed
     const url = `/tryout/${tryoutId}/exam/${subtestId}${
       isReview ? "?review=true" : ""
     }`;
@@ -70,9 +168,8 @@ const TryoutDetailModule = ({
   };
 
   const isSubtestLocked = (subtestIndex: number) => {
-    // First subtest is always unlocked
+    if (!tryoutData) return true;
     if (subtestIndex === 0) return false;
-    // Check if previous subtest is completed
     const previousSubtestId = tryoutData.categories[subtestIndex - 1].id;
     return !completedSubtests.includes(previousSubtestId);
   };
@@ -85,6 +182,30 @@ const TryoutDetailModule = ({
       year: "numeric",
     });
   };
+
+  // --- RENDER LOADING & ERROR ---
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Sedang memuat data try out...</p>
+      </div>
+    );
+  }
+
+  if (error || !tryoutData) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
+        <AlertCircle className="w-12 h-12 text-red-500" />
+        <h3 className="text-lg font-bold text-gray-900">Gagal Memuat Data</h3>
+        <p className="text-gray-500">{error || "Try Out tidak ditemukan"}</p>
+        <Button onClick={() => router.back()} variant="outline">Kembali</Button>
+      </div>
+    );
+  }
+
+  // --- RENDER MAIN UI (Kode UI Asli Kamu) ---
 
   return (
     <div className="min-h-screen pl-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 pt-24 pb-20">
@@ -251,6 +372,7 @@ const TryoutDetailModule = ({
           </CardContent>
         </Card>
 
+        {/* DETAIL & SUBTESTS UI (Sama persis seperti kodemu sebelumnya) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Details */}
           <div className="lg:col-span-2 space-y-6">
