@@ -1,7 +1,11 @@
 "use client";
 import {
+  BadgeQuestionMarkIcon,
   BanknoteIcon,
+  CalendarDaysIcon,
   CoinsIcon,
+  FileExclamationPointIcon,
+  FileQuestionIcon,
   NotebookPenIcon,
   UserIcon,
 } from "lucide-react";
@@ -40,6 +44,11 @@ const items = [
     title: "Kelola Paket Token",
     path: "admin/packages",
     icon: CoinsIcon,
+  },
+  {
+    title: "Kelola Daily Question",
+    path: "admin/daily",
+    icon: CalendarDaysIcon,
   },
 ];
 
