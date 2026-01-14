@@ -84,7 +84,7 @@ export const SubtestList: React.FC<SubtestListProps> = ({
                     <TableCell>{subtest.name}</TableCell>
                     <TableCell>{subtest.durationMinutes} Menit</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/admin/tryout/${createdTryoutId}/subtest/${subtest.id}`}>
+                      <Link href={`/admin/tryout/${createdTryoutId}/s/${subtest.id}`}>
                         <Button variant="outline" size="sm" className="h-8">
                           <FileText className="w-3.5 h-3.5 mr-2" />
                           Kelola Soal
