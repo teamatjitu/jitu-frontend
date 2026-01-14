@@ -1,21 +1,19 @@
 "use client";
 import {
-  BadgeQuestionMarkIcon,
   BanknoteIcon,
   CalendarDaysIcon,
   CoinsIcon,
-  FileExclamationPointIcon,
-  FileQuestionIcon,
   HomeIcon,
   NotebookPenIcon,
   UserIcon,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -23,6 +21,9 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useSession, signOut } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 // Menu items.
 const items = [
@@ -62,6 +63,17 @@ const AdminNavbar = () => {
   const path = usePathname();
   const router = useRouter();
   const { open, setOpen } = useSidebar();
+  const { data: session } = useSession();
+
+  const handleLogout = async () => {
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
+  };
 
   return (
     <div>
@@ -118,6 +130,58 @@ const AdminNavbar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <div
+                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 ${
+                  open ? "bg-muted/50 border shadow-xs" : ""
+                }`}
+              >
+                <Avatar className="h-10 w-10 border-2 border-primary/10 shadow-sm">
+                  <AvatarImage
+                    src={session?.user?.image || ""}
+                    alt={session?.user?.name}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {session?.user?.name?.charAt(0).toUpperCase() || "A"}
+                  </AvatarFallback>
+                </Avatar>
+                {open && (
+                  <div className="flex-1 min-w-0 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
+                    <p className="text-sm font-bold text-foreground truncate">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate uppercase font-medium tracking-tighter">
+                      {session?.user?.email}
+                    </p>
+                  </div>
+                )}
+                {open && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
+                    title="Kelola & Logout"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {!open && (
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex justify-center py-3 text-red-500 hover:text-red-600 transition-colors"
+                  title="Keluar Akun"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              )}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
     </div>
   );
