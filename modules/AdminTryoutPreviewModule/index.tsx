@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, Info } from "lucide-react";
 import { getTryoutPreview } from "@/lib/api/AdminTryoutApi";
 import { toast } from "sonner";
-import { PreviewHeader } from "./components/PreviewHeader";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { SidebarNavigation } from "./components/SidebarNavigation";
 import { QuestionDisplay } from "./components/QuestionDisplay";
 
@@ -90,15 +91,39 @@ const AdminTryoutPreviewModule: React.FC<AdminTryoutPreviewModuleProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PreviewHeader
-        title={data.title}
-        subtestName={currentSubtest.name}
-        batch={data.batch}
-        onExit={() => router.back()}
-      />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Dashboard Style Header */}
+      <div className="max-w-7xl mx-auto w-full p-8 pb-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.back()}
+              className="h-9 w-9 shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-primary">
+                Preview Tryout
+              </h1>
+              <p className="text-muted-foreground flex items-center gap-2">
+                {data.title}{" "}
+                <Badge variant="secondary" className="text-[10px]">
+                  {data.batch}
+                </Badge>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-lg text-yellow-700 text-xs font-bold">
+            <Info className="h-3.5 w-3.5" />
+            MODE PREVIEW
+          </div>
+        </div>
+      </div>
 
-      <div className="pt-20 pb-8 px-4">
+      <div className="pt-8 pb-8 px-2 sm:px-4 flex-1">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Sidebar - Navigation Grid */}
           <SidebarNavigation
