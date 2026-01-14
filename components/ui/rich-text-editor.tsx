@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import ImageResize from "tiptap-extension-resize-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { MathExtension } from "tiptap-math-extension";
@@ -41,9 +41,9 @@ const RichTextEditor = ({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image.configure({
-        inline: true,
+      ImageResize.configure({
         allowBase64: true,
+        inline: true,
       }),
       Link.configure({
         openOnClick: false,
