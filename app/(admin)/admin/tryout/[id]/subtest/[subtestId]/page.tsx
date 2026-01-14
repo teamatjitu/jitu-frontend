@@ -5,7 +5,7 @@ export default async function SubtestQuestionsPage({
 }: {
   params: Promise<{ id: string; subtestId: string }>;
 }) {
-  const { subtestId } = await params;
+  const { id, subtestId } = await params;
 
-  return <SubtestQuestionsModule subtestId={subtestId} />;
+  return <SubtestQuestionsModule subtestId={subtestId} tryoutId={id} />;
 }

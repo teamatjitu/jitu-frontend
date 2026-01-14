@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,9 +10,9 @@ import {
   getQuestionsBySubtest,
   createQuestion,
   deleteQuestion,
+  updateQuestion,
   Question,
   CreateQuestionPayload,
-  updateQuestion,
 } from "@/lib/api/AdminQuestionApi";
 import { toast } from "sonner";
 import {
@@ -25,10 +25,12 @@ import {
 
 interface SubtestQuestionsModuleProps {
   subtestId: string;
+  tryoutId: string;
 }
 
 const SubtestQuestionsModule: React.FC<SubtestQuestionsModuleProps> = ({
   subtestId,
+  tryoutId,
 }) => {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -36,7 +38,7 @@ const SubtestQuestionsModule: React.FC<SubtestQuestionsModuleProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await getQuestionsBySubtest(subtestId);
@@ -47,13 +49,23 @@ const SubtestQuestionsModule: React.FC<SubtestQuestionsModuleProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [subtestId]);
 
   useEffect(() => {
     if (subtestId) {
       fetchQuestions();
     }
-  }, [subtestId]);
+  }, [subtestId, fetchQuestions]);
+
+  const handleBack = () => {
+    if (isCreating) {
+      setIsCreating(false);
+      setEditingQuestion(null);
+    } else {
+      // Navigate explicitly to the tryout edit page to ensure correct flow
+      router.push(`/admin/tryout/${tryoutId}`);
+    }
+  };
 
   const handleSave = async (payload: CreateQuestionPayload) => {
     try {
@@ -87,15 +99,21 @@ const SubtestQuestionsModule: React.FC<SubtestQuestionsModuleProps> = ({
   return (
     <div className="flex flex-col gap-8 p-8 w-full max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-primary">
-            Kelola Soal Subtest
+            {isCreating
+              ? editingQuestion
+                ? "Edit Soal"
+                : "Tambah Soal"
+              : "Kelola Soal Subtest"}
           </h1>
           <p className="text-muted-foreground">
-            Daftar soal untuk subtest ini. Tambahkan, edit, atau hapus soal.
+            {isCreating
+              ? "Isi form di bawah untuk menyimpan soal."
+              : "Daftar soal untuk subtest ini. Tambahkan, edit, atau hapus soal."}
           </p>
         </div>
       </div>

@@ -38,9 +38,14 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
   const [points, setPoints] = useState(initialData?.points || 1);
 
   // State specific to PILIHAN_GANDA
-  const [options, setOptions] = useState(
+  const sortedItems =
     initialData?.type === "PILIHAN_GANDA" && initialData.items
-      ? initialData.items.map((it) => ({
+      ? [...initialData.items].sort((a, b) => a.order - b.order)
+      : [];
+
+  const [options, setOptions] = useState(
+    sortedItems.length > 0
+      ? sortedItems.map((it) => ({
           content: it.content,
           isCorrect: it.isCorrect,
         }))
@@ -53,8 +58,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         ]
   );
   const [correctOptionIndex, setCorrectOptionIndex] = useState<number | null>(
-    initialData?.type === "PILIHAN_GANDA" && initialData.items
-      ? initialData.items.findIndex((it) => it.isCorrect)
+    sortedItems.length > 0
+      ? sortedItems.findIndex((it) => it.isCorrect)
       : null
   );
 
