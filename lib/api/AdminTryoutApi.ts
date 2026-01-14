@@ -13,10 +13,13 @@ export const getTryoutStats = async () => {
 };
 
 export const getAllTryouts = async (page = 1, limit = 10) => {
-  const response = await fetch(`${BACKEND_URL}/admin/tryouts?page=${page}&limit=${limit}`, {
-    method: "GET",
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${BACKEND_URL}/admin/tryouts?page=${page}&limit=${limit}`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch tryouts");
@@ -72,11 +75,16 @@ export const createUtbkSubtests = async (tryoutId: string) => {
   return response.json(); // Returns Created count or similar
 };
 
-export const getSubtestsByTryout = async (tryoutId: string): Promise<Subtest[]> => {
-  const response = await fetch(`${BACKEND_URL}/admin/tryouts/${tryoutId}/subtests`, {
-    method: "GET",
-    credentials: "include",
-  });
+export const getSubtestsByTryout = async (
+  tryoutId: string
+): Promise<Subtest[]> => {
+  const response = await fetch(
+    `${BACKEND_URL}/admin/tryouts/${tryoutId}/subtests`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch subtests");

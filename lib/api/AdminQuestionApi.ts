@@ -51,7 +51,9 @@ export const uploadImage = async (file: File) => {
   return response.json(); // returns { url: string }
 };
 
-export const getQuestionsBySubtest = async (subtestId: string): Promise<Question[]> => {
+export const getQuestionsBySubtest = async (
+  subtestId: string
+): Promise<Question[]> => {
   const response = await fetch(
     `${BACKEND_URL}/admin/subtests/${subtestId}/questions`,
     {
@@ -66,7 +68,10 @@ export const getQuestionsBySubtest = async (subtestId: string): Promise<Question
   return response.json();
 };
 
-export const createQuestion = async (subtestId: string, data: CreateQuestionPayload) => {
+export const createQuestion = async (
+  subtestId: string,
+  data: CreateQuestionPayload
+) => {
   const response = await fetch(
     `${BACKEND_URL}/admin/subtests/${subtestId}/questions`,
     {
@@ -86,7 +91,10 @@ export const createQuestion = async (subtestId: string, data: CreateQuestionPayl
   return response.json();
 };
 
-export const updateQuestion = async (id: string, data: CreateQuestionPayload) => {
+export const updateQuestion = async (
+  id: string,
+  data: CreateQuestionPayload
+) => {
   const response = await fetch(`${BACKEND_URL}/admin/questions/${id}`, {
     method: "PATCH",
     headers: {

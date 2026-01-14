@@ -1,5 +1,10 @@
 "use client";
-import { NotebookPenIcon, UserIcon } from "lucide-react";
+import {
+  BanknoteIcon,
+  CoinsIcon,
+  NotebookPenIcon,
+  UserIcon,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +30,16 @@ const items = [
     title: "Kelola User",
     path: "admin/user",
     icon: UserIcon,
+  },
+  {
+    title: "Kelola Pembayaran",
+    path: "admin/payments",
+    icon: BanknoteIcon,
+  },
+  {
+    title: "Kelola Paket Token",
+    path: "admin/packages",
+    icon: CoinsIcon,
   },
 ];
 

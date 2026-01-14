@@ -139,7 +139,7 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
                   htmlFor="solutionPrice"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Harga Pembahasan (Token)
+                  Harga Tryout (Token)
                 </label>
                 <Input
                   id="solutionPrice"
