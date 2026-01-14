@@ -12,8 +12,8 @@ export const getTryoutStats = async () => {
   return response.json();
 };
 
-export const getAllTryouts = async () => {
-  const response = await fetch(`${BACKEND_URL}/admin/tryouts`, {
+export const getAllTryouts = async (page = 1, limit = 10) => {
+  const response = await fetch(`${BACKEND_URL}/admin/tryouts?page=${page}&limit=${limit}`, {
     method: "GET",
     credentials: "include",
   });

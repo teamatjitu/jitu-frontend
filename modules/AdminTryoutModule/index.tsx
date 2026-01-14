@@ -11,6 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Plus, Eye } from "lucide-react";
 import { stats } from "./const";
 import { AdminTryoutResponse, AdminTryoutStatsResponse } from "./interface";
@@ -24,16 +32,30 @@ const AdminTryoutModule = () => {
 
   const [tryouts, setTryouts] = useState<AdminTryoutResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    lastPage: 1,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [statsData, tryoutsData] = await Promise.all([
           getTryoutStats(),
-          getAllTryouts(),
+          getAllTryouts(page),
         ]);
         setValueStats(statsData);
-        setTryouts(tryoutsData);
+        // Handle paginated response structure
+        if (tryoutsData.data) {
+          setTryouts(tryoutsData.data);
+          setPaginationMeta(tryoutsData.meta);
+        } else {
+          // Fallback if backend hasn't deployed changes yet (unlikely but safe)
+          setTryouts(tryoutsData as unknown as AdminTryoutResponse[]);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -42,7 +64,13 @@ const AdminTryoutModule = () => {
     };
 
     fetchData();
-  }, []);
+  }, [page]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= paginationMeta.lastPage) {
+      setPage(newPage);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -216,6 +244,38 @@ const AdminTryoutModule = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="mt-4 flex justify-end">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(page - 1)}
+                    className={
+                      page <= 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+                {/* Simple pagination logic: just showing current page for now or simple range could be added */}
+                <PaginationItem>
+                  <PaginationLink isActive>{page}</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(page + 1)}
+                    className={
+                      page >= paginationMeta.lastPage
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </CardContent>
       </Card>
