@@ -6,6 +6,7 @@ import {
   CoinsIcon,
   FileExclamationPointIcon,
   FileQuestionIcon,
+  HomeIcon,
   NotebookPenIcon,
   UserIcon,
 } from "lucide-react";
@@ -25,6 +26,11 @@ import Image from "next/image";
 
 // Menu items.
 const items = [
+  {
+    title: "Dashboard",
+    path: "admin/",
+    icon: HomeIcon,
+  },
   {
     title: "Kelola Tryout",
     path: "admin/tryout",

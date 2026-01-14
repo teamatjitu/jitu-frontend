@@ -31,8 +31,13 @@ const LoginModule = () => {
         password: loginData.password,
       },
       {
-        onSuccess: () => {
-          router.push("/dashboard");
+        onSuccess: (ctx) => {
+          const user = ctx.data.user;
+          if (user.role === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
         },
         onError: (ctx) => {
           alert(ctx.error.message);

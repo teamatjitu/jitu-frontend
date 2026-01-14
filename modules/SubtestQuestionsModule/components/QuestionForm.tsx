@@ -103,15 +103,28 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           setIsLoading(false);
           return;
         }
-        if (options.filter((o) => o.content.trim()).length < 2) {
-          alert("Minimal isi 2 opsi jawaban");
+
+        // Validate first 4 options (A-D) must be filled
+        const requiredOptionsFilled = options.slice(0, 4).every(o => o.content.trim() !== "");
+        if (!requiredOptionsFilled) {
+          alert("Opsi A, B, C, dan D wajib diisi.");
           setIsLoading(false);
           return;
         }
 
-        payload.items = options.map((opt, idx) => ({
+        // Filter out empty options (like empty E)
+        const filledOptions = options.filter(o => o.content.trim() !== "");
+        
+        // Ensure the selected correct answer index still exists in filled options
+        if (options[correctOptionIndex].content.trim() === "") {
+          alert("Jawaban benar tidak boleh pada opsi yang kosong");
+          setIsLoading(false);
+          return;
+        }
+
+        payload.items = filledOptions.map((opt, idx) => ({
           content: opt.content,
-          isCorrect: idx === correctOptionIndex,
+          isCorrect: opt.content === options[correctOptionIndex].content,
           order: idx + 1,
         }));
       } else if (type === "ISIAN_SINGKAT") {
@@ -230,9 +243,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     </Label>
                     <div className="flex-1">
                       <Input
-                        placeholder={`Tulis teks jawaban opsi ${String.fromCharCode(
-                          65 + index
-                        )}...`}
+                        placeholder={
+                          index === 4
+                            ? `Tulis teks jawaban opsi E... (Opsional)`
+                            : `Tulis teks jawaban opsi ${String.fromCharCode(65 + index)}...`
+                        }
                         value={option.content}
                         onChange={(e) =>
                           handleOptionChange(index, e.target.value)

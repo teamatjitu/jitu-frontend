@@ -15,7 +15,8 @@ import { TryoutForm } from "@/modules/CreateTryoutModule/components/TryoutForm";
 import { SubtestList } from "@/modules/CreateTryoutModule/components/SubtestList";
 import { toast } from "sonner";
 
-// Helper to format Date for datetime-local input (YYYY-MM-DDTHH:mm)
+import Link from "next/link";
+
 const formatDateForInput = (isoString: string) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -147,9 +148,11 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
   return (
     <div className="flex flex-col gap-8 p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Link href={"/admin/tryout"}>
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-primary">
             Edit Tryout

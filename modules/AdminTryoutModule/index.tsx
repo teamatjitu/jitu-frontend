@@ -19,7 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Trophy } from "lucide-react";
 import { stats } from "./const";
 import { AdminTryoutResponse, AdminTryoutStatsResponse } from "./interface";
 import { getAllTryouts, getTryoutStats } from "@/lib/api/AdminTryoutApi";
@@ -54,7 +54,7 @@ const AdminTryoutModule = () => {
           setPaginationMeta(tryoutsData.meta);
         } else {
           // Fallback if backend hasn't deployed changes yet (unlikely but safe)
-          setTryouts(tryoutsData as unknown as AdminTryoutResponse[]);
+          setTryouts(tryoutsData as AdminTryoutResponse[]);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -89,11 +89,11 @@ const AdminTryoutModule = () => {
             Belum Rilis
           </Badge>
         );
-      case "ENDED":
+      case "FINISHED":
         return (
           <Badge
             variant="destructive"
-            className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200 shadow-none"
+            className="bg-red-100 text-white hover:bg-red-200 border-red-200 shadow-none"
           >
             Selesai
           </Badge>
@@ -173,7 +173,7 @@ const AdminTryoutModule = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[80px]">ID</TableHead>
+                  <TableHead className="w-20">ID</TableHead>
                   <TableHead>Nama Tryout</TableHead>
                   <TableHead>Akses</TableHead>
                   <TableHead>Referral</TableHead>
@@ -226,7 +226,9 @@ const AdminTryoutModule = () => {
                             {tryout.referralCode}
                           </code>
                         ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
+                          <span className="text-muted-foreground text-xs">
+                            -
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -255,12 +257,36 @@ const AdminTryoutModule = () => {
                       </TableCell>
                       <TableCell>{getStatusBadge(tryout.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/admin/tryout/${tryout.id}`}>
-                          <Button variant="outline" size="sm" className="h-8">
-                            <Eye className="mr-2 h-3.5 w-3.5" />
-                            Detail
-                          </Button>
-                        </Link>
+                        <div className="flex justify-end gap-2">
+                          {tryout.status === "FINISHED" ? (
+                            <Link href={`/admin/tryout/${tryout.id}/results`}>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                                title="Lihat Leaderboard"
+                              >
+                                <Trophy className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground opacity-50 cursor-not-allowed border-muted"
+                              title="Hasil hanya tersedia setelah tryout selesai"
+                              disabled
+                            >
+                              <Trophy className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Link href={`/admin/tryout/${tryout.id}`}>
+                            <Button variant="outline" size="sm" className="h-8">
+                              <Eye className="mr-2 h-3.5 w-3.5" />
+                              Detail
+                            </Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
