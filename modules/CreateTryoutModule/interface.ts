@@ -6,4 +6,6 @@ export interface TryoutFormData {
   releaseDate: string;
   scheduledStart: string;
   scheduledEnd: string;
+  isPublic: boolean;
+  referralCode: string;
 }

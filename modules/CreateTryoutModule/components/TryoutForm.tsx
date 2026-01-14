@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, CheckCircle2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Loader2, Save, CheckCircle2, Globe, Lock } from "lucide-react";
 import { TryoutFormData } from "../interface";
 
 interface TryoutFormProps {
@@ -19,6 +21,7 @@ interface TryoutFormProps {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => void;
+  handleSwitchChange: (name: string, checked: boolean) => void;
   handleSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   createdTryoutId: string | null;
@@ -28,6 +31,7 @@ interface TryoutFormProps {
 export const TryoutForm: React.FC<TryoutFormProps> = ({
   formData,
   handleChange,
+  handleSwitchChange,
   handleSubmit,
   isLoading,
   createdTryoutId,
@@ -69,12 +73,7 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
             className="space-y-6 group-disabled:opacity-50"
           >
             <div className="space-y-2">
-              <label
-                htmlFor="title"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Nama Tryout
-              </label>
+              <Label htmlFor="title">Nama Tryout</Label>
               <Input
                 id="title"
                 name="title"
@@ -87,12 +86,7 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="description"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Deskripsi (Opsional)
-              </label>
+              <Label htmlFor="description">Deskripsi (Opsional)</Label>
               <textarea
                 id="description"
                 name="description"
@@ -103,14 +97,77 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
               />
             </div>
 
+            {/* Access Control Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base flex items-center gap-2">
+                      {formData.isPublic ? (
+                        <Globe className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <Lock className="h-4 w-4 text-orange-500" />
+                      )}
+                      Akses Tryout
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.isPublic
+                        ? "Publik: Dapat diakses semua user."
+                        : "Privat: Butuh kode referral."}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                      {formData.isPublic ? "Publik" : "Privat"}
+                    </span>
+                    <Switch
+                      checked={formData.isPublic}
+                      onCheckedChange={(checked) =>
+                        handleSwitchChange("isPublic", checked)
+                      }
+                    />
+                  </div>
+                </div>
+
+                {!formData.isPublic && (
+                  <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label htmlFor="referralCode" className="text-xs">
+                      Kode Referral / Akses
+                    </Label>
+                    <Input
+                      id="referralCode"
+                      name="referralCode"
+                      placeholder="CONTOH: AKSES-JITU"
+                      value={formData.referralCode}
+                      onChange={handleChange}
+                      className="mt-1 h-8 font-mono uppercase bg-white px-3"
+                      required={!formData.isPublic}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2 flex flex-col justify-end">
+                <Label htmlFor="solutionPrice">Harga Tryout (Token)</Label>
+                <Input
+                  id="solutionPrice"
+                  name="solutionPrice"
+                  type="number"
+                  min="0"
+                  required
+                  value={formData.solutionPrice}
+                  onChange={handleChange}
+                  className="px-3"
+                />
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Masukkan 0 untuk gratis.
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="batch"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Kategori (Batch)
-                </label>
+                <Label htmlFor="batch">Kategori (Batch)</Label>
                 <div className="relative">
                   <select
                     id="batch"
@@ -135,36 +192,7 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="solutionPrice"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Harga Tryout (Token)
-                </label>
-                <Input
-                  id="solutionPrice"
-                  name="solutionPrice"
-                  type="number"
-                  min="0"
-                  required
-                  value={formData.solutionPrice}
-                  onChange={handleChange}
-                  className="px-3"
-                />
-                <p className="text-[0.8rem] text-muted-foreground">
-                  Masukkan 0 untuk gratis.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label
-                  htmlFor="releaseDate"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Tanggal Rilis
-                </label>
+                <Label htmlFor="releaseDate">Tanggal Rilis</Label>
                 <Input
                   id="releaseDate"
                   name="releaseDate"
@@ -175,14 +203,11 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
                   className="px-3"
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="scheduledStart"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Jadwal Mulai
-                </label>
+                <Label htmlFor="scheduledStart">Jadwal Mulai</Label>
                 <Input
                   id="scheduledStart"
                   name="scheduledStart"
@@ -195,12 +220,7 @@ export const TryoutForm: React.FC<TryoutFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="scheduledEnd"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Jadwal Selesai
-                </label>
+                <Label htmlFor="scheduledEnd">Jadwal Selesai</Label>
                 <Input
                   id="scheduledEnd"
                   name="scheduledEnd"

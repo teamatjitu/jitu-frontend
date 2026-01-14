@@ -28,6 +28,8 @@ const CreateTryoutModule = () => {
     releaseDate: "",
     scheduledStart: "",
     scheduledEnd: "",
+    isPublic: true,
+    referralCode: "",
   });
 
   const handleChange = (
@@ -44,6 +46,13 @@ const CreateTryoutModule = () => {
             ? ""
             : parseInt(value)
           : value,
+    }));
+  };
+
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: checked,
     }));
   };
 
@@ -93,7 +102,7 @@ const CreateTryoutModule = () => {
   return (
     <div className="flex flex-col gap-8 p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="space-y-1">
@@ -109,6 +118,7 @@ const CreateTryoutModule = () => {
       <TryoutForm
         formData={formData}
         handleChange={handleChange}
+        handleSwitchChange={handleSwitchChange}
         handleSubmit={handleSubmit}
         isLoading={isLoading}
         createdTryoutId={createdTryoutId}

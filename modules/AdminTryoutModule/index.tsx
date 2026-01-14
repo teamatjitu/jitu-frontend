@@ -173,9 +173,11 @@ const AdminTryoutModule = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead className="w-[80px]">ID</TableHead>
                   <TableHead>Nama Tryout</TableHead>
-                  <TableHead>Harga (Token)</TableHead>
+                  <TableHead>Akses</TableHead>
+                  <TableHead>Referral</TableHead>
+                  <TableHead>Harga</TableHead>
                   <TableHead>Tanggal Rilis</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
@@ -184,14 +186,14 @@ const AdminTryoutModule = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Memuat data...
                     </TableCell>
                   </TableRow>
                 ) : tryouts.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Belum ada tryout yang dibuat.
@@ -199,12 +201,33 @@ const AdminTryoutModule = () => {
                   </TableRow>
                 ) : (
                   tryouts.map((tryout) => (
-                    <TableRow key={tryout.code}>
-                      <TableCell className="font-mono text-xs font-medium">
+                    <TableRow key={tryout.id}>
+                      <TableCell className="font-mono text-xs font-medium text-muted-foreground">
                         #{tryout.code}
                       </TableCell>
                       <TableCell className="font-medium">
                         {tryout.title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={tryout.isPublic ? "outline" : "secondary"}
+                          className={
+                            tryout.isPublic
+                              ? "text-blue-600 border-blue-200 bg-blue-50"
+                              : "text-orange-600 border-orange-200 bg-orange-50"
+                          }
+                        >
+                          {tryout.isPublic ? "Publik" : "Privat"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {tryout.referralCode ? (
+                          <code className="text-xs font-bold bg-muted px-1.5 py-0.5 rounded">
+                            {tryout.referralCode}
+                          </code>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {tryout.solutionPrice > 0 ? (
@@ -212,7 +235,7 @@ const AdminTryoutModule = () => {
                             <span>
                               {tryout.solutionPrice.toLocaleString("id-ID")}
                             </span>
-                            <span className="text-xs">Token</span>
+                            <span className="text-[10px]">Token</span>
                           </div>
                         ) : (
                           <span className="text-green-600 font-medium">
@@ -220,12 +243,12 @@ const AdminTryoutModule = () => {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
                         {new Date(tryout.releaseDate).toLocaleDateString(
                           "id-ID",
                           {
                             day: "numeric",
-                            month: "long",
+                            month: "short",
                             year: "numeric",
                           }
                         )}
@@ -233,7 +256,7 @@ const AdminTryoutModule = () => {
                       <TableCell>{getStatusBadge(tryout.status)}</TableCell>
                       <TableCell className="text-right">
                         <Link href={`/admin/tryout/${tryout.id}`}>
-                          <Button variant="outline" className="h-8">
+                          <Button variant="outline" size="sm" className="h-8">
                             <Eye className="mr-2 h-3.5 w-3.5" />
                             Detail
                           </Button>

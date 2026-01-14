@@ -13,14 +13,12 @@ import {
 import { TryoutFormData } from "@/modules/CreateTryoutModule/interface";
 import { TryoutForm } from "@/modules/CreateTryoutModule/components/TryoutForm";
 import { SubtestList } from "@/modules/CreateTryoutModule/components/SubtestList";
-import { toast } from "sonner"; // Assuming sonner or similar toast is used, or basic alert if not. I'll stick to alert/console for consistency with Create module, or check components.
+import { toast } from "sonner";
 
 // Helper to format Date for datetime-local input (YYYY-MM-DDTHH:mm)
 const formatDateForInput = (isoString: string) => {
   if (!isoString) return "";
   const date = new Date(isoString);
-  // Adjust for timezone offset if needed, but standard datetime-local works best with local time string
-  // Here we construct local ISO string
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
     date.getDate()
@@ -36,7 +34,6 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  // We treat "createdTryoutId" as simply the current ID for subtest visibility
   const [subtests, setSubtests] = useState<Subtest[]>([]);
   const [formData, setFormData] = useState<TryoutFormData>({
     title: "",
@@ -46,6 +43,8 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
     releaseDate: "",
     scheduledStart: "",
     scheduledEnd: "",
+    isPublic: true,
+    referralCode: "",
   });
 
   useEffect(() => {
@@ -65,6 +64,8 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
           releaseDate: formatDateForInput(tryout.releaseDate),
           scheduledStart: formatDateForInput(tryout.scheduledStart),
           scheduledEnd: formatDateForInput(tryout.scheduledEnd),
+          isPublic: tryout.isPublic ?? true,
+          referralCode: tryout.referralCode || "",
         });
 
         setSubtests(
@@ -72,7 +73,7 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
         );
       } catch (error) {
         console.error("Failed to fetch tryout data:", error);
-        alert("Gagal memuat data tryout.");
+        toast.error("Gagal memuat data tryout.");
       } finally {
         setIsFetching(false);
       }
@@ -100,6 +101,13 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
     }));
   };
 
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -115,12 +123,10 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
       };
 
       await updateTryout(tryoutId, payload);
-      // Option: redirect or stay
-      // router.push("/admin/tryout");
       toast.success("Tryout berhasil diperbarui!");
     } catch (error) {
       console.error("Failed to update tryout:", error);
-      toast.error("Tryout gagal dibuat!");
+      toast.error("Gagal memperbarui tryout.");
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +147,7 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
   return (
     <div className="flex flex-col gap-8 p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="space-y-1">
@@ -157,15 +163,16 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
       <TryoutForm
         formData={formData}
         handleChange={handleChange}
+        handleSwitchChange={handleSwitchChange}
         handleSubmit={handleSubmit}
         isLoading={isLoading}
-        createdTryoutId={tryoutId} // In edit mode, ID always exists
+        createdTryoutId={tryoutId}
         isEdit={true}
       />
 
       <SubtestList
         subtests={subtests}
-        createdTryoutId={tryoutId} // Always show subtests in edit mode
+        createdTryoutId={tryoutId}
         handleFinish={handleFinish}
       />
     </div>
