@@ -1,5 +1,5 @@
 "use client";
-import { NotebookPenIcon } from "lucide-react";
+import { NotebookPenIcon, UserIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,8 +18,13 @@ import Image from "next/image";
 const items = [
   {
     title: "Kelola Tryout",
-    path: "",
+    path: "admin/tryout",
     icon: NotebookPenIcon,
+  },
+  {
+    title: "Kelola User",
+    path: "admin/user",
+    icon: UserIcon,
   },
 ];
 
