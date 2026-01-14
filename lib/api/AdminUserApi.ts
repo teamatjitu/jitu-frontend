@@ -33,8 +33,16 @@ export const getUserStats = async (): Promise<AdminUserStatsResponse> => {
   };
 };
 
-export const getAllUsers = async (page = 1, limit = 10) => {
-  const response = await fetch(`${BACKEND_URL}/admin/user?page=${page}&limit=${limit}`, {
+export const getAllUsers = async (page = 1, limit = 10, search?: string, role?: string) => {
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (search) queryParams.append("search", search);
+  if (role) queryParams.append("role", role);
+
+  const response = await fetch(`${BACKEND_URL}/admin/user?${queryParams.toString()}`, {
     method: "GET",
     credentials: "include",
   });

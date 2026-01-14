@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Trash2, Coins, Eye, Settings } from "lucide-react";
+import { Trash2, Coins, Eye, Settings, Search } from "lucide-react";
 import { StatCard } from "@/components/elements/Admin/StatCard";
 import { getStatsConfig } from "./const";
 import { AdminUserResponse, AdminUserStatsResponse } from "./interface";
@@ -29,6 +29,14 @@ import { toast } from "sonner";
 import { TokenAdjustmentDialog } from "./components/TokenAdjustmentDialog";
 import { EditUserDialog } from "./components/EditUserDialog";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AdminUserModule = () => {
   const [stats, setStats] = useState<AdminUserStatsResponse>({
@@ -45,6 +53,9 @@ const AdminUserModule = () => {
     lastPage: 1,
   });
 
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+
   const [selectedUserForToken, setSelectedUserForToken] =
     useState<AdminUserResponse | null>(null);
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
@@ -56,9 +67,10 @@ const AdminUserModule = () => {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
+      const role = roleFilter === "ALL" ? undefined : roleFilter;
       const [statsData, usersData] = await Promise.all([
         getUserStats(),
-        getAllUsers(page),
+        getAllUsers(page, 10, search, role),
       ]);
       setStats(statsData);
 
@@ -72,10 +84,14 @@ const AdminUserModule = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page]);
+  }, [page, search, roleFilter]);
 
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 500); // Debounce search
+
+    return () => clearTimeout(timer);
   }, [fetchData]);
 
   const handleDelete = async (id: string) => {
@@ -138,6 +154,40 @@ const AdminUserModule = () => {
         ).map((stat, index) => (
           <StatCard key={index} {...stat} isLoading={isLoading} />
         ))}
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex flex-col md:flex-row gap-4 bg-white p-6 rounded-2xl">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Cari nama atau email..."
+            className="pl-10"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1); // Reset to page 1 on search
+            }}
+          />
+        </div>
+        <div className="w-full md:w-[200px]">
+          <Select
+            value={roleFilter}
+            onValueChange={(value) => {
+              setRoleFilter(value);
+              setPage(1); // Reset to page 1 on filter
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Role</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="USER">User</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* User Table */}
