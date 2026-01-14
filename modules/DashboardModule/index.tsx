@@ -46,8 +46,12 @@ const DashboardModule = () => {
   const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/login");
+    if (!isPending) {
+      if (!session) {
+        router.push("/login");
+      } else if (session.user.role === "ADMIN") {
+        router.push("/admin");
+      }
     }
   }, [session, isPending, router]);
 
