@@ -16,8 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle2, Lock } from "lucide-react";
+import { CheckCircle2, Lock, FileText } from "lucide-react";
 import { Subtest } from "@/lib/api/AdminTryoutApi";
+import Link from "next/link";
 
 interface SubtestListProps {
   subtests: Subtest[];
@@ -83,13 +84,12 @@ export const SubtestList: React.FC<SubtestListProps> = ({
                     <TableCell>{subtest.name}</TableCell>
                     <TableCell>{subtest.durationMinutes} Menit</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => alert("Fitur edit akan segera hadir!")}
-                      >
-                        Edit
-                      </Button>
+                      <Link href={`/admin/tryout/${createdTryoutId}/subtest/${subtest.id}`}>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <FileText className="w-3.5 h-3.5 mr-2" />
+                          Kelola Soal
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}
