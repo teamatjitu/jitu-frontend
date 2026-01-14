@@ -45,7 +45,7 @@ const LoginModule = () => {
   const handleGoogleLogin = async () => {
     await signIn.social({
       provider: "google",
-      // callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
+      callbackURL: `http://localhost:5173/dashboard`,
     });
   };
 

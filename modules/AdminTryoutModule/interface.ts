@@ -14,6 +14,7 @@ export interface AdminTryoutStatsResponse {
 }
 
 export interface AdminTryoutResponse {
+  id: string;
   code: number;
   title: string;
   solutionPrice: number;
