@@ -262,6 +262,46 @@
   outline: 3px solid #3b82f6;
 }
 
+/* Global Prose Overflow Fixes */
+.prose {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.prose table {
+  width: 100%;
+  table-layout: auto;
+  overflow-x: auto;
+  display: block;
+}
+
+.prose pre {
+  white-space: pre-wrap;
+  word-all: break-all;
+}
+
+/* Custom Scrollbar for better UX */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
 .prose li {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;

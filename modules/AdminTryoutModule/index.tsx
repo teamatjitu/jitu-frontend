@@ -258,6 +258,16 @@ const AdminTryoutModule = () => {
                       <TableCell>{getStatusBadge(tryout.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Link href={`/admin/tryout/${tryout.id}/preview`}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-purple-600 border-purple-200 hover:bg-purple-50"
+                              title="Preview Tryout"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           {tryout.status === "FINISHED" ? (
                             <Link href={`/admin/tryout/${tryout.id}/results`}>
                               <Button

@@ -81,6 +81,7 @@ const AdminNavbar = () => {
         collapsible="icon"
         onMouseOver={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
+        className="z-40"
       >
         <SidebarContent>
           <SidebarGroup>

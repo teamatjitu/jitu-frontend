@@ -16,21 +16,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle2, Lock, FileText } from "lucide-react";
+import { CheckCircle2, Lock, FileText, Pencil } from "lucide-react";
 import { Subtest } from "@/lib/api/AdminTryoutApi";
 import Link from "next/link";
+import { EditSubtestDialog } from "./EditSubtestDialog";
 
 interface SubtestListProps {
   subtests: Subtest[];
   createdTryoutId: string | null;
   handleFinish: () => void;
+  onRefresh?: () => void;
 }
 
 export const SubtestList: React.FC<SubtestListProps> = ({
   subtests,
   createdTryoutId,
   handleFinish,
+  onRefresh,
 }) => {
+  const [selectedSubtest, setSelectedSubtest] = React.useState<Subtest | null>(
+    null
+  );
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
   return (
     <Card
       className={`border-border/50 shadow-sm transition-all duration-500 ${
@@ -54,15 +62,6 @@ export const SubtestList: React.FC<SubtestListProps> = ({
                 : "Subtest akan otomatis digenerate setelah data tryout disimpan."}
             </CardDescription>
           </div>
-          {createdTryoutId && (
-            <Badge
-              variant="outline"
-              className="bg-green-50 text-green-700 border-green-200"
-            >
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Tergenerate
-            </Badge>
-          )}
         </div>
       </CardHeader>
       {createdTryoutId && (
@@ -80,16 +79,34 @@ export const SubtestList: React.FC<SubtestListProps> = ({
               <TableBody>
                 {subtests.map((subtest) => (
                   <TableRow key={subtest.id}>
-                    <TableCell className="font-medium">{subtest.order}</TableCell>
+                    <TableCell className="font-medium">
+                      {subtest.order}
+                    </TableCell>
                     <TableCell>{subtest.name}</TableCell>
                     <TableCell>{subtest.durationMinutes} Menit</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/admin/tryout/${createdTryoutId}/s/${subtest.id}`}>
-                        <Button variant="outline" size="sm" className="h-8">
-                          <FileText className="w-3.5 h-3.5 mr-2" />
-                          Kelola Soal
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                          onClick={() => {
+                            setSelectedSubtest(subtest);
+                            setIsEditDialogOpen(true);
+                          }}
+                          title="Edit Durasi"
+                        >
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      </Link>
+                        <Link
+                          href={`/admin/tryout/${createdTryoutId}/s/${subtest.id}`}
+                        >
+                          <Button variant="outline" size="sm" className="h-8">
+                            <FileText className="w-3.5 h-3.5 mr-2" />
+                            Kelola Soal
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -107,6 +124,13 @@ export const SubtestList: React.FC<SubtestListProps> = ({
           </div>
         </CardContent>
       )}
+
+      <EditSubtestDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        subtest={selectedSubtest}
+        onSuccess={() => onRefresh?.()}
+      />
     </Card>
   );
 };

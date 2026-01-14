@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Eye } from "lucide-react";
 import {
   getTryoutById,
   getSubtestsByTryout,
@@ -14,7 +14,6 @@ import { TryoutFormData } from "@/modules/CreateTryoutModule/interface";
 import { TryoutForm } from "@/modules/CreateTryoutModule/components/TryoutForm";
 import { SubtestList } from "@/modules/CreateTryoutModule/components/SubtestList";
 import { toast } from "sonner";
-
 import Link from "next/link";
 
 const formatDateForInput = (isoString: string) => {
@@ -48,13 +47,24 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
     referralCode: "",
   });
 
+  const fetchSubtests = useCallback(async () => {
+    try {
+      const subtestsData = await getSubtestsByTryout(tryoutId);
+      setSubtests(
+        subtestsData.sort((a: Subtest, b: Subtest) => a.order - b.order)
+      );
+    } catch (error) {
+      console.error("Failed to fetch subtests:", error);
+    }
+  }, [tryoutId]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsFetching(true);
-        const [tryout, subtestsData] = await Promise.all([
+        const [tryout] = await Promise.all([
           getTryoutById(tryoutId),
-          getSubtestsByTryout(tryoutId),
+          fetchSubtests(),
         ]);
 
         setFormData({
@@ -68,10 +78,6 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
           isPublic: tryout.isPublic ?? true,
           referralCode: tryout.referralCode || "",
         });
-
-        setSubtests(
-          subtestsData.sort((a: Subtest, b: Subtest) => a.order - b.order)
-        );
       } catch (error) {
         console.error("Failed to fetch tryout data:", error);
         toast.error("Gagal memuat data tryout.");
@@ -147,20 +153,31 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
 
   return (
     <div className="flex flex-col gap-8 p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-500">
-      <div className="flex items-center gap-4">
-        <Link href={"/admin/tryout"}>
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Link href={"/admin/tryout"}>
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-primary">
+              Edit Tryout
+            </h1>
+            <p className="text-muted-foreground">
+              Ubah informasi tryout dan kelola subtest.
+            </p>
+          </div>
+        </div>
+        <Link href={`/admin/tryout/${tryoutId}/preview`}>
+          <Button
+            variant="outline"
+            className="gap-2 border-purple-200 text-purple-600 hover:bg-purple-50 font-semibold shadow-sm"
+          >
+            <Eye className="h-4 w-4" />
+            Preview Tryout
           </Button>
         </Link>
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">
-            Edit Tryout
-          </h1>
-          <p className="text-muted-foreground">
-            Ubah informasi tryout dan kelola subtest.
-          </p>
-        </div>
       </div>
 
       <TryoutForm
@@ -177,6 +194,7 @@ const EditTryoutModule: React.FC<EditTryoutModuleProps> = ({ tryoutId }) => {
         subtests={subtests}
         createdTryoutId={tryoutId}
         handleFinish={handleFinish}
+        onRefresh={fetchSubtests}
       />
     </div>
   );

@@ -56,6 +56,15 @@ const CreateTryoutModule = () => {
     }));
   };
 
+  const fetchSubtests = async (id: string) => {
+    try {
+      const subtestsData = await getSubtestsByTryout(id);
+      setSubtests(subtestsData.sort((a, b) => a.order - b.order));
+    } catch (error) {
+      console.error("Failed to fetch subtests:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (createdTryoutId) return; // Prevent double submission if already created
@@ -82,9 +91,7 @@ const CreateTryoutModule = () => {
         await createUtbkSubtests(tryout.id);
 
         // 3. Fetch Subtests to display
-        const subtestsData = await getSubtestsByTryout(tryout.id);
-        // Sort by order
-        setSubtests(subtestsData.sort((a, b) => a.order - b.order));
+        await fetchSubtests(tryout.id);
         toast.success("Tryout berhasil dibuat!");
       }
     } catch (error) {
@@ -128,6 +135,7 @@ const CreateTryoutModule = () => {
         subtests={subtests}
         createdTryoutId={createdTryoutId}
         handleFinish={handleFinish}
+        onRefresh={() => createdTryoutId && fetchSubtests(createdTryoutId)}
       />
     </div>
   );

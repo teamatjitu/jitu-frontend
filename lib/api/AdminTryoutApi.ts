@@ -75,6 +75,26 @@ export const createUtbkSubtests = async (tryoutId: string) => {
   return response.json(); // Returns Created count or similar
 };
 
+export const updateSubtest = async (
+  id: string,
+  data: { durationMinutes: number }
+) => {
+  const response = await fetch(`${BACKEND_URL}/admin/subtests/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to update subtest");
+  }
+  return response.json();
+};
+
 export const getSubtestsByTryout = async (
   tryoutId: string
 ): Promise<Subtest[]> => {
@@ -100,6 +120,18 @@ export const getTryoutById = async (id: string) => {
 
   if (!response.ok) {
     throw new Error("Failed to fetch tryout");
+  }
+  return response.json();
+};
+
+export const getTryoutPreview = async (id: string) => {
+  const response = await fetch(`${BACKEND_URL}/admin/tryouts/${id}/preview`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch tryout preview");
   }
   return response.json();
 };
