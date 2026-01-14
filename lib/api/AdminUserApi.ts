@@ -93,6 +93,29 @@ export const resetUserTryout = async (attemptId: string) => {
   return response.json();
 };
 
+export interface UpdateUserPayload {
+  name?: string;
+  role?: string;
+  password?: string;
+  tokenBalance?: number;
+}
+
+export const updateUser = async (id: string, data: UpdateUserPayload) => {
+  const response = await fetch(`${BACKEND_URL}/admin/user/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update user details");
+  }
+  return response.json();
+};
+
 export const deleteUser = async (id: string) => {
   const response = await fetch(`${BACKEND_URL}/admin/user/${id}`, {
     method: "DELETE",

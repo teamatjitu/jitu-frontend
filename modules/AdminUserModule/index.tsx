@@ -20,13 +20,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Trash2, Coins, Eye } from "lucide-react";
+import { Trash2, Coins, Eye, Settings } from "lucide-react";
 import { StatCard } from "@/components/elements/Admin/StatCard";
 import { getStatsConfig } from "./const";
 import { AdminUserResponse, AdminUserStatsResponse } from "./interface";
 import { getAllUsers, getUserStats, deleteUser } from "@/lib/api/AdminUserApi";
 import { toast } from "sonner";
 import { TokenAdjustmentDialog } from "./components/TokenAdjustmentDialog";
+import { EditUserDialog } from "./components/EditUserDialog";
 import Link from "next/link";
 
 const AdminUserModule = () => {
@@ -47,6 +48,10 @@ const AdminUserModule = () => {
   const [selectedUserForToken, setSelectedUserForToken] =
     useState<AdminUserResponse | null>(null);
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
+
+  const [selectedUserForEdit, setSelectedUserForEdit] =
+    useState<AdminUserResponse | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -218,6 +223,18 @@ const AdminUserModule = () => {
                             <Coins className="h-4 w-4" />
                           </Button>
                           <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+                            title="Edit Profil"
+                            onClick={() => {
+                              setSelectedUserForEdit(user);
+                              setIsEditDialogOpen(true);
+                            }}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                          <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
@@ -275,6 +292,16 @@ const AdminUserModule = () => {
         onSuccess={() => {
           fetchData(); // Refresh to show new token balance
           setSelectedUserForToken(null);
+        }}
+      />
+
+      <EditUserDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        user={selectedUserForEdit}
+        onSuccess={() => {
+          fetchData(); // Refresh to show new data
+          setSelectedUserForEdit(null);
         }}
       />
     </div>
