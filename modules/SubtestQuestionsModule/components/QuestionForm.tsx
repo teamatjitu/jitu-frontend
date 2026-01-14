@@ -58,9 +58,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         ]
   );
   const [correctOptionIndex, setCorrectOptionIndex] = useState<number | null>(
-    sortedItems.length > 0
-      ? sortedItems.findIndex((it) => it.isCorrect)
-      : null
+    sortedItems.length > 0 ? sortedItems.findIndex((it) => it.isCorrect) : null
   );
 
   // State specific to ISIAN_SINGKAT
@@ -180,9 +178,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             <Label>Poin Soal</Label>
             <Input
               type="number"
-              min="0"
               value={points}
-              onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
+              onChange={(e) => setPoints(parseInt(e.target.value))}
             />
           </div>
         </div>
