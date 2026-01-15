@@ -58,7 +58,7 @@ const Navbar = () => {
   const { open, setOpen } = useSidebar();
 
   const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
-  const hidden = ["/login", "/register", "/admin"];
+  const hidden = ["/login", "/register", "/admin", "/"];
 
   // Hide navbar on exam pages
   const isExamPage = path.includes("/exam/");
