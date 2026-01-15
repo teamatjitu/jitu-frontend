@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Info, Flag, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FontSizeControl } from "./FontSizeControl";
-import renderMathInElement from "katex/dist/contrib/auto-render";
+import renderMathInElement from "katex/contrib/auto-render";
 import "katex/dist/katex.min.css";
 
 interface QuestionDisplayProps {

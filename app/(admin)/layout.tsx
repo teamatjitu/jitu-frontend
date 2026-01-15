@@ -6,6 +6,7 @@ import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { UserWithRole } from "@/lib/types";
 
 export default function AdminLayout({
   children,
@@ -17,10 +18,11 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!isPending) {
-      console.log("Current User Role:", session?.user?.role); // DEBUG LOG
+      const user = session?.user as unknown as UserWithRole;
+      console.log("Current User Role:", user?.role); // DEBUG LOG
       if (!session) {
         router.push("/login");
-      } else if (session.user.role !== "ADMIN") {
+      } else if (user?.role !== "ADMIN") {
         router.push("/dashboard");
       }
     }
@@ -34,8 +36,10 @@ export default function AdminLayout({
     );
   }
 
+  const user = session?.user as unknown as UserWithRole;
+
   // Jika session tidak ada atau role bukan admin, jangan render children (sedang redirect)
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || user?.role !== "ADMIN") {
     return null;
   }
 

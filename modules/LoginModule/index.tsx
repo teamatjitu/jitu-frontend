@@ -8,6 +8,7 @@ import { LoginData } from "./interface";
 import { signIn, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { UserWithRole } from "@/lib/types";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +18,7 @@ const LoginModule = () => {
   // Redirect jika sudah login
   useEffect(() => {
     if (!isPending && session) {
-      if (session.user.role === "ADMIN") {
+      if ((session.user as unknown as UserWithRole).role === "ADMIN") {
         router.push("/admin");
       } else {
         router.push("/dashboard");
@@ -45,7 +46,7 @@ const LoginModule = () => {
       },
       {
         onSuccess: (ctx) => {
-          const user = ctx.data.user;
+          const user = ctx.data.user as unknown as UserWithRole;
           if (user.role === "ADMIN") {
             router.push("/admin");
           } else {
@@ -53,7 +54,9 @@ const LoginModule = () => {
           }
         },
         onError: (ctx) => {
-          toast.error(ctx.error.message || "Gagal masuk. Cek email dan password.");
+          toast.error(
+            ctx.error.message || "Gagal masuk. Cek email dan password."
+          );
         },
       }
     );
@@ -156,7 +159,10 @@ const LoginModule = () => {
             </div>
 
             {/* Login Button */}
-            <Button onClick={handleSubmit} className="w-full font-bold py-6 rounded-xl">
+            <Button
+              onClick={handleSubmit}
+              className="w-full font-bold py-6 rounded-xl"
+            >
               Masuk
             </Button>
 
@@ -166,7 +172,9 @@ const LoginModule = () => {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">Akses Cepat</span>
+                <span className="px-4 bg-white text-gray-500 font-medium">
+                  Akses Cepat
+                </span>
               </div>
             </div>
 

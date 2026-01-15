@@ -29,6 +29,7 @@ import { ScoreData, StatCard, Subtest, MenuItem } from "./interface";
 import DailyStreak from "./components/DailyStreak";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserWithRole } from "@/lib/types";
 
 ChartJS.register(
   CategoryScale,
@@ -49,7 +50,7 @@ const DashboardModule = () => {
     if (!isPending) {
       if (!session) {
         router.push("/login");
-      } else if (session.user.role === "ADMIN") {
+      } else if ((session.user as unknown as UserWithRole).role === "ADMIN") {
         router.push("/admin");
       }
     }
