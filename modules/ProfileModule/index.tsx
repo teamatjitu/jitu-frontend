@@ -1,25 +1,23 @@
+// modules/ProfileModule/index.tsx
 "use client";
 import {
   BookOpen,
   TrendingUp,
-  Search,
-  Menu,
-  Bell,
-  Edit,
   Target,
   BarChart3,
   MessageCircle,
-  Settings,
-  Eye,
+  Edit,
   ChevronRight,
   LogOut,
-  Sun,
-  Info,
-  Filter,
+  Award,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react";
-import { useState } from "react";
-import { menuItems, scoreHistory, stats, subtests, weekDays } from "./payload";
-import { ScoreData, Subtest, MenuItem, StatCard } from "./interface";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "@/lib/auth-client"; // Gunakan auth client
+import { menuItems, subtests, weekDays } from "./payload";
+import { ScoreData, MenuItem, StatCard } from "./interface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +44,38 @@ ChartJS.register(
 );
 
 const DashboardModule = () => {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(true);
   const [activeSubtests, setActiveSubtests] = useState<string[]>(["total"]);
+  
+  // State untuk data dinamis
+  const [profileData, setProfileData] = useState<any>(null);
+
+  // Fetch Data dari Backend
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'}/api/profile/stats`, {
+            // Include credentials jika backend butuh cookie session, 
+            // tapi better-auth client biasanya handle ini via header/cookie otomatis jika satu domain
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setProfileData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile stats", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (session) {
+      fetchProfileData();
+    }
+  }, [session]);
 
   const toggleSubtest = (id: string) => {
     setActiveSubtests((prev) => {
@@ -62,13 +91,20 @@ const DashboardModule = () => {
     });
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    router.push("/login");
+  };
+
+  // Gunakan data dari backend atau fallback ke array kosong
+  const scoreHistory: ScoreData[] = profileData?.scoreHistory || [];
+
   const chartData = {
     labels: scoreHistory.map((score) => score.to),
     datasets: subtests
       .filter(
         (subtest) =>
-          activeSubtests.includes(subtest.id) ||
-          activeSubtests.includes("total")
+          activeSubtests.includes(subtest.id) || activeSubtests.includes("total")
       )
       .map((subtest) => {
         const color = subtest.color.replace("bg-", "").replace("-500", "");
@@ -99,19 +135,61 @@ const DashboardModule = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "bottom" as const,
-      },
-      title: {
-        display: false,
-      },
+      legend: { position: "bottom" as const },
+      title: { display: false },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-      },
+      y: { beginAtZero: true },
     },
   };
+
+  // Helper untuk stats card dinamis
+  const getDynamicStats = (): StatCard[] => {
+    const s = profileData?.stats;
+    return [
+      {
+        label: "SKOR TERAKHIR",
+        value: s?.lastScore || 0,
+        icon: BarChart3,
+        color: "text-blue-600",
+        bgColor: "bg-blue-100",
+      },
+      {
+        label: "PERSONAL BEST",
+        value: s?.personalBest || 0,
+        icon: Award,
+        color: "text-orange-600",
+        bgColor: "bg-orange-100",
+      },
+      {
+        label: "AKTIVITAS MINGGUAN",
+        value: s?.weeklyActivity || 0,
+        icon: Calendar,
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+        suffix: "soal",
+      },
+      {
+        label: "TOTAL TRYOUT",
+        value: s?.totalTryouts || 0,
+        icon: CheckCircle2,
+        color: "text-pink-600",
+        bgColor: "bg-pink-100",
+        suffix: "selesai",
+      },
+    ];
+  };
+
+  if (loading && !profileData) {
+      return (
+        <div className="min-h-screen pl-20 flex items-center justify-center bg-gray-100">
+            <div className="animate-pulse flex flex-col items-center">
+                <div className="w-12 h-12 bg-gray-300 rounded-full mb-4"></div>
+                <div className="h-4 w-32 bg-gray-300 rounded"></div>
+            </div>
+        </div>
+      )
+  }
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -132,28 +210,33 @@ const DashboardModule = () => {
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full lg:w-auto">
               <div className="relative flex-shrink-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold ring-4 ring-white/30 shadow-xl">
-                  H
-                </div>
+                {session?.user?.image ? (
+                   <img src={session.user.image} alt={session.user.name} className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ring-4 ring-white/30 shadow-xl object-cover" />
+                ) : (
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold ring-4 ring-white/30 shadow-xl">
+                    {session?.user?.name?.charAt(0) || "U"}
+                  </div>
+                )}
+                
                 <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-                  Hakim Nizami
+                  {session?.user?.name || "User"}
                 </h2>
                 <p className="text-blue-100 mb-3 text-sm sm:text-base">
-                  hakimnizami15@gmail.com
+                  {session?.user?.email || "email@example.com"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="bg-blue-400/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg">
                     <Target className="w-3.5 h-3.5" />
-                    Target: UTBK 2026
+                    Target: {profileData?.basicInfo?.target || "UTBK 2026"}
                   </span>
                   <span className="bg-blue-400/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    Terakhir aktif: Hari ini
+                    {profileData?.basicInfo?.lastActive || "Online"}
                   </span>
                 </div>
               </div>
@@ -181,7 +264,7 @@ const DashboardModule = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat: StatCard, index) => (
+            {getDynamicStats().map((stat: StatCard, index) => (
               <Card
                 key={index}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 border border-gray-100"
@@ -211,85 +294,44 @@ const DashboardModule = () => {
           </div>
         </section>
 
-        {/* Activity Chart */}
+        {/* Activity Chart (Mock Visual) */}
         <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+             {/* ... Bagian Heatmap Activity (Bisa dibiarkan mock atau di-update logicnya nanti) ... */}
+             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  Target Personal Best
+                  Aktivitas Harian
                 </h3>
                 <p className="text-sm text-gray-600">
-                  7 hari terakhir • Target:{" "}
-                  <span className="text-emerald-600 font-semibold">500</span>
+                  Konsistensi belajar kamu dalam seminggu terakhir
                 </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600 font-medium">
-                    Sedikit
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600 font-medium">
-                    Banyak
-                  </span>
-                </div>
               </div>
             </div>
 
             <div className="flex items-end justify-between gap-3 sm:gap-4 h-32">
               {weekDays.map((day, index) => {
                 const isToday = index === 6;
-                const height = Math.random() * 100;
+                // Mock visual, nanti bisa di-link ke API jika backend sudah support daily aggregation per day
+                const height = Math.random() * 80 + 20; 
                 return (
-                  <div
-                    key={day}
-                    className="flex-1 flex flex-col items-center gap-2"
-                  >
-                    <div
-                      className="w-full bg-gray-100 rounded-t-xl overflow-hidden"
-                      style={{ height: "100%" }}
-                    >
+                  <div key={day} className="flex-1 flex flex-col items-center gap-2">
+                    <div className="w-full bg-gray-100 rounded-t-xl overflow-hidden" style={{ height: "100%" }}>
                       <div
-                        className={`w-full ${
-                          isToday ? "bg-orange-500" : "bg-emerald-500"
-                        } rounded-t-xl transition-all hover:opacity-80 cursor-pointer`}
+                        className={`w-full ${isToday ? "bg-orange-500" : "bg-emerald-500"} rounded-t-xl transition-all hover:opacity-80`}
                         style={{ height: `${height}%`, marginTop: "auto" }}
                       ></div>
                     </div>
-                    <span
-                      className={`text-xs font-semibold ${
-                        isToday ? "text-orange-600" : "text-gray-600"
-                      }`}
-                    >
+                    <span className={`text-xs font-semibold ${isToday ? "text-orange-600" : "text-gray-600"}`}>
                       {day}
                     </span>
                   </div>
                 );
               })}
             </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-6 pt-6 border-t border-gray-100 gap-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Target className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">
-                  Terakhir aktif:{" "}
-                  <span className="font-semibold text-gray-900">Belum ada</span>
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                className="text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center gap-1 p-0 h-auto"
-              >
-                Lihat Insight Lengkap
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
           </CardContent>
         </Card>
+
         {/* Score Statistics Chart */}
         <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 bg-gray-50/50 p-6">
@@ -298,79 +340,42 @@ const DashboardModule = () => {
                 Statistik Skor Try Out
               </CardTitle>
               <p className="text-sm text-gray-600">
-                Perkembangan skor dari TO 1 hingga TO 5
+                Riwayat performa tryout kamu
               </p>
             </div>
-            <Button
-              variant={"outline"}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50 px-4 py-2 rounded-xl transition-all border-gray-200 shadow-sm"
-            >
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-semibold">Filter</span>
-            </Button>
           </CardHeader>
 
           <CardContent className="p-4 sm:p-6">
-            {/* Subtest Filter Chips */}
-            <div className="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-100">
-              {subtests.map((subtest: Subtest) => (
-                <Badge
-                  key={subtest.id}
-                  onClick={() => toggleSubtest(subtest.id)}
-                  variant={
-                    activeSubtests.includes(subtest.id) ? "default" : "outline"
-                  }
-                  className="font-semibold transition-all cursor-pointer hover:scale-105 shadow-sm"
-                >
-                  {subtest.label}
-                </Badge>
-              ))}
-            </div>
-
-            {/* Chart */}
-            <div className="relative h-80 sm:h-96 mb-6">
-              <Line data={chartData} options={chartOptions} />
-            </div>
-
-            {/* Score Summary */}
-            <div className="pt-6 border-t border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Riwayat Skor
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                {scoreHistory.map((score, index) => (
-                  <Card
-                    key={score.to}
-                    className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-blue-300"
-                  >
-                    <div className="text-xs text-gray-500 font-semibold mb-2 uppercase tracking-wide">
-                      {score.to}
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 mb-1">
-                      {score.total}
-                    </div>
-                    <div className="text-xs mt-1">
-                      {index > 0 && (
-                        <span
-                          className={`font-bold ${
-                            score.total > scoreHistory[index - 1].total
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
+             {/* Jika belum ada data skor */}
+             {scoreHistory.length === 0 ? (
+                 <div className="text-center py-12 text-gray-500">
+                     Belum ada riwayat Tryout. Ayo kerjakan Tryout pertamamu!
+                     <div className="mt-4">
+                        <Button onClick={() => router.push('/tryout')}>Cari Tryout</Button>
+                     </div>
+                 </div>
+             ) : (
+                <>
+                    {/* Subtest Filter Chips */}
+                    <div className="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-100">
+                    {subtests.map((subtest) => (
+                        <Badge
+                        key={subtest.id}
+                        onClick={() => toggleSubtest(subtest.id)}
+                        variant={activeSubtests.includes(subtest.id) ? "default" : "outline"}
+                        className="font-semibold transition-all cursor-pointer hover:scale-105 shadow-sm"
                         >
-                          {score.total > scoreHistory[index - 1].total
-                            ? "↑ +"
-                            : "↓ "}
-                          {Math.abs(
-                            score.total - scoreHistory[index - 1].total
-                          )}
-                        </span>
-                      )}
+                        {subtest.label}
+                        </Badge>
+                    ))}
                     </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
+
+                    {/* Chart */}
+                    <div className="relative h-80 sm:h-96 mb-6">
+                    <Line data={chartData} options={chartOptions} />
+                    </div>
+                </>
+             )}
           </CardContent>
         </Card>
 
@@ -411,11 +416,6 @@ const DashboardModule = () => {
                             <div className="text-sm font-semibold text-gray-900">
                               {item.label}
                             </div>
-                            {item.description && (
-                              <div className="text-xs text-gray-500">
-                                {item.description}
-                              </div>
-                            )}
                           </div>
                         </div>
                         {item.toggle && (
@@ -430,23 +430,6 @@ const DashboardModule = () => {
                     ))}
                   </div>
                 )}
-
-                {menu.action && (
-                  <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl flex items-center justify-center gap-2">
-                    <MessageCircle className="w-5 h-5" />
-                    {menu.action}
-                  </Button>
-                )}
-
-                {index === menuItems.length - 1 && (
-                  <Button
-                    variant={"ghost"}
-                    className="w-full mt-3 text-emerald-600 font-semibold text-sm hover:text-emerald-700 flex items-center justify-center gap-1 p-3 hover:bg-emerald-50 rounded-xl transition-all"
-                  >
-                    Pengaturan lengkap
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                )}
               </CardContent>
             </Card>
           ))}
@@ -456,6 +439,7 @@ const DashboardModule = () => {
         <div className="mt-8 flex justify-center pb-8">
           <Button
             variant={"destructive"}
+            onClick={handleLogout}
             className="bg-white border-2 border-red-200 text-red-600 px-8 py-3 rounded-xl font-bold hover:bg-red-50 hover:border-red-300 transition-all flex items-center gap-2 shadow-sm"
           >
             <LogOut className="w-5 h-5" />
