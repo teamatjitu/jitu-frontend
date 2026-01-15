@@ -15,6 +15,9 @@ export interface TryoutDetail {
   categories: CategoryDetail[];
   benefits: string[];
   requirements: string[];
+  latestFinishedAttemptId?: string | null;
+  latestAttemptStatus?: 'IN_PROGRESS' | 'FINISHED' | null;
+
 }
 
 export interface CategoryDetail {
