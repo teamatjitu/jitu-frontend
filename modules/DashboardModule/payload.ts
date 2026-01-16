@@ -17,6 +17,63 @@ import {
   DailyProblem,
 } from "./interface";
 
+export const availableTryouts = [
+  {
+    id: 4,
+    title: "Try Out UTBK SNBT 4 2026",
+    number: "4",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 22752,
+  },
+  {
+    id: 3,
+    title: "Try Out UTBK SNBT 3 2026",
+    number: "3",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 18477,
+  },
+  {
+    id: 2,
+    title: "Try Out UTBK SNBT 2 2026",
+    number: "2",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 22736,
+  },
+  {
+    id: 1,
+    title: "Try Out UTBK SNBT 1 2026",
+    number: "1",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 31307,
+  },
+  {
+    id: 14,
+    title: "Try Out UTBK SNBT 14 2025",
+    number: "14",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 188473,
+  },
+  {
+    id: 13,
+    title: "Try Out UTBK SNBT 13 2025",
+    number: "13",
+    badge: "SNBT",
+    type: "Gratis dan Berbayar",
+    status: "Bisa diedit",
+    participants: 166687,
+  },
+];
+
 export const stats: StatCard[] = [
   {
     label: "SKOR TERAKHIR",
