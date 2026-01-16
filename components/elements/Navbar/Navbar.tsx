@@ -57,7 +57,8 @@ const Navbar = () => {
   const router = useRouter();
   const { open, setOpen } = useSidebar();
 
-  const state = items.find((item) => path.endsWith(item.path)) ?? items[0];
+  const state =
+    items.find((item) => path.startsWith(`/${item.path}`)) ?? items[0];
   const hidden = ["/login", "/register", "/admin"];
 
   // Hide navbar on exam pages

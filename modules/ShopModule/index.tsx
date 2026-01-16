@@ -7,11 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircleIcon, CheckCircle2Icon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { AlertCircleIcon, History, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { usePathname, useRouter } from "next/navigation";
 import TokenCard from "./components/TokenCard";
-import { tokenPackages } from "./payload";
+import { contactInfos, tokenPackages } from "./payload";
 
 import { BACKEND_URL } from "@/lib/api";
 
@@ -20,23 +22,10 @@ const ShopModule = () => {
   const [selectedPkg, setSelectedPkg] = useState<number | null>(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [showContact, setShowContact] = useState(false);
   const [qrCode, setQrCode] = useState("");
 
-  const [alerts, setAlerts] = useState<
-    { type: "success" | "error"; title: string; message: string }[]
-  >([]);
-
-  function showAlert(
-    type: "success" | "error",
-    title: string,
-    message: string
-  ) {
-    setAlerts((prev) => [...prev, { type, title, message }]);
-
-    setTimeout(() => {
-      setAlerts((prev) => prev.slice(1));
-    }, 5000);
-  }
+  const router = useRouter();
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -51,6 +40,43 @@ const ShopModule = () => {
           <p className="text-gray-600">
             Pilih paket token yang sesuai dengan kebutuhan latihan kamu
           </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div
+            onClick={() => router.push("/shop/pending")}
+            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                <History className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">
+                  Cek Transaksi Pending
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Lihat transaksi token try out yang belum selesai dibayar
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            onClick={() => router.push("/shop/past")}
+            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                <History className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">Cek Transaksi Lama</h3>
+                <p className="text-gray-500 text-sm">
+                  Lihat riwayat pembelian token try out kamu sebelumnya
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Info Banner */}
@@ -95,24 +121,20 @@ const ShopModule = () => {
         </section>
       </div>
 
-      <div className="fixed bottom-4 right-4 flex flex-col gap-2">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={index}
-            variant={alert.type === "success" ? "default" : "destructive"}
-          >
-            {alert.type === "success" ? (
-              <CheckCircle2Icon className="w-5 h-5 mr-2" />
-            ) : (
-              <AlertCircleIcon className="w-5 h-5 mr-2" />
-            )}
-            <AlertTitle>{alert.title}</AlertTitle>
-            <AlertDescription>{alert.message}</AlertDescription>
-          </Alert>
-        ))}
-      </div>
+      <Dialog
+        open={isModalOpened}
+        onOpenChange={(state) => {
+          setIsModalOpened(state);
 
-      <Dialog open={isModalOpened} onOpenChange={setIsModalOpened} modal>
+          if (!state) {
+            setIsModalLoading(false);
+            setTransactionId(null);
+            setSelectedPkg(null);
+            setShowContact(false);
+          }
+        }}
+        modal
+      >
         <DialogContent>
           {!isModalLoading && !transactionId && (
             <>
@@ -130,13 +152,13 @@ const ShopModule = () => {
                     setIsModalLoading(true);
 
                     fetch(
-                      `${BACKEND_URL}/api/shop/create/${
+                      `${BACKEND_URL}/shop/create/${
                         tokenPackages[selectedPkg!].id
                       }`,
                       {
                         method: "POST",
                         credentials: "include",
-                      }
+                      },
                     )
                       .then((res) => {
                         if (!res.ok) {
@@ -150,15 +172,16 @@ const ShopModule = () => {
                         setIsModalLoading(false);
                         setTransactionId(data.id);
                         setQrCode(data.qris);
+                        setShowContact(false);
                       })
                       .catch((e: Error) => {
                         // console.error(e);
                         setIsModalLoading(false);
-                        showAlert(
-                          "error",
-                          "Gagal Membuat Transaksi",
-                          "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi."
-                        );
+
+                        toast.error("Gagal Membuat Transaksi", {
+                          description:
+                            "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi.",
+                        });
                       });
                   }}
                 >
@@ -175,7 +198,7 @@ const ShopModule = () => {
             </div>
           )}
 
-          {!isModalLoading && transactionId && (
+          {!isModalLoading && transactionId && !showContact && (
             <div className="flex flex-col items-center gap-4">
               <h2 className="text-2xl font-bold mb-4">
                 Silahkan Lakukan Pembayaran
@@ -185,7 +208,7 @@ const ShopModule = () => {
                   {qrCode ? (
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
-                        qrCode
+                        qrCode,
                       )}`}
                       alt="QRIS code"
                       className="w-48 h-48"
@@ -200,46 +223,56 @@ const ShopModule = () => {
               </div>
               <Button
                 onClick={() => {
-                  setIsModalLoading(true);
-
-                  fetch(`${BACKEND_URL}/api/shop/check/${transactionId}`, {
-                    method: "POST",
-                    credentials: "include",
-                  })
-                    .then((res) => res.json())
-                    .then((data: { type: string }) => {
-                      console.log(data);
-                      setIsModalLoading(false);
-
-                      if (data.type === "PAID") {
-                        showAlert(
-                          "success",
-                          "Pembayaran Berhasil",
-                          "Terima kasih! Pembayaran kamu telah kami terima dan token sudah ditambahkan ke akun kamu."
-                        );
-                        setIsModalOpened(false);
-                        setTransactionId(null);
-                        setSelectedPkg(null);
-                      } else {
-                        showAlert(
-                          "error",
-                          "Pembayaran Belum Diterima",
-                          "Pembayaran kamu belum kami terima. Silahkan pastikan kamu sudah melakukan pembayaran dengan benar."
-                        );
-                      }
-                    })
-                    .catch((e: Error) => {
-                      console.error(e);
-                      setIsModalLoading(false);
-                      showAlert(
-                        "error",
-                        "Gagal Memeriksa Status Transaksi",
-                        "Terjadi kesalahan saat memeriksa status transaksi. Silahkan coba lagi."
-                      );
-                    });
+                  setShowContact(true);
                 }}
               >
                 Saya sudah melakukan pembayaran
+              </Button>
+            </div>
+          )}
+
+          {!isModalLoading && transactionId && showContact && (
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-bold mb-4">Pembayaran Diproses</h2>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-center">
+                  Pembayaran kamu akan segera kami proses. Apabila dalam 1x24
+                  jam belum terverifikasi, silahkan hubungi kontak berikut:
+                </p>
+                {contactInfos.map((contact) => (
+                  <Alert
+                    key={contact.name}
+                    variant="info"
+                    className="w-full max-w-md"
+                  >
+                    <AlertCircleIcon className="h-5 w-5 shrink-0" />
+                    <div>
+                      <AlertTitle className="font-medium">
+                        {contact.name}
+                      </AlertTitle>
+                      <AlertDescription className="text-sm mt-2">
+                        {Object.entries(contact.contacts).map(
+                          ([method, info]) => (
+                            <div key={method}>
+                              <strong>{method}:</strong> {info || "-"}
+                            </div>
+                          ),
+                        )}
+                      </AlertDescription>
+                    </div>
+                  </Alert>
+                ))}
+                <p className="text-xs text-gray-500">
+                  Transaction ID: {transactionId}
+                </p>
+              </div>
+              <Button
+                className="mt-4"
+                onClick={() => {
+                  setShowContact(false);
+                }}
+              >
+                Tunjukkan kembali QRIS
               </Button>
             </div>
           )}

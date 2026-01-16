@@ -38,3 +38,14 @@ export const tokenPackages: TokenPackage[] = [
     categoryBg: "from-emerald-500 to-emerald-600",
   },
 ];
+
+export const contactInfos = [
+  {
+    name: "Hakim Ninja Mie",
+    contacts: {
+      LINE: "@hakimnm",
+      Email: "hakimnm@email.net",
+      WhatsApp: "0812-3456-7890",
+    },
+  },
+];

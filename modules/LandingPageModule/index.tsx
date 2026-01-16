@@ -96,8 +96,12 @@ const LandingPageModule = () => {
           process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
         const [activeResponse, availableResponse] = await Promise.all([
-          fetch(`${backendUrl}/api/tryout/active`),
-          fetch(`${backendUrl}/api/tryout/available`),
+          fetch(`${backendUrl}/tryout/active`, {
+            credentials: "include",
+          }),
+          fetch(`${backendUrl}/tryout/available`, {
+            credentials: "include",
+          }),
         ]);
 
         const activeData = await activeResponse.json();
@@ -111,7 +115,7 @@ const LandingPageModule = () => {
             isFree: true, // TODO: add to backend
             status: "active",
             canTake: true,
-          }))
+          })),
         );
 
         setAvailableTryOuts(
@@ -119,7 +123,7 @@ const LandingPageModule = () => {
             ...item,
             isFree: true,
             status: "available",
-          }))
+          })),
         );
       } catch (error) {
         console.error("Error fetching try outs:", error);
@@ -320,7 +324,9 @@ const LandingPageModule = () => {
                         )}
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Users className="w-4 h-4" />
-                          <span>{tryOut.participants.toLocaleString()} Peserta</span>
+                          <span>
+                            {tryOut.participants.toLocaleString()} Peserta
+                          </span>
                         </div>
                       </div>
 
@@ -404,7 +410,9 @@ const LandingPageModule = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
-                      <span>{tryOut.participants.toLocaleString()} Peserta</span>
+                      <span>
+                        {tryOut.participants.toLocaleString()} Peserta
+                      </span>
                     </div>
                   </div>
 
@@ -458,9 +466,7 @@ const LandingPageModule = () => {
                     <div
                       className={`${subject.bgColor} p-4 rounded-xl group-hover:scale-110 transition-transform`}
                     >
-                      <IconComponent
-                        className={`w-8 h-8 ${subject.color}`}
-                      />
+                      <IconComponent className={`w-8 h-8 ${subject.color}`} />
                     </div>
                     <h3 className="text-sm font-semibold text-gray-900 leading-tight">
                       {subject.name}
