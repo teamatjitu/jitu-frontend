@@ -47,14 +47,32 @@ export const getDailyQuestion = async (): Promise<DailyQuestionResponse> => {
         question: {
           id: "mock-1",
           type: "MULTIPLE_CHOICE",
-          content: "Manakah di antara kalimat berikut yang merupakan kalimat efektif?",
+          content:
+            "Manakah di antara kalimat berikut yang merupakan kalimat efektif?",
           imageUrl: null,
           narration: null,
           options: [
-            { id: "opt-1", content: "Budi adalah merupakan seorang anak yang pintar.", order: 0 },
-            { id: "opt-2", content: "Meskipun lelah, tetapi dia tetap melanjutkan pekerjaannya.", order: 1 },
-            { id: "opt-3", content: "Para hadirin dimohon untuk duduk kembali.", order: 2 },
-            { id: "opt-4", content: "Dia menjelaskan tentang masalah itu secara rinci.", order: 3 },
+            {
+              id: "opt-1",
+              content: "Budi adalah merupakan seorang anak yang pintar.",
+              order: 0,
+            },
+            {
+              id: "opt-2",
+              content:
+                "Meskipun lelah, tetapi dia tetap melanjutkan pekerjaannya.",
+              order: 1,
+            },
+            {
+              id: "opt-3",
+              content: "Para hadirin dimohon untuk duduk kembali.",
+              order: 2,
+            },
+            {
+              id: "opt-4",
+              content: "Dia menjelaskan tentang masalah itu secara rinci.",
+              order: 3,
+            },
           ],
         },
       };
@@ -108,10 +126,12 @@ export const submitAnswer = async (
         success: true,
         isCorrect,
         newStreak: isCorrect ? 1 : 0,
-        explanation: isCorrect 
+        explanation: isCorrect
           ? "Kalimat C adalah kalimat efektif karena tidak mengandung pleonasme (pengulangan kata yang bermakna sama) dan tidak memiliki kontradiksi konjungsi."
           : "Jawaban yang benar adalah C. Kalimat C adalah kalimat efektif karena tidak mengandung pleonasme dan tidak memiliki kontradiksi konjungsi.",
-        message: isCorrect ? "Jawaban benar!" : "Jawaban salah. Coba lagi besok!",
+        message: isCorrect
+          ? "Jawaban benar!"
+          : "Jawaban salah. Coba lagi besok!",
       };
     }
     throw new Error("Failed to submit answer");

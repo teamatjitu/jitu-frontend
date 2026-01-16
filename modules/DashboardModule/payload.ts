@@ -1,6 +1,4 @@
-import {
-  Subtest,
-} from "./interface";
+import { Subtest } from "./interface";
 
 // Subtest configuration for chart display
 export const subtests: Subtest[] = [
@@ -47,4 +45,3 @@ export const subtests: Subtest[] = [
     hoverColor: "hover:bg-indigo-600",
   },
 ];
-

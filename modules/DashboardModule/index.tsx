@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,15 +26,15 @@ import { ScoreData, Subtest } from "./interface";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserWithRole } from "@/lib/types";
-import { 
-  getUserStats, 
-  getOngoingTryouts, 
-  getAvailableTryouts, 
+import {
+  getUserStats,
+  getOngoingTryouts,
+  getAvailableTryouts,
   getScoreHistory,
   UserStats,
   OngoingTryout,
   AvailableTryout,
-  ScoreHistory
+  ScoreHistory,
 } from "@/lib/api/DashboardApi";
 import { toast } from "sonner";
 
@@ -55,7 +54,9 @@ const DashboardModule = () => {
   const { data: session, isPending } = useSession();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [ongoingTryouts, setOngoingTryouts] = useState<OngoingTryout[]>([]);
-  const [availableTryoutsData, setAvailableTryoutsData] = useState<AvailableTryout[]>([]);
+  const [availableTryoutsData, setAvailableTryoutsData] = useState<
+    AvailableTryout[]
+  >([]);
   const [scoreHistory, setScoreHistory] = useState<ScoreHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +75,7 @@ const DashboardModule = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       const [stats, ongoing, available, history] = await Promise.all([
         getUserStats(),
         getOngoingTryouts(),
@@ -270,10 +271,12 @@ const DashboardModule = () => {
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-green-500" />
                             <span>
-                              {new Date(tryout.scheduledStart).toLocaleDateString('id-ID', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
+                              {new Date(
+                                tryout.scheduledStart
+                              ).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
                               })}
                             </span>
                           </div>
@@ -333,7 +336,9 @@ const DashboardModule = () => {
           ) : (
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
               <CardContent className="p-8 text-center">
-                <p className="text-gray-500">Tidak ada try out yang sedang berlangsung</p>
+                <p className="text-gray-500">
+                  Tidak ada try out yang sedang berlangsung
+                </p>
               </CardContent>
             </Card>
           )}
@@ -389,11 +394,14 @@ const DashboardModule = () => {
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-gray-600">•</span>
                         <span className="text-gray-700">
-                          {new Date(tryout.scheduledStart).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
+                          {new Date(tryout.scheduledStart).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            }
+                          )}
                         </span>
                       </div>
                     )}
