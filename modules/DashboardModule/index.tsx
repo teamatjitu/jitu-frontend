@@ -26,6 +26,7 @@ import { scoreHistory, subtests, availableTryouts } from "./payload";
 import { ScoreData, Subtest } from "./interface";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserWithRole } from "@/lib/types";
 
 ChartJS.register(
   CategoryScale,
@@ -43,8 +44,12 @@ const DashboardModule = () => {
   const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/login");
+    if (!isPending) {
+      if (!session) {
+        router.push("/login");
+      } else if ((session.user as unknown as UserWithRole).role === "ADMIN") {
+        router.push("/admin");
+      }
     }
   }, [session, isPending, router]);
 
