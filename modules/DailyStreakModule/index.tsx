@@ -3,58 +3,99 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { dailyProblems } from "./payload";
-import { DailyProblem } from "./interface";
 import { Flame, Trophy, Calendar, Target, CheckCircle2 } from "lucide-react";
+import {
+  getDailyQuestion,
+  getUserStreak,
+  submitAnswer as submitAnswerApi,
+  DailyQuestion as APIDailyQuestion,
+} from "@/lib/api/DailyApi";
+import { toast } from "sonner";
 
 const DailyStreakModule = () => {
   const [streak, setStreak] = useState(0);
-  const [currentProblem, setCurrentProblem] = useState<DailyProblem | null>(
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalProblemsSolved, setTotalProblemsSolved] = useState(0);
+  const [currentProblem, setCurrentProblem] = useState<APIDailyQuestion | null>(
     null
   );
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get today's problem
-    const today = new Date().toDateString();
-    const problem = dailyProblems.find((p) => p.date === today);
-    setCurrentProblem(problem || dailyProblems[0]); // Fallback to first problem
-
-    // Load streak from localStorage
-    const savedStreak = localStorage.getItem("dailyStreak");
-    if (savedStreak) {
-      setStreak(parseInt(savedStreak));
-    }
-
-    // Check if already answered today
-    const lastAnswered = localStorage.getItem("lastAnsweredDate");
-    if (lastAnswered === today) {
-      setIsAnswered(true);
-    }
+    loadDailyData();
   }, []);
 
-  const handleAnswerSubmit = () => {
+  const loadDailyData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load streak data
+      const streakData = await getUserStreak();
+      setStreak(streakData.currentStreak);
+      setBestStreak(streakData.bestStreak);
+      setTotalProblemsSolved(streakData.totalProblemsSolved);
+
+      // Load today's question
+      const questionData = await getDailyQuestion();
+      setCurrentProblem(questionData.question);
+      setIsAnswered(questionData.alreadyAnswered);
+      
+      if (questionData.alreadyAnswered && questionData.isCorrect !== undefined) {
+        setIsCorrect(questionData.isCorrect);
+      }
+    } catch (error) {
+      console.error("Failed to load daily data:", error);
+      toast.error("Gagal memuat data harian");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnswerSubmit = async () => {
     if (!currentProblem || !selectedAnswer) return;
 
-    const correct = selectedAnswer === currentProblem.correctAnswer;
-    setIsCorrect(correct);
-    setIsAnswered(true);
-
-    if (correct) {
-      const newStreak = streak + 1;
-      setStreak(newStreak);
-      localStorage.setItem("dailyStreak", newStreak.toString());
+    try {
+      const result = await submitAnswerApi(currentProblem.id, selectedAnswer);
+      
+      if (result.success) {
+        setIsCorrect(result.isCorrect || false);
+        setIsAnswered(true);
+        setExplanation(result.explanation || null);
+        
+        if (result.newStreak !== undefined) {
+          setStreak(result.newStreak);
+          setBestStreak(Math.max(bestStreak, result.newStreak));
+        }
+        
+        if (result.isCorrect) {
+          setTotalProblemsSolved(totalProblemsSolved + 1);
+          toast.success("Jawaban benar! Streak kamu bertambah! 🔥");
+        } else {
+          toast.error("Jawaban salah. Coba lagi besok!");
+        }
+      } else {
+        toast.error(result.message || "Gagal mengirim jawaban");
+      }
+    } catch (error) {
+      console.error("Failed to submit answer:", error);
+      toast.error("Gagal mengirim jawaban");
     }
-
-    localStorage.setItem("lastAnsweredDate", new Date().toDateString());
   };
 
-  const resetStreak = () => {
-    setStreak(0);
-    localStorage.setItem("dailyStreak", "0");
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen pl-20 bg-gradient-to-br from-orange-50 via-pink-50 to-yellow-50 pt-24 pb-20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat soal harian...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pl-20 bg-gradient-to-br from-orange-50 via-pink-50 to-yellow-50 pt-24 pb-20">
@@ -92,9 +133,7 @@ const DailyStreakModule = () => {
                 <Trophy className="w-8 h-8" />
                 <div>
                   <p className="text-sm opacity-90">Best Streak</p>
-                  <p className="text-3xl font-bold">
-                    {Math.max(streak, 15)} hari
-                  </p>
+                  <p className="text-3xl font-bold">{bestStreak} hari</p>
                 </div>
               </div>
             </CardContent>
@@ -106,7 +145,7 @@ const DailyStreakModule = () => {
                 <Target className="w-8 h-8" />
                 <div>
                   <p className="text-sm opacity-90">Problems Solved</p>
-                  <p className="text-3xl font-bold">{streak * 3}</p>
+                  <p className="text-3xl font-bold">{totalProblemsSolved}</p>
                 </div>
               </div>
             </CardContent>
@@ -137,38 +176,48 @@ const DailyStreakModule = () => {
           <CardContent className="p-8">
             {currentProblem ? (
               <div className="space-y-6">
-                {/* Problem Details */}
-                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold">
-                    {currentProblem.subject}
-                  </span>
-                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-semibold">
-                    {currentProblem.difficulty}
-                  </span>
-                </div>
+                {/* Question Image */}
+                {currentProblem.imageUrl && (
+                  <div className="mb-4">
+                    <img
+                      src={currentProblem.imageUrl}
+                      alt="Question"
+                      className="max-w-full h-auto rounded-lg"
+                    />
+                  </div>
+                )}
+
+                {/* Narration */}
+                {currentProblem.narration && (
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200 mb-4">
+                    <p className="text-gray-700 italic">
+                      {currentProblem.narration}
+                    </p>
+                  </div>
+                )}
 
                 {/* Question */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <p className="text-lg text-gray-900 leading-relaxed">
-                    {currentProblem.question}
-                  </p>
-                </div>
+                {currentProblem.content && (
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <p className="text-lg text-gray-900 leading-relaxed">
+                      {currentProblem.content}
+                    </p>
+                  </div>
+                )}
 
                 {/* Options */}
                 <div className="space-y-3">
                   {currentProblem.options.map((option, index) => {
-                    const optionKey = String.fromCharCode(65 + index); // A, B, C, D
-                    const isSelected = selectedAnswer === optionKey;
-                    const isCorrectAnswer =
-                      isAnswered && currentProblem.correctAnswer === optionKey;
-                    const isWrongAnswer =
-                      isAnswered && isSelected && !isCorrectAnswer;
+                    const isSelected = selectedAnswer === option.id;
+                    const isCorrectAnswer = false; // We don't reveal correct answer from frontend
+                    const isWrongAnswer = isAnswered && isSelected && !isCorrect;
+                    const optionLabel = String.fromCharCode(65 + index); // A, B, C, D...
 
                     return (
                       <button
-                        key={optionKey}
+                        key={option.id}
                         onClick={() =>
-                          !isAnswered && setSelectedAnswer(optionKey)
+                          !isAnswered && setSelectedAnswer(option.id)
                         }
                         disabled={isAnswered}
                         className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
@@ -197,10 +246,10 @@ const DailyStreakModule = () => {
                                 : "bg-gray-200 text-gray-700"
                             }`}
                           >
-                            {optionKey}
+                            {optionLabel}
                           </div>
                           <span className="text-base text-gray-900 flex-1">
-                            {option}
+                            {option.content}
                           </span>
                           {isCorrectAnswer && (
                             <CheckCircle2 className="w-6 h-6 text-green-500" />
@@ -223,14 +272,14 @@ const DailyStreakModule = () => {
                 )}
 
                 {/* Explanation */}
-                {isAnswered && (
+                {isAnswered && explanation && (
                   <Card className="bg-blue-50 border-2 border-blue-200">
                     <CardContent className="p-6">
                       <h3 className="font-bold text-lg text-blue-900 mb-3">
                         💡 Pembahasan
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
-                        {currentProblem.explanation}
+                        {explanation}
                       </p>
                     </CardContent>
                   </Card>

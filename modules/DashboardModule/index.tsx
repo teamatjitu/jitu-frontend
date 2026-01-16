@@ -22,11 +22,22 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { scoreHistory, subtests, availableTryouts } from "./payload";
+import { subtests } from "./payload";
 import { ScoreData, Subtest } from "./interface";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserWithRole } from "@/lib/types";
+import { 
+  getUserStats, 
+  getOngoingTryouts, 
+  getAvailableTryouts, 
+  getScoreHistory,
+  UserStats,
+  OngoingTryout,
+  AvailableTryout,
+  ScoreHistory
+} from "@/lib/api/DashboardApi";
+import { toast } from "sonner";
 
 ChartJS.register(
   CategoryScale,
@@ -42,6 +53,11 @@ const DashboardModule = () => {
   const router = useRouter();
   const [activeSubtests, setActiveSubtests] = useState<string[]>(["total"]);
   const { data: session, isPending } = useSession();
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [ongoingTryouts, setOngoingTryouts] = useState<OngoingTryout[]>([]);
+  const [availableTryoutsData, setAvailableTryoutsData] = useState<AvailableTryout[]>([]);
+  const [scoreHistory, setScoreHistory] = useState<ScoreHistory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isPending) {
@@ -49,11 +65,36 @@ const DashboardModule = () => {
         router.push("/login");
       } else if ((session.user as unknown as UserWithRole).role === "ADMIN") {
         router.push("/admin");
+      } else {
+        loadDashboardData();
       }
     }
   }, [session, isPending, router]);
 
-  if (isPending) {
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      const [stats, ongoing, available, history] = await Promise.all([
+        getUserStats(),
+        getOngoingTryouts(),
+        getAvailableTryouts(),
+        getScoreHistory(),
+      ]);
+
+      setUserStats(stats);
+      setOngoingTryouts(ongoing);
+      setAvailableTryoutsData(available);
+      setScoreHistory(history);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+      toast.error("Gagal memuat data dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isPending || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Loading...
@@ -64,21 +105,6 @@ const DashboardModule = () => {
   if (!session) {
     return null;
   }
-
-  // Mock registered tryouts data - currently in progress
-  const registeredTryouts = [
-    {
-      id: 5,
-      title: "Try Out UTBK SNBT 5 2026",
-      number: "5",
-      badge: "SNBT",
-      type: "Gratis dan Berbayar",
-      participants: 13582,
-      startDate: "4 Januari 2026",
-      endDate: "18 Januari 2026",
-      isRegistered: false,
-    },
-  ];
 
   const toggleSubtest = (id: string) => {
     setActiveSubtests((prev) => {
@@ -182,7 +208,9 @@ const DashboardModule = () => {
             </div>
 
             <div className="bg-blue-400/30 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/30 w-full sm:w-auto">
-              <div className="text-3xl sm:text-4xl font-bold mb-1">0</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-1">
+                {userStats?.tokenBalance ?? 0}
+              </div>
               <div className="text-sm text-blue-100 mb-3">Kuota Premium</div>
               <Button
                 variant="outline"
@@ -208,91 +236,107 @@ const DashboardModule = () => {
             </p>
           </div>
 
-          {registeredTryouts.map((tryout) => (
-            <Card
-              key={tryout.id}
-              className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden"
-            >
-              <CardContent className="p-0">
-                <div className="flex items-center gap-6 p-6">
-                  {/* Large Number Display */}
-                  <div className="flex flex-col items-center">
-                    <Badge className="bg-green-500 text-white px-3 py-1 text-xs font-bold mb-2">
-                      {tryout.badge}
-                    </Badge>
-                    <div className="text-7xl font-bold text-gray-900">
-                      {tryout.number}
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="h-32 w-px bg-gray-200"></div>
-
-                  {/* Try Out Details */}
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 mb-1">{tryout.type}</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      {tryout.title}
-                    </h3>
-                    <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-green-500" />
-                        <span>
-                          {tryout.startDate} - {tryout.endDate}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span>
-                          {tryout.participants.toLocaleString()} Peserta
-                        </span>
+          {ongoingTryouts.length > 0 ? (
+            ongoingTryouts.map((tryout) => (
+              <Card
+                key={tryout.id}
+                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden"
+              >
+                <CardContent className="p-0">
+                  <div className="flex items-center gap-6 p-6">
+                    {/* Large Number Display */}
+                    <div className="flex flex-col items-center">
+                      <Badge className="bg-green-500 text-white px-3 py-1 text-xs font-bold mb-2">
+                        SNBT
+                      </Badge>
+                      <div className="text-7xl font-bold text-gray-900">
+                        {tryout.title.match(/\d+/)?.[0] || "N/A"}
                       </div>
                     </div>
 
-                    {/* Not Registered State */}
-                    {!tryout.isRegistered && (
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                              <Info className="w-5 h-5 text-gray-500" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">
-                                Kamu belum mendaftar Try Out
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Beli kuota Try Out atau daftar Try Out gratis
-                                untuk mulai latihan!
-                              </p>
-                            </div>
+                    {/* Divider */}
+                    <div className="h-32 w-px bg-gray-200"></div>
+
+                    {/* Try Out Details */}
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 mb-1">
+                        {tryout.isPublic ? "Gratis" : "Berbayar"}
+                      </p>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        {tryout.title}
+                      </h3>
+                      <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
+                        {tryout.scheduledStart && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-green-500" />
+                            <span>
+                              {new Date(tryout.scheduledStart).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="outline"
-                              className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                              onClick={() => router.push("/shop")}
-                            >
-                              Beli Kuota Premium
-                            </Button>
-                            <Button
-                              className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                              onClick={() =>
-                                router.push(`/tryout/${tryout.id}`)
-                              }
-                            >
-                              Daftar Try Out
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
-                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <span>
+                            {tryout.participants.toLocaleString()} Peserta
+                          </span>
                         </div>
                       </div>
-                    )}
+
+                      {/* Not Registered State */}
+                      {!tryout.isRegistered && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                <Info className="w-5 h-5 text-gray-500" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">
+                                  Kamu belum mendaftar Try Out
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Beli kuota Try Out atau daftar Try Out gratis
+                                  untuk mulai latihan!
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="outline"
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                onClick={() => router.push("/shop")}
+                              >
+                                Beli Kuota Premium
+                              </Button>
+                              <Button
+                                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+                                onClick={() =>
+                                  router.push(`/tryout/${tryout.id}`)
+                                }
+                              >
+                                Daftar Try Out
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-500">Tidak ada try out yang sedang berlangsung</p>
               </CardContent>
             </Card>
-          ))}
+          )}
         </section>
 
         {/* Try Out Tersedia Section */}
@@ -315,7 +359,7 @@ const DashboardModule = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableTryouts.map((tryout) => (
+            {availableTryoutsData.slice(0, 6).map((tryout) => (
               <Card
                 key={tryout.id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 cursor-pointer group"
@@ -325,15 +369,15 @@ const DashboardModule = () => {
                   <div className="flex items-start gap-4 mb-4">
                     <div className="flex flex-col items-center">
                       <Badge className="bg-green-500 text-white px-2.5 py-0.5 text-xs font-bold mb-2">
-                        {tryout.badge}
+                        SNBT
                       </Badge>
                       <div className="text-5xl font-bold text-gray-900">
-                        {tryout.number}
+                        {tryout.title.match(/\d+/)?.[0] || "N/A"}
                       </div>
                     </div>
                     <div className="flex-1 pt-1">
                       <p className="text-xs text-gray-600 mb-1">
-                        {tryout.type}
+                        {tryout.isPublic ? "Gratis" : "Berbayar"}
                       </p>
                       <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                         {tryout.title}
@@ -341,10 +385,18 @@ const DashboardModule = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">•</span>
-                      <span className="text-gray-700">{tryout.status}</span>
-                    </div>
+                    {tryout.scheduledStart && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-600">•</span>
+                        <span className="text-gray-700">
+                          {new Date(tryout.scheduledStart).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
                       <span>
