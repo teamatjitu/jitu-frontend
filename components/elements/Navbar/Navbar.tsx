@@ -4,6 +4,7 @@ import {
   ShoppingBag,
   NotebookPen,
   History,
+  Flame,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +25,11 @@ const items = [
     title: "Dashboard",
     path: "dashboard",
     icon: Home,
+  },
+  {
+    title: "Daily Streak",
+    path: "daily-streak",
+    icon: Flame,
   },
   {
     title: "Tryout",
