@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
-      // Tambahan opsional: untuk jaga-jaga jika Google pakai subdomain lain (lh4, lh5, dst)
       {
         protocol: "https",
         hostname: "*.googleusercontent.com",
@@ -18,7 +17,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/auth/:path*",
-        destination: "https://jitu-backend-staging.up.railway.app/api/auth/:path*",
+        destination:
+          "https://jitu-backend-staging.up.railway.app/api/auth/:path*",
+      },
+      {
+        source: "/api/proxy/:path*",
+        destination: "https://jitu-backend-staging.up.railway.app/:path*",
       },
     ];
   },
