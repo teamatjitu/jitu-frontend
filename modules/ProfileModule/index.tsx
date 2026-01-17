@@ -306,15 +306,13 @@ export default function ProfileModule() {
                 >
                   Member Siswa
                 </Badge>
-                {user.target && user.target !== "-" && (
-                  <Badge
-                    variant="outline"
-                    className="text-slate-600 border-slate-200 gap-1"
-                  >
-                    <Target size={12} />
-                    {user.target}
-                  </Badge>
-                )}
+                <Badge
+                  variant="outline"
+                  className="text-slate-600 border-slate-200 gap-1"
+                >
+                  <Target size={12} />
+                  {(session.user as any).target}
+                </Badge>
                 <div
                   onClick={() => router.push("/shop")}
                   className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
@@ -530,7 +528,7 @@ export default function ProfileModule() {
                         Nama Lengkap
                       </label>
                       <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
-                        {user.name}
+                        {user.tokenBalance}
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
@@ -538,7 +536,7 @@ export default function ProfileModule() {
                         Target Kampus
                       </label>
                       <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
-                        {user.target}
+                        {(session.user as any).target}
                       </div>
                     </div>
                   </div>
