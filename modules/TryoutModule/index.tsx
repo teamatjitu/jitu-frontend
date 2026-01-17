@@ -42,11 +42,14 @@ const TryoutModule = () => {
 
   // Referral States
   const [referralCode, setReferralCode] = useState<string>("");
-  const [checkResult, setCheckResult] = useState<ReferralCheckResult | null>(null);
+  const [checkResult, setCheckResult] = useState<ReferralCheckResult | null>(
+    null
+  );
   const [isChecking, setIsChecking] = useState(false);
 
   // --- Effects ---
 
+  // 1. Fetch Data Tryout dari Backend
   // 1. Fetch Data Tryout dari Backend
   useEffect(() => {
     const fetchTryouts = async () => {
@@ -54,9 +57,8 @@ const TryoutModule = () => {
         setIsLoading(true);
         const res = await fetch(`${BACKEND_URL}/tryout`, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Tambahkan ini jika menggunakan session/cookie
         });
 
         if (!res.ok) throw new Error("Gagal mengambil data tryout");
@@ -64,15 +66,16 @@ const TryoutModule = () => {
         const data = await res.json();
 
         // Mapping response backend ke UI Frontend
+        // Sesuai dengan TryOutCardDto di backend Anda
         const mappedData: TryOutCard[] = data.map((item: any) => ({
           id: item.id,
           title: item.title,
-          // Ambil angka dari judul (misal "Try Out 3" -> "3"), default "?"
-          number: item.title.match(/\d+/)?.[0] || "?",
+          // KUNCI: Backend sudah mengirimkan 'number' dan 'participants'
+          // Jangan dihitung ulang dengan Regex atau _count lagi
+          number: item.number || "?",
+          participants: item.participants || 0,
+          badge: item.badge || "SNBT",
           canEdit: false,
-          // Asumsi backend kirim count relations, jika belum ada default 0
-          participants: item._count?.attempts || 0,
-          badge: item.category || "SNBT",
         }));
 
         setTryouts(mappedData);
@@ -401,7 +404,9 @@ const TryoutModule = () => {
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Belum ada Try Out</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                Belum ada Try Out
+              </h3>
               <p className="text-gray-500 mt-1">
                 Saat ini belum ada jadwal try out yang tersedia.
               </p>
