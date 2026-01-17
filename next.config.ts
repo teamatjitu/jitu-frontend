@@ -18,11 +18,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/auth/:path*",
-        destination: `${BACKEND_URL}/api/auth/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/:path*`,
       },
       {
         source: "/api/proxy/:path*",
-        destination: `${BACKEND_URL}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/:path*`,
       },
     ];
   },
