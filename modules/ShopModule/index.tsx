@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertCircleIcon, History, Loader2 } from "lucide-react";
+import { AlertCircleIcon, Clock, History, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePathname, useRouter } from "next/navigation";
@@ -49,7 +49,7 @@ const ShopModule = () => {
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                <History className="w-6 h-6" />
+                <Clock className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-lg font-bold mb-1">
