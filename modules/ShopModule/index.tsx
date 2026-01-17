@@ -240,11 +240,7 @@ const ShopModule = () => {
                   jam belum terverifikasi, silahkan hubungi kontak berikut:
                 </p>
                 {contactInfos.map((contact) => (
-                  <Alert
-                    key={contact.name}
-                    variant="info"
-                    className="w-full max-w-md"
-                  >
+                  <Alert key={contact.name} className="w-full max-w-md">
                     <AlertCircleIcon className="h-5 w-5 shrink-0" />
                     <div>
                       <AlertTitle className="font-medium">

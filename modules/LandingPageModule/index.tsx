@@ -1,6 +1,6 @@
-// modules/LandingPageModule/index.tsx
 "use client";
-import { useState } from "react"; // Hapus useEffect karena tidak dipakai lagi
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
@@ -15,11 +15,60 @@ import {
   BarChart3,
   Users,
   Brain,
-  Timer,
   Coins,
+  Calendar,
+  BookOpen,
+  Calculator,
+  PenTool,
+  Globe,
+  Languages,
 } from "lucide-react";
 
-// --- Components Khusus Landing Page ---
+// --- Mock Data ---
+const SUBJECTS_DATA = [
+  {
+    id: 1,
+    name: "Penalaran Umum",
+    icon: Brain,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+  },
+  {
+    id: 2,
+    name: "Pengetahuan Kuantitatif",
+    icon: Calculator,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+  },
+  {
+    id: 3,
+    name: "Pemahaman Bacaan",
+    icon: BookOpen,
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+  },
+  {
+    id: 4,
+    name: "Penalaran Matematika",
+    icon: BarChart3,
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+  },
+  {
+    id: 5,
+    name: "Literasi Bahasa Indonesia",
+    icon: PenTool,
+    color: "text-rose-600",
+    bgColor: "bg-rose-50",
+  },
+  {
+    id: 6,
+    name: "Literasi Bahasa Inggris",
+    icon: Languages,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50",
+  },
+];
 
 const PublicNavbar = () => {
   const router = useRouter();
@@ -29,18 +78,22 @@ const PublicNavbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => router.push("/")}
           >
-            <Image src="/logo.png" alt="JituPTN Logo" width={40} height={40} />
+            <Image
+              src="/logo.png"
+              alt="JituPTN Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               JituPTN
             </span>
           </div>
 
-          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
             <a
               href="#features"
@@ -49,10 +102,10 @@ const PublicNavbar = () => {
               Fitur
             </a>
             <a
-              href="#gamification"
+              href="#subjects"
               className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
             >
-              Gamifikasi
+              Materi
             </a>
             <a
               href="#preview"
@@ -62,7 +115,6 @@ const PublicNavbar = () => {
             </a>
           </div>
 
-          {/* CTA Buttons */}
           <div className="flex items-center gap-4">
             {session ? (
               <Button
@@ -76,7 +128,7 @@ const PublicNavbar = () => {
                 <Button
                   variant="ghost"
                   onClick={() => router.push("/login")}
-                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-semibold"
+                  className="text-gray-700 hover:text-blue-600"
                 >
                   Masuk
                 </Button>
@@ -106,7 +158,7 @@ const Footer = () => (
               alt="JituPTN Logo"
               width={32}
               height={32}
-              className="opacity-90 grayscale brightness-200"
+              className="opacity-90  brightness-200"
             />
             <span className="text-xl font-bold">JituPTN</span>
           </div>
@@ -115,7 +167,6 @@ const Footer = () => (
             IRT dan analisis mendalam.
           </p>
         </div>
-
         <div>
           <h4 className="font-bold mb-4">Layanan</h4>
           <ul className="space-y-2 text-gray-400 text-sm">
@@ -136,7 +187,6 @@ const Footer = () => (
             </li>
           </ul>
         </div>
-
         <div>
           <h4 className="font-bold mb-4">Perusahaan</h4>
           <ul className="space-y-2 text-gray-400 text-sm">
@@ -157,11 +207,9 @@ const Footer = () => (
             </li>
           </ul>
         </div>
-
         <div>
           <h4 className="font-bold mb-4">Ikuti Kami</h4>
           <div className="flex gap-4">
-            {/* Social Icons Placeholders */}
             <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white cursor-pointer transition-all">
               IG
             </div>
@@ -178,20 +226,19 @@ const Footer = () => (
   </footer>
 );
 
-// --- Main Module ---
-
 const LandingPageModule = () => {
   const router = useRouter();
   const { data: session } = useSession();
+  const [loading, setLoading] = useState(false); // Set false to show mock data immediately or skeleton
 
-  // PERBAIKAN: Inisialisasi state langsung dengan data (tanpa useEffect)
-  const [activeTryOuts] = useState<any[]>([
+  const [activeTryOuts, setActiveTryOuts] = useState<any[]>([
     {
       id: "5",
       title: "Try Out UTBK SNBT 5 2026",
       badge: "SNBT",
       participants: 8016,
       isFree: true,
+      dateRange: "9 - 18 Jan 2026",
     },
     {
       id: "4",
@@ -199,6 +246,7 @@ const LandingPageModule = () => {
       badge: "SNBT",
       participants: 22665,
       isFree: true,
+      dateRange: "1 - 8 Jan 2026",
     },
     {
       id: "3",
@@ -206,171 +254,29 @@ const LandingPageModule = () => {
       badge: "SNBT",
       participants: 18540,
       isFree: false,
+      dateRange: "Des 2025",
     },
   ]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTryOuts = async () => {
-      try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-
-        const [activeResponse, availableResponse] = await Promise.all([
-          fetch(`${backendUrl}/tryout/active`, {
-            credentials: "include",
-          }),
-          fetch(`${backendUrl}/tryout/available`, {
-            credentials: "include",
-          }),
-        ]);
-
-        const activeData = await activeResponse.json();
-        const availableData = await availableResponse.json();
-
-        // Transform backend data to match component structure
-        setActiveTryOuts(
-          activeData.map((item: any) => ({
-            ...item,
-            dateRange: "9 Januari 2026 - 18 Januari 2026", // TODO: add to backend
-            isFree: true, // TODO: add to backend
-            status: "active",
-            canTake: true,
-          })),
-        );
-
-        setAvailableTryOuts(
-          availableData.map((item: any) => ({
-            ...item,
-            isFree: true,
-            status: "available",
-          })),
-        );
-      } catch (error) {
-        console.error("Error fetching try outs:", error);
-        // Fallback to mock data if API fails
-        setActiveTryOuts([
-          {
-            id: "5",
-            title: "Try Out UTBK SNBT 5 2026",
-            number: "5",
-            badge: "SNBT",
-            participants: 8016,
-            dateRange: "9 Januari 2026 - 18 Januari 2026",
-            isFree: true,
-            status: "active",
-            canTake: true,
-          },
-        ]);
-
-        setAvailableTryOuts([
-          {
-            id: "4",
-            title: "Try Out UTBK SNBT 4 2026",
-            number: "4",
-            badge: "SNBT",
-            participants: 22665,
-            isFree: true,
-            status: "available",
-          },
-          {
-            id: "3",
-            title: "Try Out UTBK SNBT 3 2026",
-            number: "3",
-            badge: "SNBT",
-            participants: 18540,
-            isFree: true,
-            status: "available",
-          },
-          {
-            id: "2",
-            title: "Try Out UTBK SNBT 2 2026",
-            number: "2",
-            badge: "SNBT",
-            participants: 22195,
-            isFree: true,
-            status: "available",
-          },
-          {
-            id: "1",
-            title: "Try Out UTBK SNBT 1 2026",
-            number: "1",
-            badge: "SNBT",
-            participants: 31316,
-            isFree: true,
-            status: "available",
-          },
-          {
-            id: "14",
-            title: "Try Out UTBK SNBT 14 2025",
-            number: "14",
-            badge: "SNBT",
-            participants: 188663,
-            isFree: true,
-            status: "available",
-          },
-          {
-            id: "13",
-            title: "Try Out UTBK SNBT 13 2025",
-            number: "13",
-            badge: "SNBT",
-            participants: 156594,
-            isFree: true,
-            status: "available",
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTryOuts();
-  }, []);
-
-  const handleStartTryOut = (tryOutId: string) => {
-    if (session) {
-      router.push(`/tryout/${tryOutId}`);
-    } else {
-      router.push("/login");
-    }
-  };
-
-  const handleViewAllTryOuts = () => {
-    if (session) {
-      router.push("/tryout");
-    } else {
-      router.push("/login");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen pt-30 bg-white">
+    <div className="min-h-screen pt-20 bg-white font-sans">
       <PublicNavbar />
+
       {/* 1. HERO SECTION */}
-      <section className=" bg-[url('/grid-pattern.svg')] bg-fixed bg-center">
-        <div className="max-w-7xl mx-auto text-center space-y-8">
+      <section className="bg-[url('/grid-pattern.svg')] bg-fixed bg-center pt-20 pb-32">
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-8">
           <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight">
             Taklukkan <span className="text-blue-600">UTBK SNBT</span> <br />
             Masuk PTN Impian.
           </h1>
-
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Simulasi ujian dengan sistem penilaian IRT, analisis peluang lolos
             real-time, dan gamifikasi yang membuat belajar jadi ketagihan.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Button
               onClick={() => router.push(session ? "/dashboard" : "/register")}
-              className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl  transition-all hover:scale-105"
+              className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl transition-all hover:scale-105"
             >
               {session ? "Buka Dashboard" : "Daftar Sekarang - Gratis"}
             </Button>
@@ -383,8 +289,7 @@ const LandingPageModule = () => {
             </Button>
           </div>
 
-          {/* Social Proof Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-20 max-w-4xl mx-auto border-t border-gray-100 mt-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 max-w-4xl mx-auto border-t border-gray-100 mt-16">
             {[
               { label: "Siswa Bergabung", value: "150rb+" },
               { label: "Total Tryout", value: "50+" },
@@ -404,8 +309,8 @@ const LandingPageModule = () => {
         </div>
       </section>
 
-      {/* 2. WHY JITU SECTION (Features) */}
-      <section id="features" className="py-24 ">
+      {/* 2. FEATURES SECTION */}
+      <section id="features" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -443,49 +348,13 @@ const LandingPageModule = () => {
             ].map((feature, idx) => (
               <Card
                 key={idx}
-                className="border-none shadow-sm hover:shadow-xl transition-all duration-300"
+                className="border-none shadow-sm hover:shadow-xl transition-all duration-300 group"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 min-w-fit border border-emerald-200">
-                      <Badge className="bg-emerald-500 text-white mb-3 font-bold">
-                        {tryOut.badge}
-                      </Badge>
-                      <div className="text-4xl font-bold text-emerald-900">
-                        {tryOut.number}
-                      </div>
-                      <div className="text-xs font-semibold text-emerald-700 mt-2">
-                        Gratis dan Berbayar
-                      </div>
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-3">
-                        {tryOut.title}
-                      </h3>
-
-                      <div className="space-y-2 mb-4">
-                        {tryOut.dateRange && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{tryOut.dateRange}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Users className="w-4 h-4" />
-                          <span>
-                            {tryOut.participants.toLocaleString()} Peserta
-                          </span>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => handleStartTryOut(tryOut.id)}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition-all"
-                      >
-                        Mulai Sekarang
-                      </Button>
-                    </div>
+                <CardContent className="p-8">
+                  <div
+                    className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                  >
+                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
                     {feature.title}
@@ -500,10 +369,12 @@ const LandingPageModule = () => {
         </div>
       </section>
 
-      {/* 3. GAMIFICATION SHOWCASE (Unique Selling Point) */}
-      <section id="gamification" className="py-24 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50 to-transparent -z-10" />
-
+      {/* 3. GAMIFICATION SECTION */}
+      <section
+        id="gamification"
+        className="py-24 overflow-hidden relative bg-slate-50"
+      >
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-100/50 to-transparent -z-10" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center gap-16">
             <div className="flex-1 space-y-8">
@@ -515,7 +386,6 @@ const LandingPageModule = () => {
                 dihargai. Kerjakan soal harian, pertahankan api streak, dan
                 kumpulkan token untuk membuka kunci pembahasan premium.
               </p>
-
               <ul className="space-y-4">
                 {[
                   "Jawab soal harian untuk dapat Streak",
@@ -528,19 +398,15 @@ const LandingPageModule = () => {
                   </li>
                 ))}
               </ul>
-
               <Button
                 onClick={() => router.push("/register")}
-                className="bg-gray-900 text-white px-8 py-6 rounded-xl hover:bg-gray-800"
+                className="bg-gray-900 text-white px-8 py-6 rounded-xl hover:bg-gray-800 shadow-lg"
               >
                 Mulai Kumpulkan Token
               </Button>
             </div>
-
-            {/* Visual Representation of Dashboard Components */}
             <div className="flex-1 relative">
               <div className="relative z-10 grid gap-6">
-                {/* Mock Streak Card */}
                 <Card className="bg-white shadow-2xl border-orange-100 transform md:-rotate-2 hover:rotate-0 transition-transform duration-500">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="bg-orange-100 p-4 rounded-full">
@@ -556,8 +422,6 @@ const LandingPageModule = () => {
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Mock Token Card */}
                 <Card className="bg-white shadow-2xl border-blue-100 transform md:translate-x-12 md:rotate-2 hover:rotate-0 transition-transform duration-500">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="bg-blue-100 p-4 rounded-full">
@@ -574,16 +438,49 @@ const LandingPageModule = () => {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Decorative Blob */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-blue-200/20 blur-3xl rounded-full -z-10" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. PREVIEW TRYOUTS */}
-      <section id="preview" className="py-24 ">
+      {/* 4. SUBJECTS SECTION (Materi) */}
+      <section id="subjects" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Materi Lengkap UTBK
+            </h2>
+            <p className="text-gray-600">
+              Pelajari semua subtes yang diujikan secara mendalam.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {SUBJECTS_DATA.map((subject) => {
+              const IconComponent = subject.icon;
+              return (
+                <Card
+                  key={subject.id}
+                  className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer group hover:-translate-y-1"
+                >
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3">
+                    <div
+                      className={`${subject.bgColor} p-4 rounded-xl group-hover:scale-110 transition-transform duration-300`}
+                    >
+                      <IconComponent className={`w-8 h-8 ${subject.color}`} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 leading-tight min-h-[40px] flex items-center justify-center">
+                      {subject.name}
+                    </h3>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. PREVIEW TRYOUTS */}
+      <section id="preview" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
@@ -607,16 +504,12 @@ const LandingPageModule = () => {
             {activeTryOuts.map((tryOut) => (
               <Card
                 key={tryOut.id}
-                className="group hover:shadow-lg transition-all duration-300 border-gray-200"
+                className="group hover:shadow-lg transition-all duration-300 border-gray-200 bg-white"
               >
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <Badge
-                      className={`${
-                        tryOut.isFree
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
-                      } hover:bg-opacity-80`}
+                      className={`${tryOut.isFree ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"} hover:bg-opacity-80`}
                     >
                       {tryOut.isFree ? "Gratis" : "Premium"}
                     </Badge>
@@ -624,22 +517,25 @@ const LandingPageModule = () => {
                       {tryOut.badge}
                     </span>
                   </div>
-
                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {tryOut.title}
                   </h3>
-
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
+                  <div className="space-y-2 mb-6">
+                    {tryOut.dateRange && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span>{tryOut.dateRange}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4 text-gray-400" />
                       <span>
                         {tryOut.participants.toLocaleString()} Peserta
                       </span>
                     </div>
                   </div>
-
                   <Button
-                    className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 font-semibold"
+                    className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-semibold transition-all"
                     onClick={() => router.push("/login")}
                   >
                     Ikuti Tryout
@@ -651,9 +547,9 @@ const LandingPageModule = () => {
         </div>
       </section>
 
-      {/* 5. CTA BOTTOM */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+      {/* 6. CTA BOTTOM */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-5xl mx-auto bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10 space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold">
               Siap Mengejar Kampus Impian?
@@ -664,42 +560,16 @@ const LandingPageModule = () => {
             </p>
             <Button
               onClick={() => router.push("/register")}
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-full font-bold shadow-lg"
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-full font-bold shadow-lg transition-transform hover:scale-105"
             >
               Daftar Akun Gratis
             </Button>
           </div>
-
-          {/* Decorative Circles */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-20 -mt-20" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-10 -mb-10" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-20 -mt-20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-10 -mb-10 blur-2xl" />
         </div>
       </section>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {subjects.map((subject) => {
-              const IconComponent = subject.icon;
-              return (
-                <Card
-                  key={subject.id}
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer group"
-                >
-                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3 group-hover:scale-105 transition-transform">
-                    <div
-                      className={`${subject.bgColor} p-4 rounded-xl group-hover:scale-110 transition-transform`}
-                    >
-                      <IconComponent className={`w-8 h-8 ${subject.color}`} />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 leading-tight">
-                      {subject.name}
-                    </h3>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-      </div>
       <Footer />
     </div>
   );

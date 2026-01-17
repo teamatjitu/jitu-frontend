@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useState } from "react";
 import { requestPasswordReset } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -12,6 +14,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Gunakan requestPasswordReset sesuai export di auth-client.ts
     const { data, error } = await requestPasswordReset({
       email: email,
       redirectTo: `${window.location.origin}/reset-password`,

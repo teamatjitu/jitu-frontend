@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { BACKEND_URL } from "./lib/api";
 
 const nextConfig: NextConfig = {
   images: {
@@ -17,12 +18,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/auth/:path*",
-        destination:
-          "https://jitu-backend-staging.up.railway.app/api/auth/:path*",
+        destination: `${BACKEND_URL}/api/auth/:path*`,
       },
       {
         source: "/api/proxy/:path*",
-        destination: "https://jitu-backend-staging.up.railway.app/:path*",
+        destination: `${BACKEND_URL}/:path*`,
       },
     ];
   },
