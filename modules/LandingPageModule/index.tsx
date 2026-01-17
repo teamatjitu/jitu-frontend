@@ -1,90 +1,211 @@
+// modules/LandingPageModule/index.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react"; // Hapus useEffect karena tidak dipakai lagi
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  ArrowRight,
+  CheckCircle2,
+  Trophy,
+  Target,
+  BarChart3,
   Users,
-  Calendar,
-  ChevronRight,
-  Zap,
-  Globe,
-  BookOpen,
-  Calculator,
-  FileText,
-  Languages,
   Brain,
+  Timer,
+  Coins,
 } from "lucide-react";
 
-interface TryOut {
-  id: string;
-  title: string;
-  number: string;
-  badge: string;
-  participants: number;
-  dateRange?: string;
-  isFree: boolean;
-  status?: "active" | "available";
-  canTake?: boolean;
-}
+// --- Components Khusus Landing Page ---
 
-interface Subject {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-}
+const PublicNavbar = () => {
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          {/* Logo */}
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => router.push("/")}
+          >
+            <Image src="/logo.png" alt="JituPTN Logo" width={40} height={40} />
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              JituPTN
+            </span>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <a
+              href="#features"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            >
+              Fitur
+            </a>
+            <a
+              href="#gamification"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            >
+              Gamifikasi
+            </a>
+            <a
+              href="#preview"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            >
+              Tryout
+            </a>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex items-center gap-4">
+            {session ? (
+              <Button
+                onClick={() => router.push("/dashboard")}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
+              >
+                Dashboard Saya
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push("/login")}
+                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-semibold"
+                >
+                  Masuk
+                </Button>
+                <Button
+                  onClick={() => router.push("/register")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-lg shadow-blue-200"
+                >
+                  Daftar Gratis
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Footer = () => (
+  <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="JituPTN Logo"
+              width={32}
+              height={32}
+              className="opacity-90 grayscale brightness-200"
+            />
+            <span className="text-xl font-bold">JituPTN</span>
+          </div>
+          <p className="text-gray-400 text-sm">
+            Platform simulasi Tryout UTBK SNBT terbaik dengan sistem penilaian
+            IRT dan analisis mendalam.
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-bold mb-4">Layanan</h4>
+          <ul className="space-y-2 text-gray-400 text-sm">
+            <li>
+              <a href="#" className="hover:text-white">
+                Tryout SNBT
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white">
+                Analisis Peluang
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white">
+                Bank Soal
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-bold mb-4">Perusahaan</h4>
+          <ul className="space-y-2 text-gray-400 text-sm">
+            <li>
+              <a href="#" className="hover:text-white">
+                Tentang Kami
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white">
+                Hubungi Kami
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white">
+                Syarat & Ketentuan
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-bold mb-4">Ikuti Kami</h4>
+          <div className="flex gap-4">
+            {/* Social Icons Placeholders */}
+            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white cursor-pointer transition-all">
+              IG
+            </div>
+            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white cursor-pointer transition-all">
+              TW
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+        © 2026 Jitu Academy. All rights reserved.
+      </div>
+    </div>
+  </footer>
+);
+
+// --- Main Module ---
 
 const LandingPageModule = () => {
   const router = useRouter();
   const { data: session } = useSession();
-  const [activeTryOuts, setActiveTryOuts] = useState<TryOut[]>([]);
-  const [availableTryOuts, setAvailableTryOuts] = useState<TryOut[]>([]);
-  const [subjects] = useState<Subject[]>([
+
+  // PERBAIKAN: Inisialisasi state langsung dengan data (tanpa useEffect)
+  const [activeTryOuts] = useState<any[]>([
     {
-      id: "1",
-      name: "Penalaran Umum",
-      icon: Brain,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
-    },
-    {
-      id: "2",
-      name: "Pengetahuan dan Pemahaman Umum",
-      icon: Globe,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
-    },
-    {
-      id: "3",
-      name: "Kemampuan Memahami Bacaan dan Menulis",
-      icon: BookOpen,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      id: "5",
+      title: "Try Out UTBK SNBT 5 2026",
+      badge: "SNBT",
+      participants: 8016,
+      isFree: true,
     },
     {
       id: "4",
-      name: "Pengetahuan Kuantitatif",
-      icon: Calculator,
-      color: "text-red-600",
-      bgColor: "bg-red-100",
+      title: "Try Out UTBK SNBT 4 2026",
+      badge: "SNBT",
+      participants: 22665,
+      isFree: true,
     },
     {
-      id: "5",
-      name: "Literasi dalam Bahasa Indonesia",
-      icon: FileText,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-    },
-    {
-      id: "6",
-      name: "Literasi dalam Bahasa Inggris",
-      icon: Languages,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-100",
+      id: "3",
+      title: "Try Out UTBK SNBT 3 2026",
+      badge: "SNBT",
+      participants: 18540,
+      isFree: false,
     },
   ]);
   const [loading, setLoading] = useState(true);
@@ -231,70 +352,98 @@ const LandingPageModule = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 pl-20 pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* User Header Section - Only show if logged in */}
-        {session && (
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl shadow-blue-500/20 p-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -ml-32 -mb-32"></div>
+    <div className="min-h-screen pt-30 bg-white">
+      <PublicNavbar />
+      {/* 1. HERO SECTION */}
+      <section className=" bg-[url('/grid-pattern.svg')] bg-fixed bg-center">
+        <div className="max-w-7xl mx-auto text-center space-y-8">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            Taklukkan <span className="text-blue-600">UTBK SNBT</span> <br />
+            Masuk PTN Impian.
+          </h1>
 
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                  {session.user.name.charAt(0)}
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    {session.user.name}
-                  </h1>
-                  <p className="text-blue-100 text-sm">{session.user.email}</p>
-                </div>
-              </div>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Simulasi ujian dengan sistem penilaian IRT, analisis peluang lolos
+            real-time, dan gamifikasi yang membuat belajar jadi ketagihan.
+          </p>
 
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/30 flex items-center gap-3">
-                  <div className="text-3xl">🎫</div>
-                  <div>
-                    <div className="text-xs text-blue-100 font-medium">
-                      Kuota Premium
-                    </div>
-                    <div className="text-2xl font-bold text-white">0</div>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => router.push("/shop")}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg"
-                >
-                  <Zap className="w-5 h-5" />
-                  Beli Kuota
-                </Button>
-              </div>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Button
+              onClick={() => router.push(session ? "/dashboard" : "/register")}
+              className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl  transition-all hover:scale-105"
+            >
+              {session ? "Buka Dashboard" : "Daftar Sekarang - Gratis"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("#preview")}
+              className="h-14 px-8 text-lg rounded-full border-2 hover:bg-gray-50 text-gray-700"
+            >
+              Lihat Jadwal Tryout
+            </Button>
           </div>
-        )}
-        {/* Try Out Berlangsung Section */}
-        <section className="space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-3xl font-bold text-gray-900">
-                Try Out Berlangsung
-              </h2>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
-                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                ACTIVE
-              </span>
-            </div>
-            <p className="text-gray-600">
-              Try Out yang sedang dalam periode pendaftaran
+
+          {/* Social Proof Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-20 max-w-4xl mx-auto border-t border-gray-100 mt-12">
+            {[
+              { label: "Siswa Bergabung", value: "150rb+" },
+              { label: "Total Tryout", value: "50+" },
+              { label: "Soal Terupdate", value: "10rb+" },
+              { label: "PTN Terdata", value: "95+" },
+            ].map((stat, idx) => (
+              <div key={idx} className="text-center">
+                <div className="text-3xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-500 font-medium">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. WHY JITU SECTION (Features) */}
+      <section id="features" className="py-24 ">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Kenapa Memilih Jitu Academy?
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Kami tidak hanya memberikan soal, tapi juga strategi dan teknologi
+              untuk memaksimalkan skormu.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {activeTryOuts.map((tryOut) => (
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Target,
+                title: "Sistem IRT & Blocking Time",
+                desc: "Simulasi persis seperti aslinya. Penilaian menggunakan Item Response Theory untuk akurasi prediksi skor.",
+                color: "text-red-600",
+                bg: "bg-red-50",
+              },
+              {
+                icon: BarChart3,
+                title: "Analisis Mendalam",
+                desc: "Ketahui kelemahanmu per subtes. Dapatkan rekomendasi materi yang harus dipelajari ulang.",
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+              },
+              {
+                icon: Brain,
+                title: "Soal High Order Thinking",
+                desc: "Kumpulan soal HOTS terbaru yang disusun oleh tim ahli sesuai kisi-kisi SNPMB 2026.",
+                color: "text-purple-600",
+                bg: "bg-purple-50",
+              },
+            ].map((feature, idx) => (
               <Card
-                key={tryOut.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden"
+                key={idx}
+                className="border-none shadow-sm hover:shadow-xl transition-all duration-300"
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
@@ -338,77 +487,150 @@ const LandingPageModule = () => {
                       </Button>
                     </div>
                   </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {feature.desc}
+                  </p>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
 
-            {/* CTA Card */}
-            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-center min-h-full p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Zap className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  Kamu belum mendaftar Try Out
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Beli kuota Try Out atau daftar Try Out gratis untuk mulai
-                  latihan!
-                </p>
-                <div className="flex flex-col gap-2">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg">
-                    Beli Kuota Premium
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-2 rounded-lg"
-                  >
-                    Daftar Try Out
-                  </Button>
-                </div>
+      {/* 3. GAMIFICATION SHOWCASE (Unique Selling Point) */}
+      <section id="gamification" className="py-24 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50 to-transparent -z-10" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-16">
+            <div className="flex-1 space-y-8">
+              <h2 className="text-4xl font-bold text-gray-900">
+                Kumpulkan Token & <br /> Jaga Daily Streak!
+              </h2>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Bosan dengan cara belajar lama? Di Jitu Academy, konsistensimu
+                dihargai. Kerjakan soal harian, pertahankan api streak, dan
+                kumpulkan token untuk membuka kunci pembahasan premium.
+              </p>
+
+              <ul className="space-y-4">
+                {[
+                  "Jawab soal harian untuk dapat Streak",
+                  "Tukarkan Token dengan Pembahasan Soal",
+                  "Leaderboard mingguan berhadiah",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                onClick={() => router.push("/register")}
+                className="bg-gray-900 text-white px-8 py-6 rounded-xl hover:bg-gray-800"
+              >
+                Mulai Kumpulkan Token
+              </Button>
+            </div>
+
+            {/* Visual Representation of Dashboard Components */}
+            <div className="flex-1 relative">
+              <div className="relative z-10 grid gap-6">
+                {/* Mock Streak Card */}
+                <Card className="bg-white shadow-2xl border-orange-100 transform md:-rotate-2 hover:rotate-0 transition-transform duration-500">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="bg-orange-100 p-4 rounded-full">
+                      <Trophy className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 font-semibold">
+                        Current Streak
+                      </p>
+                      <h4 className="text-3xl font-bold text-gray-900">
+                        7 Hari 🔥
+                      </h4>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Mock Token Card */}
+                <Card className="bg-white shadow-2xl border-blue-100 transform md:translate-x-12 md:rotate-2 hover:rotate-0 transition-transform duration-500">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="bg-blue-100 p-4 rounded-full">
+                      <Coins className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 font-semibold">
+                        Token Balance
+                      </p>
+                      <h4 className="text-3xl font-bold text-gray-900">
+                        250 JituPoints
+                      </h4>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </Card>
-          </div>
-        </section>
 
-        {/* Try Out Tersedia Section */}
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Try Out Tersedia
-            </h2>
-            <p className="text-gray-600">Try Out yang bisa kamu ikuti</p>
+              {/* Decorative Blob */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-blue-200/20 blur-3xl rounded-full -z-10" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. PREVIEW TRYOUTS */}
+      <section id="preview" className="py-24 ">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Jadwal Tryout Terdekat
+              </h2>
+              <p className="text-gray-600">
+                Siapkan dirimu, kursi terbatas untuk sesi live.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              className="text-blue-600 hover:bg-blue-50"
+              onClick={() => router.push("/login")}
+            >
+              Lihat Semua <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableTryOuts.slice(0, 6).map((tryOut) => (
+          <div className="grid md:grid-cols-3 gap-6">
+            {activeTryOuts.map((tryOut) => (
               <Card
                 key={tryOut.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer"
-                onClick={() => handleStartTryOut(tryOut.id)}
+                className="group hover:shadow-lg transition-all duration-300 border-gray-200"
               >
                 <CardContent className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="bg-emerald-500 text-white font-bold text-sm px-3 py-2 rounded min-w-fit">
+                  <div className="flex justify-between items-start mb-4">
+                    <Badge
+                      className={`${
+                        tryOut.isFree
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      } hover:bg-opacity-80`}
+                    >
+                      {tryOut.isFree ? "Gratis" : "Premium"}
+                    </Badge>
+                    <span className="text-xs font-semibold text-gray-400 border border-gray-200 px-2 py-1 rounded">
                       {tryOut.badge}
-                    </div>
-                    <div className="text-4xl font-bold text-gray-900">
-                      {tryOut.number}
-                    </div>
+                    </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {tryOut.title}
                   </h3>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Zap className="w-4 h-4 text-orange-500" />
-                      <span className="text-gray-700 font-medium">
-                        Bisa Dibeli
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+                    <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       <span>
                         {tryOut.participants.toLocaleString()} Peserta
@@ -416,43 +638,43 @@ const LandingPageModule = () => {
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-500 text-center py-3 border-t border-gray-100">
-                    Gratis dan Berbayar
-                  </div>
+                  <Button
+                    className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 font-semibold"
+                    onClick={() => router.push("/login")}
+                  >
+                    Ikuti Tryout
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="flex justify-center">
+      {/* 5. CTA BOTTOM */}
+      <section className="py-20 px-4">
+        <div className="max-w-5xl mx-auto bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div className="relative z-10 space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Siap Mengejar Kampus Impian?
+            </h2>
+            <p className="text-blue-100 max-w-xl mx-auto text-lg">
+              Bergabunglah dengan ribuan pejuang PTN lainnya. Mulai dari gratis,
+              upgrade kapan saja.
+            </p>
             <Button
-              onClick={handleViewAllTryOuts}
-              variant="outline"
-              className="px-8 py-3 rounded-full border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 flex items-center gap-2"
+              onClick={() => router.push("/register")}
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-full font-bold shadow-lg"
             >
-              Jelajahi Try Out Tersedia
-              <ChevronRight className="w-5 h-5" />
+              Daftar Akun Gratis
             </Button>
           </div>
-        </section>
 
-        {/* Materi Pembelajaran Section */}
-        <section className="space-y-6 pb-12">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Materi Pembelajaran
-              </h2>
-              <p className="text-gray-600">Pelajari materi UTBK TPS pilihan</p>
-            </div>
-            <Button
-              variant="outline"
-              className="border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 rounded-full px-6 py-2 flex items-center gap-2"
-            >
-              Lihat Semua
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
+          {/* Decorative Circles */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-20 -mt-20" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-10 -mb-10" />
+        </div>
+      </section>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {subjects.map((subject) => {
@@ -478,6 +700,7 @@ const LandingPageModule = () => {
           </div>
         </section>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -54,7 +54,7 @@ const RegisterModule = () => {
   const handleGoogleRegister = async () => {
     await signIn.social({
       provider: "google",
-      // callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
+      callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
     });
   };
 
