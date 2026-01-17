@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,21 +11,51 @@ import { toast } from "sonner";
 import { AlertCircleIcon, Clock, History, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import TokenCard from "./components/TokenCard";
-import { contactInfos, tokenPackages } from "./payload";
+import { contactInfos } from "./payload";
 
 import { BACKEND_URL } from "@/lib/api";
 
+interface TokenPackage {
+  id: string;
+  name: string;
+  tokenAmount: number;
+  price: number;
+}
+
 const ShopModule = () => {
+  const [packages, setPackages] = useState<TokenPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const [isModalOpened, setIsModalOpened] = useState(false);
-  const [selectedPkg, setSelectedPkg] = useState<number | null>(null);
+  const [selectedPkg, setSelectedPkg] = useState<TokenPackage | null>(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [showContact, setShowContact] = useState(false);
   const [qrCode, setQrCode] = useState("");
 
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/shop/packages`);
+        if (res.ok) {
+          const data = await res.json();
+          setPackages(data);
+        } else {
+          toast.error("Gagal memuat paket token");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Terjadi kesalahan jaringan");
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    fetchPackages();
+  }, []);
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -106,18 +136,51 @@ const ShopModule = () => {
               Pilih paket yang sesuai dengan intensitas belajar kamu
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {tokenPackages.map((pkg, idx) => (
-              <TokenCard
-                key={pkg.id}
-                pkg={pkg}
-                onPressBuy={() => {
-                  setSelectedPkg(idx);
-                  setIsModalOpened(true);
-                }}
-              />
-            ))}
-          </div>
+
+          {loadingPackages ? (
+            <div className="text-center py-10">Memuat paket...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+              {packages.map((pkg) => {
+                // Kalkulasi kosmetik untuk UI
+                const originalPrice = Math.round(pkg.price * 1.2); // Asumsi diskon 20%
+                const discount = 20;
+                const savings = originalPrice - pkg.price;
+                const pricePerToken = Math.round(pkg.price / pkg.tokenAmount);
+
+                // Tentukan warna berdasarkan jumlah token
+                let categoryBg = "from-blue-600 to-indigo-700";
+                if (pkg.tokenAmount >= 50)
+                  categoryBg = "from-purple-600 to-pink-600";
+                else if (pkg.tokenAmount >= 25)
+                  categoryBg = "from-emerald-600 to-teal-600";
+
+                return (
+                  <TokenCard
+                    key={pkg.id}
+                    pkg={{
+                      id: Number(pkg.id),
+                      title: pkg.name,
+                      subtitle: "Akses Premium Tryout & Pembahasan",
+                      tokenAmount: pkg.tokenAmount,
+                      originalPrice: originalPrice,
+                      finalPrice: pkg.price,
+                      discount: discount,
+                      savings: savings,
+                      pricePerToken: String(pricePerToken),
+                      categoryBg: categoryBg,
+                      popular: pkg.tokenAmount === 50, // Tandai paket 50 sebagai populer
+                      badge: pkg.tokenAmount >= 50 ? "Best Value" : undefined,
+                    }}
+                    onPressBuy={() => {
+                      setSelectedPkg(pkg);
+                      setIsModalOpened(true);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
 
@@ -151,15 +214,10 @@ const ShopModule = () => {
                   onClick={() => {
                     setIsModalLoading(true);
 
-                    fetch(
-                      `${BACKEND_URL}/shop/create/${
-                        tokenPackages[selectedPkg!].id
-                      }`,
-                      {
-                        method: "POST",
-                        credentials: "include",
-                      },
-                    )
+                    fetch(`${BACKEND_URL}/shop/create/${selectedPkg?.id}`, {
+                      method: "POST",
+                      credentials: "include",
+                    })
                       .then((res) => {
                         if (!res.ok) {
                           throw new Error(res.statusText);
