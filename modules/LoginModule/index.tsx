@@ -9,6 +9,7 @@ import { signIn, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserWithRole } from "@/lib/types";
+import Link from "next/link";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -149,13 +150,16 @@ const LoginModule = () => {
             </div>
 
             {/* Forgot Password */}
+
             <div className="text-right">
-              <button
-                type="button"
-                className="text-sm text-primary-300 hover:underline"
-              >
-                Lupa password?
-              </button>
+              <Link href={"/forgot-password"}>
+                <button
+                  type="button"
+                  className="text-sm text-primary-300 hover:underline"
+                >
+                  Lupa password?
+                </button>
+              </Link>
             </div>
 
             {/* Login Button */}

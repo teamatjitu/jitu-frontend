@@ -528,7 +528,7 @@ export default function ProfileModule() {
                         Nama Lengkap
                       </label>
                       <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
-                        {user.tokenBalance}
+                        {user.name}
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
@@ -536,7 +536,7 @@ export default function ProfileModule() {
                         Target Kampus
                       </label>
                       <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
-                        {(session.user as any).target}
+                        {user.target}
                       </div>
                     </div>
                   </div>
