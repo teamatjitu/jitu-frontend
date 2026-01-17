@@ -3,21 +3,22 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth-client";
+import { signOut, changePassword } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { 
   User, LogOut, TrendingUp, History, 
   Award, Coins, Flame, Settings, 
-  ChevronRight, Edit3, Shield, BookOpen 
+  Edit3, Shield, BookOpen, Target, Lock, KeyRound,
+  ChevronRight
 } from "lucide-react";
 
-// Import UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
-// --- Tipe Data (Interface) ---
 interface Attempt {
   id: string;
   title: string;
@@ -32,6 +33,8 @@ interface ProfileData {
     email: string;
     image: string | null;
     tokenBalance: number;
+    target?: string;
+    hasPassword?: boolean;
   };
   stats: {
     totalTryout: number;
@@ -46,24 +49,39 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "history" | "settings">("overview");
 
-  // Fallback Data
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  
   const user = data?.user || {
     name: session?.user?.name || "Siswa Jitu",
     email: session?.user?.email || "siswa@contoh.com",
     image: session?.user?.image || null,
-    tokenBalance: 0
+    tokenBalance: 0,
+    target: "Belum set target",
+    hasPassword: false
   };
+
+  const hasPassword = user.hasPassword ?? false;
   
+  const [formData, setFormData] = useState({
+    name: user.name,
+    target: user.target || ""
+  });
+
   const stats = data?.stats || { 
-    lastScore: 0, 
-    averageScore: 0, 
-    streak: 0, 
-    totalTryout: 0 
+    lastScore: 0, averageScore: 0, streak: 0, totalTryout: 0 
   };
   
   const attempts = data?.attempts || [];
 
-  // Handler Logout
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
@@ -75,14 +93,109 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
     });
   };
 
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+      
+      const res = await fetch(`${BASE_URL}/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": session?.user?.id 
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) throw new Error("Gagal menyimpan profil");
+
+      toast.success("Profil berhasil diperbarui!");
+      setIsEditOpen(false);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal menyimpan perubahan.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordAction = async () => {
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast.error("Password baru wajib diisi");
+      return;
+    }
+    if (hasPassword && !passwordForm.currentPassword) {
+      toast.error("Password saat ini wajib diisi");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Password baru tidak cocok");
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      toast.error("Minimal 8 karakter");
+      return;
+    }
+
+    setIsPasswordSaving(true);
+    try {
+      if (hasPassword) {
+        await changePassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          revokeOtherSessions: true,
+        }, {
+          onSuccess: () => {
+            toast.success("Password berhasil diubah!");
+            resetPasswordModal();
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          }
+        });
+      } else {
+        const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+        const res = await fetch(`${BASE_URL}/profile/set-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": session?.user?.id 
+          },
+          body: JSON.stringify({ password: passwordForm.newPassword }),
+          credentials: "include"
+        });
+
+        if (!res.ok) {
+           const errData = await res.json();
+           throw new Error(errData.message || "Gagal membuat password");
+        }
+
+        toast.success("Password berhasil dibuat! Silakan login ulang.");
+        resetPasswordModal();
+        router.refresh();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan sistem");
+    } finally {
+      setIsPasswordSaving(false);
+    }
+  };
+
+  const resetPasswordModal = () => {
+    setIsPasswordOpen(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  };
+
+  const openEditModal = () => {
+    setFormData({ name: user.name, target: user.target || "" });
+    setIsEditOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans text-slate-900">
-      
-      {/* --- 1. HEADER PROFILE --- */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 py-8 md:flex md:items-center md:justify-between gap-6">
-          
-          {/* Kiri: Avatar & Info */}
           <div className="flex items-center gap-5">
             <div className="relative group">
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100">
@@ -94,7 +207,10 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                   </div>
                 )}
               </div>
-              <button className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors">
+              <button 
+                onClick={openEditModal}
+                className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              >
                 <Edit3 size={14} />
               </button>
             </div>
@@ -102,10 +218,16 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
               <p className="text-slate-500 text-sm mb-2">{user.email}</p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
                   Member Siswa
                 </Badge>
+                {user.target && (
+                  <Badge variant="outline" className="text-slate-600 border-slate-200 gap-1">
+                    <Target size={12} />
+                    {user.target}
+                  </Badge>
+                )}
                 <div 
                   onClick={() => router.push('/shop')}
                   className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
@@ -117,7 +239,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </div>
           </div>
 
-          {/* Kanan: Action Buttons */}
           <div className="mt-6 md:mt-0 flex flex-col sm:flex-row gap-3">
              <Button variant="outline" onClick={() => router.push('/shop')}>
                 <Coins className="mr-2 h-4 w-4 text-amber-500" />
@@ -130,10 +251,7 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         </div>
       </div>
 
-      {/* --- 2. MAIN CONTENT GRID --- */}
       <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* SIDEBAR MENU (Kiri - 3 Kolom) */}
         <div className="lg:col-span-3 space-y-6">
           <nav className="flex flex-col space-y-1">
             <MenuButton 
@@ -156,13 +274,11 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             />
           </nav>
 
-          {/* Pusat Bantuan & Logout (Fix Design) */}
           <Card className="bg-slate-50 border-dashed border-slate-200 shadow-none">
             <CardContent className="p-4">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                 Lainnya
               </h4>
-              
               <div className="space-y-1">
                 <Button 
                   variant="ghost" 
@@ -186,13 +302,9 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
           </Card>
         </div>
 
-        {/* CONTENT AREA (Kanan - 9 Kolom) */}
         <div className="lg:col-span-9 space-y-6">
-          
-          {/* TAB: OVERVIEW */}
           {activeTab === "overview" && (
             <>
-              {/* Statistik Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard 
                   title="Skor Terakhir" 
@@ -214,7 +326,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                 />
               </div>
 
-              {/* Banner Ajak Tryout */}
               {stats.totalTryout === 0 && (
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -229,7 +340,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                 </div>
               )}
 
-              {/* Preview Riwayat Terakhir */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-lg font-bold">Aktivitas Terakhir</CardTitle>
@@ -254,7 +364,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </>
           )}
 
-          {/* TAB: HISTORY */}
           {activeTab === "history" && (
             <Card>
               <CardHeader>
@@ -283,7 +392,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </Card>
           )}
 
-          {/* TAB: SETTINGS */}
           {activeTab === "settings" && (
             <Card>
               <CardHeader>
@@ -291,12 +399,28 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-slate-700">Nama Lengkap</label>
-                    <div className="p-2 border rounded-md bg-slate-50 text-slate-500 text-sm">
-                      {user.name}
+                  <div className="flex items-center justify-between">
+                     <h4 className="text-sm font-medium">Informasi Profil</h4>
+                     <Button variant="outline" size="sm" onClick={openEditModal} className="h-8">
+                       <Edit3 className="w-3 h-3 mr-2" /> Edit Data
+                     </Button>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-slate-700">Nama Lengkap</label>
+                      <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
+                        {user.name}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-slate-700">Target Kampus</label>
+                      <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
+                        {user.target || "-"}
+                      </div>
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-slate-700">Email Terdaftar</label>
                     <div className="p-2 border rounded-md bg-slate-50 text-slate-500 text-sm flex items-center justify-between">
@@ -312,8 +436,13 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                      <Shield className="h-4 w-4" /> Keamanan
                    </h4>
-                   <Button variant="outline" className="w-full justify-start text-slate-600">
-                     Ubah Password
+                   <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-slate-600 hover:text-slate-900"
+                    onClick={() => setIsPasswordOpen(true)}
+                   >
+                     {hasPassword ? <Lock className="w-4 h-4 mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
+                     {hasPassword ? "Ubah Password" : "Buat Password Akun"}
                    </Button>
                 </div>
               </CardContent>
@@ -322,11 +451,103 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
 
         </div>
       </div>
+
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profil</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="name" className="text-sm font-medium">Nama Lengkap</label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Masukkan nama lengkap"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="target" className="text-sm font-medium">Target Kampus/Jurusan</label>
+              <Input
+                id="target"
+                value={formData.target}
+                onChange={(e) => setFormData({ ...formData, target: e.target.value })}
+                placeholder="Contoh: Kedokteran UI 2026"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+               <Button variant="outline" type="button">Batal</Button>
+            </DialogClose>
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{hasPassword ? "Ubah Password" : "Buat Password Baru"}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {hasPassword && (
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Password Saat Ini</label>
+                <Input
+                  type="password"
+                  placeholder="******"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                />
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Password Baru</label>
+              <Input
+                type="password"
+                placeholder="Minimal 8 karakter"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Konfirmasi Password Baru</label>
+              <Input
+                type="password"
+                placeholder="Ulangi password baru"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              />
+            </div>
+            
+            {!hasPassword && (
+              <p className="text-xs text-slate-500 bg-blue-50 p-2 rounded border border-blue-100">
+                Karena Anda login menggunakan Google/Akun lain, Anda belum memiliki password. Buat password sekarang agar bisa login menggunakan Email & Password.
+              </p>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+               <Button variant="outline" type="button">Batal</Button>
+            </DialogClose>
+            <Button onClick={handlePasswordAction} disabled={isPasswordSaving}>
+              {isPasswordSaving ? "Menyimpan..." : (hasPassword ? "Simpan Password" : "Buat Password")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
-
-// --- Sub-Components ---
 
 function MenuButton({ active, onClick, icon: Icon, label }: any) {
   return (
