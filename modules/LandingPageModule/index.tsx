@@ -208,6 +208,148 @@ const LandingPageModule = () => {
       isFree: false,
     },
   ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTryOuts = async () => {
+      try {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+
+        const [activeResponse, availableResponse] = await Promise.all([
+          fetch(`${backendUrl}/tryout/active`, {
+            credentials: "include",
+          }),
+          fetch(`${backendUrl}/tryout/available`, {
+            credentials: "include",
+          }),
+        ]);
+
+        const activeData = await activeResponse.json();
+        const availableData = await availableResponse.json();
+
+        // Transform backend data to match component structure
+        setActiveTryOuts(
+          activeData.map((item: any) => ({
+            ...item,
+            dateRange: "9 Januari 2026 - 18 Januari 2026", // TODO: add to backend
+            isFree: true, // TODO: add to backend
+            status: "active",
+            canTake: true,
+          })),
+        );
+
+        setAvailableTryOuts(
+          availableData.map((item: any) => ({
+            ...item,
+            isFree: true,
+            status: "available",
+          })),
+        );
+      } catch (error) {
+        console.error("Error fetching try outs:", error);
+        // Fallback to mock data if API fails
+        setActiveTryOuts([
+          {
+            id: "5",
+            title: "Try Out UTBK SNBT 5 2026",
+            number: "5",
+            badge: "SNBT",
+            participants: 8016,
+            dateRange: "9 Januari 2026 - 18 Januari 2026",
+            isFree: true,
+            status: "active",
+            canTake: true,
+          },
+        ]);
+
+        setAvailableTryOuts([
+          {
+            id: "4",
+            title: "Try Out UTBK SNBT 4 2026",
+            number: "4",
+            badge: "SNBT",
+            participants: 22665,
+            isFree: true,
+            status: "available",
+          },
+          {
+            id: "3",
+            title: "Try Out UTBK SNBT 3 2026",
+            number: "3",
+            badge: "SNBT",
+            participants: 18540,
+            isFree: true,
+            status: "available",
+          },
+          {
+            id: "2",
+            title: "Try Out UTBK SNBT 2 2026",
+            number: "2",
+            badge: "SNBT",
+            participants: 22195,
+            isFree: true,
+            status: "available",
+          },
+          {
+            id: "1",
+            title: "Try Out UTBK SNBT 1 2026",
+            number: "1",
+            badge: "SNBT",
+            participants: 31316,
+            isFree: true,
+            status: "available",
+          },
+          {
+            id: "14",
+            title: "Try Out UTBK SNBT 14 2025",
+            number: "14",
+            badge: "SNBT",
+            participants: 188663,
+            isFree: true,
+            status: "available",
+          },
+          {
+            id: "13",
+            title: "Try Out UTBK SNBT 13 2025",
+            number: "13",
+            badge: "SNBT",
+            participants: 156594,
+            isFree: true,
+            status: "available",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTryOuts();
+  }, []);
+
+  const handleStartTryOut = (tryOutId: string) => {
+    if (session) {
+      router.push(`/tryout/${tryOutId}`);
+    } else {
+      router.push("/login");
+    }
+  };
+
+  const handleViewAllTryOuts = () => {
+    if (session) {
+      router.push("/tryout");
+    } else {
+      router.push("/login");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-30 bg-white">
@@ -303,11 +445,47 @@ const LandingPageModule = () => {
                 key={idx}
                 className="border-none shadow-sm hover:shadow-xl transition-all duration-300"
               >
-                <CardContent className="p-8">
-                  <div
-                    className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-6`}
-                  >
-                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 min-w-fit border border-emerald-200">
+                      <Badge className="bg-emerald-500 text-white mb-3 font-bold">
+                        {tryOut.badge}
+                      </Badge>
+                      <div className="text-4xl font-bold text-emerald-900">
+                        {tryOut.number}
+                      </div>
+                      <div className="text-xs font-semibold text-emerald-700 mt-2">
+                        Gratis dan Berbayar
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">
+                        {tryOut.title}
+                      </h3>
+
+                      <div className="space-y-2 mb-4">
+                        {tryOut.dateRange && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="w-4 h-4" />
+                            <span>{tryOut.dateRange}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Users className="w-4 h-4" />
+                          <span>
+                            {tryOut.participants.toLocaleString()} Peserta
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={() => handleStartTryOut(tryOut.id)}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition-all"
+                      >
+                        Mulai Sekarang
+                      </Button>
+                    </div>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
                     {feature.title}
@@ -454,11 +632,9 @@ const LandingPageModule = () => {
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      {tryOut.participants.toLocaleString()}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Timer className="w-4 h-4" />
-                      195 Menit
+                      <span>
+                        {tryOut.participants.toLocaleString()} Peserta
+                      </span>
                     </div>
                   </div>
 
@@ -500,6 +676,30 @@ const LandingPageModule = () => {
         </div>
       </section>
 
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {subjects.map((subject) => {
+              const IconComponent = subject.icon;
+              return (
+                <Card
+                  key={subject.id}
+                  className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer group"
+                >
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3 group-hover:scale-105 transition-transform">
+                    <div
+                      className={`${subject.bgColor} p-4 rounded-xl group-hover:scale-110 transition-transform`}
+                    >
+                      <IconComponent className={`w-8 h-8 ${subject.color}`} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 leading-tight">
+                      {subject.name}
+                    </h3>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      </div>
       <Footer />
     </div>
   );

@@ -53,6 +53,8 @@ const Navbar = () => {
   const router = useRouter();
   const { setOpen } = useSidebar();
 
+  const state =
+    items.find((item) => path.startsWith(`/${item.path}`)) ?? items[0];
   const hidden = ["/login", "/register", "/admin"];
   const isExamPage = path.includes("/exam/");
 
