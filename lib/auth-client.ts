@@ -5,16 +5,6 @@ export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173",
 });
 
-<<<<<<< HEAD
-export const { 
-  signIn, 
-  signUp, 
-  useSession, 
-  signOut, 
-  changePassword,
-  requestPasswordReset,
-  resetPassword
-=======
 export const {
   signIn,
   signUp,
@@ -23,5 +13,4 @@ export const {
   changePassword,
   requestPasswordReset,
   resetPassword,
->>>>>>> 3ee9ef9 (fix: profile page edit and reset features)
 } = authClient;

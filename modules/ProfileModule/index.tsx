@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signOut, changePassword } from "@/lib/auth-client";
+import { signOut, changePassword, useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import {
   User,
@@ -38,6 +38,7 @@ import {
 import { BACKEND_URL } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 
+// --- Tipe Data (Interface) ---
 interface Attempt {
   id: string;
   title: string;
@@ -46,39 +47,38 @@ interface Attempt {
   status: string;
 }
 
-interface ProfileData {
-  user: {
-    name: string;
-    email: string;
-    image: string | null;
-    tokenBalance: number;
-    target?: string;
-    hasPassword?: boolean;
-  };
-  stats: {
-    totalTryout: number;
-    averageScore: number;
-    lastScore: number;
-    streak: number;
-  };
-  attempts: Attempt[];
+interface ProfileStats {
+  totalTryout: number;
+  averageScore: number;
+  lastScore: number;
+  streak: number;
 }
 
-export default function ProfileModule({
-  data,
-  session,
-}: {
-  data: ProfileData | null;
-  session: any;
-}) {
+export default function ProfileModule() {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
+
+  // -- State Tabs --
   const [activeTab, setActiveTab] = useState<
     "overview" | "history" | "settings"
   >("overview");
 
+  // -- State Data --
+  const [stats, setStats] = useState<ProfileStats>({
+    lastScore: 0,
+    averageScore: 0,
+    streak: 0,
+    totalTryout: 0,
+  });
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // -- State Edit Profile --
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({ name: "", target: "" });
 
+  // -- State Password --
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -87,30 +87,66 @@ export default function ProfileModule({
     confirmPassword: "",
   });
 
-  const user = data?.user || {
-    name: session?.user?.name || "Siswa Jitu",
-    email: session?.user?.email || "siswa@contoh.com",
-    image: session?.user?.image || null,
-    tokenBalance: 0,
-    target: "Belum set target",
-    hasPassword: false,
+  // Cek apakah user punya password (jika login Google biasanya false)
+  // Better Auth biasanya tidak mengekspos `hasPassword` secara langsung di session user standard,
+  // tapi kita bisa asumsikan dari `auth.providers`.
+  // Untuk simplifikasi, kita anggap semua user punya akses set password.
+  // Tapi sebaiknya check session.user.hasPassword jika available di schema Anda.
+  const hasPassword = (session?.user as any)?.hasPassword ?? false;
+
+  // -- 1. Fetch Data Tambahan (Client Side Proxy) --
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!session) return;
+      setIsLoadingData(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/profile`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.stats) setStats(data.stats);
+          if (data.attempts) setAttempts(data.attempts);
+
+          // Update local form data
+          setFormData({
+            name: session.user.name || "",
+            target: (session.user as any).target || "",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal memuat data profile:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [session]);
+
+  // -- 2. Logic Auth --
+  if (isPending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    if (typeof window !== "undefined") router.replace("/login");
+    return null;
+  }
+
+  const user = {
+    name: session.user?.name || "Siswa Jitu",
+    email: session.user?.email || "",
+    image: session.user?.image || null,
+    target: (session.user as any).target || "-",
+    tokenBalance: (session.user as any).tokenBalance || 0,
   };
-
-  const hasPassword = user.hasPassword ?? false;
-
-  const [formData, setFormData] = useState({
-    name: user.name,
-    target: user.target || "",
-  });
-
-  const stats = data?.stats || {
-    lastScore: 0,
-    averageScore: 0,
-    streak: 0,
-    totalTryout: 0,
-  };
-
-  const attempts = data?.attempts || [];
 
   const handleLogout = async () => {
     await signOut({
@@ -123,16 +159,22 @@ export default function ProfileModule({
     });
   };
 
+  // -- 3. Handler Edit Profile --
+  const openEditModal = () => {
+    setFormData({
+      name: user.name,
+      target: user.target === "-" ? "" : user.target,
+    });
+    setIsEditOpen(true);
+  };
+
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      const BASE_URL = BACKEND_URL || "http://localhost:3000";
-
-      const res = await fetch(`${BASE_URL}/profile`, {
+      const res = await fetch(`${BACKEND_URL}/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": session?.user?.id,
         },
         body: JSON.stringify(formData),
       });
@@ -141,13 +183,27 @@ export default function ProfileModule({
 
       toast.success("Profil berhasil diperbarui!");
       setIsEditOpen(false);
+
+      // Refresh halaman agar session terupdate (atau update session manual jika didukung)
       router.refresh();
+      // Workaround: Force reload to update session cookie immediately
+      window.location.reload();
     } catch (error) {
       console.error(error);
       toast.error("Gagal menyimpan perubahan.");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // -- 4. Handler Password --
+  const resetPasswordModal = () => {
+    setIsPasswordOpen(false);
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   const handlePasswordAction = async () => {
@@ -188,15 +244,12 @@ export default function ProfileModule({
           },
         );
       } else {
-        const BASE_URL = BACKEND_URL || "http://localhost:3000";
-        const res = await fetch(`${BASE_URL}/profile/set-password`, {
+        const res = await fetch(`${BACKEND_URL}/profile/set-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-user-id": session?.user?.id,
           },
           body: JSON.stringify({ password: passwordForm.newPassword }),
-          credentials: "include",
         });
 
         if (!res.ok) {
@@ -213,20 +266,6 @@ export default function ProfileModule({
     } finally {
       setIsPasswordSaving(false);
     }
-  };
-
-  const resetPasswordModal = () => {
-    setIsPasswordOpen(false);
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-  };
-
-  const openEditModal = () => {
-    setFormData({ name: user.name, target: user.target || "" });
-    setIsEditOpen(true);
   };
 
   return (
@@ -267,7 +306,7 @@ export default function ProfileModule({
                 >
                   Member Siswa
                 </Badge>
-                {user.target && (
+                {user.target && user.target !== "-" && (
                   <Badge
                     variant="outline"
                     className="text-slate-600 border-slate-200 gap-1"
@@ -300,6 +339,7 @@ export default function ProfileModule({
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* SIDEBAR MENU */}
         <div className="lg:col-span-3 space-y-6">
           <nav className="flex flex-col space-y-1">
             <MenuButton
@@ -352,6 +392,7 @@ export default function ProfileModule({
           </Card>
         </div>
 
+        {/* CONTENT */}
         <div className="lg:col-span-9 space-y-6">
           {activeTab === "overview" && (
             <>
@@ -421,7 +462,9 @@ export default function ProfileModule({
                     </div>
                   ) : (
                     <div className="text-center py-8 text-slate-500 text-sm">
-                      Belum ada aktivitas.
+                      {isLoadingData
+                        ? "Memuat data..."
+                        : "Belum ada aktivitas."}
                     </div>
                   )}
                 </CardContent>
@@ -495,7 +538,7 @@ export default function ProfileModule({
                         Target Kampus
                       </label>
                       <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
-                        {user.target || "-"}
+                        {user.target}
                       </div>
                     </div>
                   </div>
@@ -541,6 +584,7 @@ export default function ProfileModule({
         </div>
       </div>
 
+      {/* --- Dialog Edit Profile --- */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -587,6 +631,7 @@ export default function ProfileModule({
         </DialogContent>
       </Dialog>
 
+      {/* --- Dialog Password --- */}
       <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -673,6 +718,8 @@ export default function ProfileModule({
     </div>
   );
 }
+
+// --- Sub-Components ---
 
 function MenuButton({ active, onClick, icon: Icon, label }: any) {
   return (
