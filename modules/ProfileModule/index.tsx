@@ -3,24 +3,22 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth-client";
+import { signOut, changePassword } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { 
   User, LogOut, TrendingUp, History, 
   Award, Coins, Flame, Settings, 
-  ChevronRight, Edit3, Shield, BookOpen, Target
+  Edit3, Shield, BookOpen, Target, Lock, KeyRound,
+  ChevronRight
 } from "lucide-react";
 
-// Import UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Pastikan install atau ganti dengan label biasa
 
-// --- Tipe Data (Interface) ---
 interface Attempt {
   id: string;
   title: string;
@@ -35,7 +33,8 @@ interface ProfileData {
     email: string;
     image: string | null;
     tokenBalance: number;
-    target?: string; // Tambahkan field target
+    target?: string;
+    hasPassword?: boolean;
   };
   stats: {
     totalTryout: number;
@@ -50,35 +49,39 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "history" | "settings">("overview");
 
-  // --- STATE UNTUK EDIT PROFILE ---
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Data User Fallback
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  
   const user = data?.user || {
     name: session?.user?.name || "Siswa Jitu",
     email: session?.user?.email || "siswa@contoh.com",
     image: session?.user?.image || null,
     tokenBalance: 0,
-    target: "Belum set target"
+    target: "Belum set target",
+    hasPassword: false
   };
+
+  const hasPassword = user.hasPassword ?? false;
   
-  // State Form Data (Inisialisasi dengan data user saat ini)
   const [formData, setFormData] = useState({
     name: user.name,
     target: user.target || ""
   });
 
   const stats = data?.stats || { 
-    lastScore: 0, 
-    averageScore: 0, 
-    streak: 0, 
-    totalTryout: 0 
+    lastScore: 0, averageScore: 0, streak: 0, totalTryout: 0 
   };
   
   const attempts = data?.attempts || [];
 
-  // --- HANDLER: Logout ---
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
@@ -90,12 +93,9 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
     });
   };
 
-  // --- HANDLER: Save Profile (Update ke Backend) ---
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // Sesuaikan URL Backend. Jika pakai proxy frontend, cukup '/api/profile' atau '/profile'
-      // Jika error CORS, gunakan full URL backend (misal http://localhost:3000/profile)
       const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
       
       const res = await fetch(`${BASE_URL}/profile`, {
@@ -107,38 +107,95 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) {
-        throw new Error("Gagal menyimpan profil");
-      }
+      if (!res.ok) throw new Error("Gagal menyimpan profil");
 
       toast.success("Profil berhasil diperbarui!");
       setIsEditOpen(false);
-      router.refresh(); // Refresh halaman agar data terbaru tampil
+      router.refresh();
     } catch (error) {
-      console.error("Save Error:", error);
+      console.error(error);
       toast.error("Gagal menyimpan perubahan.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Handler Buka Modal Edit
+  const handlePasswordAction = async () => {
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast.error("Password baru wajib diisi");
+      return;
+    }
+    if (hasPassword && !passwordForm.currentPassword) {
+      toast.error("Password saat ini wajib diisi");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Password baru tidak cocok");
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      toast.error("Minimal 8 karakter");
+      return;
+    }
+
+    setIsPasswordSaving(true);
+    try {
+      if (hasPassword) {
+        await changePassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          revokeOtherSessions: true,
+        }, {
+          onSuccess: () => {
+            toast.success("Password berhasil diubah!");
+            resetPasswordModal();
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          }
+        });
+      } else {
+        const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+        const res = await fetch(`${BASE_URL}/profile/set-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": session?.user?.id 
+          },
+          body: JSON.stringify({ password: passwordForm.newPassword }),
+          credentials: "include"
+        });
+
+        if (!res.ok) {
+           const errData = await res.json();
+           throw new Error(errData.message || "Gagal membuat password");
+        }
+
+        toast.success("Password berhasil dibuat! Silakan login ulang.");
+        resetPasswordModal();
+        router.refresh();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan sistem");
+    } finally {
+      setIsPasswordSaving(false);
+    }
+  };
+
+  const resetPasswordModal = () => {
+    setIsPasswordOpen(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  };
+
   const openEditModal = () => {
-    setFormData({
-      name: user.name,
-      target: user.target || ""
-    });
+    setFormData({ name: user.name, target: user.target || "" });
     setIsEditOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans text-slate-900">
-      
-      {/* --- 1. HEADER PROFILE --- */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 py-8 md:flex md:items-center md:justify-between gap-6">
-          
-          {/* Kiri: Avatar & Info */}
           <div className="flex items-center gap-5">
             <div className="relative group">
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100">
@@ -150,7 +207,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                   </div>
                 )}
               </div>
-              {/* Tombol Edit Profile (Sekarang Berfungsi!) */}
               <button 
                 onClick={openEditModal}
                 className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
@@ -162,20 +218,16 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
               <p className="text-slate-500 text-sm mb-2">{user.email}</p>
-              
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
                   Member Siswa
                 </Badge>
-                
-                {/* Tampilkan Target jika ada */}
                 {user.target && (
                   <Badge variant="outline" className="text-slate-600 border-slate-200 gap-1">
                     <Target size={12} />
                     {user.target}
                   </Badge>
                 )}
-
                 <div 
                   onClick={() => router.push('/shop')}
                   className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
@@ -187,7 +239,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </div>
           </div>
 
-          {/* Kanan: Action Buttons */}
           <div className="mt-6 md:mt-0 flex flex-col sm:flex-row gap-3">
              <Button variant="outline" onClick={() => router.push('/shop')}>
                 <Coins className="mr-2 h-4 w-4 text-amber-500" />
@@ -200,10 +251,7 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         </div>
       </div>
 
-      {/* --- 2. MAIN CONTENT GRID --- */}
       <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* SIDEBAR MENU */}
         <div className="lg:col-span-3 space-y-6">
           <nav className="flex flex-col space-y-1">
             <MenuButton 
@@ -254,10 +302,7 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
           </Card>
         </div>
 
-        {/* CONTENT AREA */}
         <div className="lg:col-span-9 space-y-6">
-          
-          {/* TAB: OVERVIEW */}
           {activeTab === "overview" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -319,7 +364,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </>
           )}
 
-          {/* TAB: HISTORY */}
           {activeTab === "history" && (
             <Card>
               <CardHeader>
@@ -348,7 +392,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             </Card>
           )}
 
-          {/* TAB: SETTINGS */}
           {activeTab === "settings" && (
             <Card>
               <CardHeader>
@@ -393,8 +436,13 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                      <Shield className="h-4 w-4" /> Keamanan
                    </h4>
-                   <Button variant="outline" className="w-full justify-start text-slate-600">
-                     Ubah Password
+                   <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-slate-600 hover:text-slate-900"
+                    onClick={() => setIsPasswordOpen(true)}
+                   >
+                     {hasPassword ? <Lock className="w-4 h-4 mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
+                     {hasPassword ? "Ubah Password" : "Buat Password Akun"}
                    </Button>
                 </div>
               </CardContent>
@@ -404,7 +452,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         </div>
       </div>
 
-      {/* --- DIALOG MODAL EDIT PROFILE --- */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -441,11 +488,66 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         </DialogContent>
       </Dialog>
 
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{hasPassword ? "Ubah Password" : "Buat Password Baru"}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {hasPassword && (
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Password Saat Ini</label>
+                <Input
+                  type="password"
+                  placeholder="******"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                />
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Password Baru</label>
+              <Input
+                type="password"
+                placeholder="Minimal 8 karakter"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Konfirmasi Password Baru</label>
+              <Input
+                type="password"
+                placeholder="Ulangi password baru"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              />
+            </div>
+            
+            {!hasPassword && (
+              <p className="text-xs text-slate-500 bg-blue-50 p-2 rounded border border-blue-100">
+                Karena Anda login menggunakan Google/Akun lain, Anda belum memiliki password. Buat password sekarang agar bisa login menggunakan Email & Password.
+              </p>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+               <Button variant="outline" type="button">Batal</Button>
+            </DialogClose>
+            <Button onClick={handlePasswordAction} disabled={isPasswordSaving}>
+              {isPasswordSaving ? "Menyimpan..." : (hasPassword ? "Simpan Password" : "Buat Password")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
-
-// --- Sub-Components ---
 
 function MenuButton({ active, onClick, icon: Icon, label }: any) {
   return (
