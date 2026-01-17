@@ -55,17 +55,17 @@ const LoginModule = () => {
         },
         onError: (ctx) => {
           toast.error(
-            ctx.error.message || "Gagal masuk. Cek email dan password."
+            ctx.error.message || "Gagal masuk. Cek email dan password.",
           );
         },
-      }
+      },
     );
   };
 
   const handleGoogleLogin = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: window.location.origin + "/dashboard",
+      callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}` + "/dashboard",
     });
   };
 
