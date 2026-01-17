@@ -1,8 +1,8 @@
 import { createAuthClient } from "better-auth/react";
-import { BACKEND_URL } from "./api";
+import { FRONTEND_URL } from "./api";
 
 export const authClient = createAuthClient({
-  baseURL: BACKEND_URL,
+  baseURL: FRONTEND_URL,
 });
 
 export const { signIn, signUp, useSession, signOut } = authClient;
