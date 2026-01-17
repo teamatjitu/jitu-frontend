@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { 
   User, LogOut, TrendingUp, History, 
   Award, Coins, Flame, Settings, 
-  ChevronRight, Edit3, Shield, BookOpen 
+  ChevronRight, Edit3, Shield, BookOpen, Target
 } from "lucide-react";
 
 // Import UI Components
@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // Pastikan install atau ganti dengan label biasa
 
 // --- Tipe Data (Interface) ---
 interface Attempt {
@@ -32,6 +35,7 @@ interface ProfileData {
     email: string;
     image: string | null;
     tokenBalance: number;
+    target?: string; // Tambahkan field target
   };
   stats: {
     totalTryout: number;
@@ -46,14 +50,25 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "history" | "settings">("overview");
 
-  // Fallback Data
+  // --- STATE UNTUK EDIT PROFILE ---
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Data User Fallback
   const user = data?.user || {
     name: session?.user?.name || "Siswa Jitu",
     email: session?.user?.email || "siswa@contoh.com",
     image: session?.user?.image || null,
-    tokenBalance: 0
+    tokenBalance: 0,
+    target: "Belum set target"
   };
   
+  // State Form Data (Inisialisasi dengan data user saat ini)
+  const [formData, setFormData] = useState({
+    name: user.name,
+    target: user.target || ""
+  });
+
   const stats = data?.stats || { 
     lastScore: 0, 
     averageScore: 0, 
@@ -63,7 +78,7 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
   
   const attempts = data?.attempts || [];
 
-  // Handler Logout
+  // --- HANDLER: Logout ---
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
@@ -73,6 +88,47 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
         },
       },
     });
+  };
+
+  // --- HANDLER: Save Profile (Update ke Backend) ---
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      // Sesuaikan URL Backend. Jika pakai proxy frontend, cukup '/api/profile' atau '/profile'
+      // Jika error CORS, gunakan full URL backend (misal http://localhost:3000/profile)
+      const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+      
+      const res = await fetch(`${BASE_URL}/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": session?.user?.id 
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        throw new Error("Gagal menyimpan profil");
+      }
+
+      toast.success("Profil berhasil diperbarui!");
+      setIsEditOpen(false);
+      router.refresh(); // Refresh halaman agar data terbaru tampil
+    } catch (error) {
+      console.error("Save Error:", error);
+      toast.error("Gagal menyimpan perubahan.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handler Buka Modal Edit
+  const openEditModal = () => {
+    setFormData({
+      name: user.name,
+      target: user.target || ""
+    });
+    setIsEditOpen(true);
   };
 
   return (
@@ -94,7 +150,11 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                   </div>
                 )}
               </div>
-              <button className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors">
+              {/* Tombol Edit Profile (Sekarang Berfungsi!) */}
+              <button 
+                onClick={openEditModal}
+                className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              >
                 <Edit3 size={14} />
               </button>
             </div>
@@ -102,10 +162,20 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
               <p className="text-slate-500 text-sm mb-2">{user.email}</p>
-              <div className="flex gap-2">
+              
+              <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
                   Member Siswa
                 </Badge>
+                
+                {/* Tampilkan Target jika ada */}
+                {user.target && (
+                  <Badge variant="outline" className="text-slate-600 border-slate-200 gap-1">
+                    <Target size={12} />
+                    {user.target}
+                  </Badge>
+                )}
+
                 <div 
                   onClick={() => router.push('/shop')}
                   className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
@@ -133,7 +203,7 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
       {/* --- 2. MAIN CONTENT GRID --- */}
       <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* SIDEBAR MENU (Kiri - 3 Kolom) */}
+        {/* SIDEBAR MENU */}
         <div className="lg:col-span-3 space-y-6">
           <nav className="flex flex-col space-y-1">
             <MenuButton 
@@ -156,13 +226,11 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
             />
           </nav>
 
-          {/* Pusat Bantuan & Logout (Fix Design) */}
           <Card className="bg-slate-50 border-dashed border-slate-200 shadow-none">
             <CardContent className="p-4">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                 Lainnya
               </h4>
-              
               <div className="space-y-1">
                 <Button 
                   variant="ghost" 
@@ -186,13 +254,12 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
           </Card>
         </div>
 
-        {/* CONTENT AREA (Kanan - 9 Kolom) */}
+        {/* CONTENT AREA */}
         <div className="lg:col-span-9 space-y-6">
           
           {/* TAB: OVERVIEW */}
           {activeTab === "overview" && (
             <>
-              {/* Statistik Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard 
                   title="Skor Terakhir" 
@@ -214,7 +281,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                 />
               </div>
 
-              {/* Banner Ajak Tryout */}
               {stats.totalTryout === 0 && (
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -229,7 +295,6 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
                 </div>
               )}
 
-              {/* Preview Riwayat Terakhir */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-lg font-bold">Aktivitas Terakhir</CardTitle>
@@ -291,12 +356,28 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-slate-700">Nama Lengkap</label>
-                    <div className="p-2 border rounded-md bg-slate-50 text-slate-500 text-sm">
-                      {user.name}
+                  <div className="flex items-center justify-between">
+                     <h4 className="text-sm font-medium">Informasi Profil</h4>
+                     <Button variant="outline" size="sm" onClick={openEditModal} className="h-8">
+                       <Edit3 className="w-3 h-3 mr-2" /> Edit Data
+                     </Button>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-slate-700">Nama Lengkap</label>
+                      <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
+                        {user.name}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-slate-700">Target Kampus</label>
+                      <div className="p-2 border rounded-md bg-slate-50 text-slate-600 text-sm">
+                        {user.target || "-"}
+                      </div>
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-slate-700">Email Terdaftar</label>
                     <div className="p-2 border rounded-md bg-slate-50 text-slate-500 text-sm flex items-center justify-between">
@@ -322,6 +403,44 @@ export default function ProfileModule({ data, session }: { data: ProfileData | n
 
         </div>
       </div>
+
+      {/* --- DIALOG MODAL EDIT PROFILE --- */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profil</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="name" className="text-sm font-medium">Nama Lengkap</label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Masukkan nama lengkap"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="target" className="text-sm font-medium">Target Kampus/Jurusan</label>
+              <Input
+                id="target"
+                value={formData.target}
+                onChange={(e) => setFormData({ ...formData, target: e.target.value })}
+                placeholder="Contoh: Kedokteran UI 2026"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+               <Button variant="outline" type="button">Batal</Button>
+            </DialogClose>
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
