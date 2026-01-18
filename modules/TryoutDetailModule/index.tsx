@@ -177,7 +177,7 @@ const TryoutDetailModule = () => {
     const id = data?.attemptId || data?.id;
     if (!id)
       throw new Error(
-        "Attempt berhasil dibuat, tapi attemptId tidak ditemukan di response."
+        "Attempt berhasil dibuat, tapi attemptId tidak ditemukan di response.",
       );
 
     return String(id);
@@ -234,7 +234,7 @@ const TryoutDetailModule = () => {
 
   const handleStartSubtest = async (
     subtestId: number,
-    isCompletedSubtest = false
+    isCompletedSubtest = false,
   ) => {
     if (!tryoutId || !tryoutData) return;
 
@@ -249,7 +249,7 @@ const TryoutDetailModule = () => {
 
       if (needsUnlock) {
         setError(
-          "Pembahasan ini terkunci. Silakan klik 'Buka Pembahasan' terlebih dahulu."
+          "Pembahasan ini terkunci. Silakan klik 'Buka Pembahasan' terlebih dahulu.",
         );
         return;
       }
@@ -265,8 +265,8 @@ const TryoutDetailModule = () => {
       // Navigasi ke Review Mode
       router.push(
         `/tryout/${tryoutId}/exam/${subtestId}?review=true&attemptId=${encodeURIComponent(
-          finishedAttemptId
-        )}`
+          finishedAttemptId,
+        )}`,
       );
       return;
     }
@@ -277,8 +277,8 @@ const TryoutDetailModule = () => {
       const id = await ensureAttempt();
       router.push(
         `/tryout/${tryoutId}/exam/${subtestId}?attemptId=${encodeURIComponent(
-          id
-        )}`
+          id,
+        )}`,
       );
     } catch (e: any) {
       setError(e?.message || "Gagal memulai subtes");
@@ -726,8 +726,8 @@ const TryoutDetailModule = () => {
                           isLocked
                             ? "border-gray-200 bg-gray-50 opacity-60"
                             : isCompleted
-                            ? "border-emerald-200 bg-emerald-50"
-                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                              ? "border-emerald-200 bg-emerald-50"
+                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
                         }`}
                       >
                         <CardContent className="p-4">
@@ -739,8 +739,8 @@ const TryoutDetailModule = () => {
                                     isLocked
                                       ? "bg-gray-300"
                                       : isCompleted
-                                      ? "bg-emerald-500"
-                                      : "bg-blue-500"
+                                        ? "bg-emerald-500"
+                                        : "bg-blue-500"
                                   }`}
                                 >
                                   {isLocked ? (
@@ -799,13 +799,13 @@ const TryoutDetailModule = () => {
                                 isLocked
                                   ? "bg-gray-300 cursor-not-allowed"
                                   : isCompleted
-                                  ? tryoutData.latestAttemptStatus ===
-                                      "FINISHED" &&
-                                    !tryoutData.isFree &&
-                                    tryoutData.unlockedSolutions.length === 0
-                                    ? "bg-orange-400 text-white" // Warna orange untuk status terkunci
-                                    : "bg-emerald-500 hover:bg-emerald-600"
-                                  : "bg-blue-500 hover:bg-blue-600"
+                                    ? tryoutData.latestAttemptStatus ===
+                                        "FINISHED" &&
+                                      !tryoutData.isFree &&
+                                      tryoutData.unlockedSolutions.length === 0
+                                      ? "bg-orange-400 text-white" // Warna orange untuk status terkunci
+                                      : "bg-emerald-500 hover:bg-emerald-600"
+                                    : "bg-blue-500 hover:bg-blue-600"
                               } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
                             >
                               {isStartingAttempt ? (
@@ -862,8 +862,8 @@ const TryoutDetailModule = () => {
                           isLocked
                             ? "border-gray-200 bg-gray-50 opacity-60"
                             : isCompleted
-                            ? "border-emerald-200 bg-emerald-50"
-                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                              ? "border-emerald-200 bg-emerald-50"
+                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
                         }`}
                       >
                         <CardContent className="p-4">
@@ -875,8 +875,8 @@ const TryoutDetailModule = () => {
                                     isLocked
                                       ? "bg-gray-300"
                                       : isCompleted
-                                      ? "bg-emerald-500"
-                                      : "bg-blue-500"
+                                        ? "bg-emerald-500"
+                                        : "bg-blue-500"
                                   }`}
                                 >
                                   {isLocked ? (
@@ -928,8 +928,8 @@ const TryoutDetailModule = () => {
                                 isLocked
                                   ? "bg-gray-300 cursor-not-allowed"
                                   : isCompleted
-                                  ? "bg-emerald-500 hover:bg-emerald-600"
-                                  : "bg-blue-500 hover:bg-blue-600"
+                                    ? "bg-emerald-500 hover:bg-emerald-600"
+                                    : "bg-blue-500 hover:bg-blue-600"
                               } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
                             >
                               {isStartingAttempt ? (
