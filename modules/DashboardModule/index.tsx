@@ -11,11 +11,13 @@ import {
   TrendingUp,
   Camera,
   Loader2,
+  Medal,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Line } from "react-chartjs-2"; // Import Line Chart
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -220,6 +222,72 @@ const DashboardModule = () => {
     return null;
   }
 
+  const toggleSubtest = (id: string) => {
+    setActiveSubtests((prev) => {
+      if (id === "total") {
+        return ["total"];
+      }
+      const newSubtests = prev.filter((sub) => sub !== "total");
+      if (newSubtests.includes(id)) {
+        return newSubtests.filter((sub) => sub !== id);
+      } else {
+        return [...newSubtests, id];
+      }
+    });
+  };
+
+  const chartData = {
+    labels: scoreHistory.map((score) => score.to),
+    datasets: subtests
+      .filter(
+        (subtest) =>
+          activeSubtests.includes(subtest.id) ||
+          activeSubtests.includes("total"),
+      )
+      .map((subtest) => {
+        const color = subtest.color.replace("bg-", "").replace("-500", "");
+        const colorMap: { [key: string]: string } = {
+          blue: "#3B82F6",
+          purple: "#A855F7",
+          green: "#10B981",
+          orange: "#F97316",
+          red: "#EF4444",
+          yellow: "#EAB308",
+          indigo: "#6366F1",
+          teal: "#14B8A6",
+        };
+        return {
+          label: subtest.label,
+          data: scoreHistory.map(
+            (score) => score[subtest.id as keyof ScoreData],
+          ),
+          borderColor: colorMap[color as keyof typeof colorMap] || "blue",
+          backgroundColor:
+            (colorMap[color as keyof typeof colorMap] || "blue") + "33",
+          fill: true,
+          tension: 0.4,
+        };
+      }),
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   const myTryouts = ongoingTryouts.filter((t) => t.isRegistered);
   const marketTryouts = [
     ...ongoingTryouts.filter((t) => !t.isRegistered),
@@ -320,9 +388,9 @@ const DashboardModule = () => {
             color="bg-emerald-500"
           />
           <StatCard
-            title="Peringkat Global"
-            value="#-"
-            icon={Trophy}
+            title="Tryout Selesai"
+            value={userStats?.totalFinished ?? 0}
+            icon={CheckCircle2}
             color="bg-orange-500"
           />
         </div>
@@ -349,7 +417,7 @@ const DashboardModule = () => {
               value="history"
               className="rounded-lg px-6 py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 font-medium"
             >
-              Riwayat Nilai
+              Riwayat Skor
             </TabsTrigger>
           </TabsList>
 
@@ -368,9 +436,19 @@ const DashboardModule = () => {
                     <CardContent className="p-0 flex flex-col h-full">
                       <div className="p-6 flex-1">
                         <div className="flex justify-between items-start mb-4">
-                          <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 px-3 py-1">
-                            Sudah Terdaftar
-                          </Badge>
+                          {tryout.status === "FINISHED" ? (
+                            <Badge className="bg-green-500 text-white hover:bg-green-600 border-0 px-3 py-1">
+                              Selesai
+                            </Badge>
+                          ) : tryout.status === "IN_PROGRESS" ? (
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-0 px-3 py-1">
+                              Sedang Dikerjakan
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 border-0 px-3 py-1">
+                              Belum Dikerjakan
+                            </Badge>
+                          )}
                           <Badge variant="outline" className="border-gray-200">
                             SNBT
                           </Badge>
@@ -398,7 +476,7 @@ const DashboardModule = () => {
 
                       <div className="p-6 pt-0 mt-auto">
                         <Button
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 shadow-lg h-12 text-base font-semibold"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white  shadow-lg h-12 text-base font-semibold"
                           onClick={() => router.push(`/tryout/${tryout.id}`)}
                         >
                           Kerjakan Sekarang
@@ -498,16 +576,40 @@ const DashboardModule = () => {
             className="animate-in fade-in-50 duration-300"
           >
             <Card className="border-none shadow-sm bg-white">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <TrendingUp className="w-8 h-8 text-blue-500" />
+              <CardContent className="p-6">
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <Badge
+                    className={`cursor-pointer px-4 py-1.5 text-sm ${activeSubtests.includes("total") ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                    onClick={() => toggleSubtest("total")}
+                  >
+                    Total
+                  </Badge>
+                  {subtests.map((subtest) => (
+                    <Badge
+                      key={subtest.id}
+                      className={`cursor-pointer px-4 py-1.5 text-sm ${activeSubtests.includes(subtest.id) ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                      onClick={() => toggleSubtest(subtest.id)}
+                    >
+                      {subtest.label}
+                    </Badge>
+                  ))}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Riwayat Nilai Segera Hadir
-                </h3>
-                <p className="text-gray-500 mt-2">
-                  Fitur grafik perkembangan nilai sedang kami siapkan untukmu.
-                </p>
+
+                <div className="h-[400px] w-full">
+                  {scoreHistory.length > 0 ? (
+                    <Line data={chartData} options={chartOptions} />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <TrendingUp className="w-12 h-12 text-gray-300 mb-3" />
+                      <p className="text-gray-500 font-medium">
+                        Belum ada riwayat skor
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        Selesaikan tryout untuk melihat grafik perkembanganmu
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -14,8 +14,9 @@ export interface ScoreData {
   ppu: number;
   pbm: number;
   pk: number;
-  literasiIndo: number;
-  literasiEng: number;
+  lbi: number;
+  lbe: number;
+  pm: number;
 }
 
 export interface Subtest {

@@ -5,7 +5,7 @@ export interface UserStats {
   lastScore: number;
   personalBest: number;
   weeklyActivity: number;
-  completedTryouts: number;
+  totalFinished: number;
   currentStreak: number;
 }
 
@@ -19,6 +19,8 @@ export interface OngoingTryout {
   createdAt: Date;
   participants: number;
   isRegistered: boolean;
+  status?: string; // IN_PROGRESS, FINISHED, NOT_STARTED
+  score?: number;
 }
 
 export interface AvailableTryout {
@@ -34,14 +36,14 @@ export interface AvailableTryout {
 
 export interface ScoreHistory {
   to: string;
-  tryOutTitle: string;
   total: number;
   pu: number;
   ppu: number;
   pbm: number;
   pk: number;
-  literasiIndo: number;
-  literasiEng: number;
+  lbi: number;
+  lbe: number;
+  pm: number;
 }
 
 export const getUserStats = async (): Promise<UserStats> => {
@@ -58,7 +60,7 @@ export const getUserStats = async (): Promise<UserStats> => {
         lastScore: 0,
         personalBest: 0,
         weeklyActivity: 0,
-        completedTryouts: 0,
+        totalFinished: 0,
         currentStreak: 0,
       };
     }

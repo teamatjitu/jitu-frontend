@@ -33,15 +33,21 @@ export const subtests: Subtest[] = [
     hoverColor: "hover:bg-red-600",
   },
   {
-    id: "literasiIndo",
+    id: "lbi",
     label: "Literasi Indonesia",
     color: "bg-yellow-500",
     hoverColor: "hover:bg-yellow-600",
   },
   {
-    id: "literasiEng",
+    id: "lbe",
     label: "Literasi Inggris",
     color: "bg-indigo-500",
     hoverColor: "hover:bg-indigo-600",
+  },
+  {
+    id: "pm",
+    label: "Penalaran Matematika",
+    color: "bg-teal-500",
+    hoverColor: "hover:bg-teal-600",
   },
 ];
