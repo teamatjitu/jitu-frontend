@@ -608,7 +608,7 @@ export default function TryoutExamModule() {
                       const isAnswered =
                         userAnswer !== undefined && userAnswer !== "";
 
-                      let btnClass =
+                      let baseBtnClass =
                         "bg-gray-100 text-gray-700 hover:bg-gray-200";
 
                       if (isReviewMode) {
@@ -619,26 +619,26 @@ export default function TryoutExamModule() {
                             userAnswer?.toLowerCase().trim() ===
                               q.correctAnswerText.toLowerCase().trim());
 
-                        if (isCurrent) {
-                          btnClass =
-                            "ring-2 ring-offset-1 ring-blue-500 bg-white text-gray-900";
-                        } else if (isAnswered) {
-                          btnClass = isCorrectAnswer
-                            ? "bg-emerald-500 text-white" // Jawaban user BENAR -> Hijau
-                            : "bg-red-500 text-white"; // Jawaban user SALAH -> Merah
+                        if (isAnswered) {
+                          baseBtnClass = isCorrectAnswer
+                            ? "bg-green-100 text-green-800" // Jawaban user BENAR -> Hijau
+                            : "bg-red-100 text-red-800"; // Jawaban user SALAH -> Merah
                         } else {
-                          btnClass = "bg-gray-200 text-gray-400"; // Kosong
+                          // Unanswered in review mode, treat as incorrect
+                          baseBtnClass = "bg-red-100 text-red-800"; // Kosong
                         }
-                      } else {
+                      } else { // Exam mode
                         const isMarked = markedQuestions.includes(q.id);
-                        if (isCurrent)
-                          btnClass =
-                            "bg-yellow-400 text-gray-900 ring-2 ring-yellow-200";
-                        else if (isMarked)
-                          btnClass =
-                            "bg-red-100 text-red-600 border border-red-200";
+                        if (isMarked)
+                          baseBtnClass = "bg-yellow-400 text-black";
                         else if (isAnswered)
-                          btnClass = "bg-blue-500 text-white hover:bg-blue-600";
+                          baseBtnClass = "bg-blue-500 text-white hover:bg-blue-600";
+                      }
+
+                      // Apply current styling AFTER base color is determined
+                      let finalBtnClass = baseBtnClass;
+                      if (isCurrent) {
+                          finalBtnClass += " ring-2 ring-blue-500";
                       }
 
                       return (
@@ -650,7 +650,7 @@ export default function TryoutExamModule() {
                               await saveCurrentQuestionIfDirty();
                             setCurrentQuestionIndex(index);
                           }}
-                          className={`aspect-square rounded-lg font-semibold text-sm transition-all ${btnClass}`}
+                          className={`aspect-square rounded-lg font-semibold text-sm transition-all ${finalBtnClass}`}
                         >
                           {index + 1}
                         </button>
