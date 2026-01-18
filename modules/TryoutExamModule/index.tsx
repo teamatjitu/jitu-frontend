@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { TransitionView } from "./components/TransitionView";
+
 type UiOption = { id: string; text: string };
 
 type UiQuestion = {
@@ -96,6 +98,7 @@ export default function TryoutExamModule() {
   >({});
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const subtestIndex = useMemo(
     () => getSubtestIndex(String(subtestId)),
@@ -318,6 +321,45 @@ export default function TryoutExamModule() {
     }
   };
 
+  const handleProceedToNext = async () => {
+    try {
+      setIsSubmittingFinish(true);
+      
+      // Panggil API start-subtest untuk mereset timer di backend
+      const nextOrder = subtestIndex + 2; // subtestIndex 0-based, order 1-based. Next = +2
+      await fetch(
+        `${BACKEND_URL}/exam/${encodeURIComponent(
+          attemptId || ""
+        )}/start-subtest`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ subtestOrder: nextOrder }),
+        }
+      );
+
+      setIsTransitioning(false);
+      setIsSubmittingFinish(false);
+      
+      router.push(
+        `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
+          attemptId || ""
+        )}`
+      );
+    } catch (e) {
+      console.error("Gagal memulai subtes:", e);
+      setIsSubmittingFinish(false);
+      // Fallback: tetap lanjut navigasi meski API gagal (opsional, tergantung kebijakan strictness)
+      setIsTransitioning(false);
+       router.push(
+        `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
+          attemptId || ""
+        )}`
+      );
+    }
+  };
+
   const finishCurrentSubtest = async () => {
     if (isReviewMode) return;
 
@@ -329,11 +371,8 @@ export default function TryoutExamModule() {
       await saveCurrentQuestionIfDirty();
 
       if (hasNextSubtest) {
-        router.push(
-          `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
-            attemptId
-          )}`
-        );
+        setIsTransitioning(true);
+        setIsSubmittingFinish(false);
       } else {
         await fetch(
           `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/finish`,
@@ -515,6 +554,29 @@ export default function TryoutExamModule() {
 
   const answeredCount = Object.keys(answers).length;
   const unansweredCount = examData.questions.length - answeredCount;
+
+  if (isTransitioning) {
+    const nextName = SUBTEST_FLOW[subtestIndex + 1] || "Subtes Berikutnya";
+    
+    // Construct subtest info list for the stepper
+    const subtestsInfo = SUBTEST_FLOW.map((name, idx) => ({
+      name,
+      order: idx + 1,
+    }));
+
+    // Current order adalah subtest yang BARU SAJA selesai (subtestIndex + 1)
+    const currentOrder = subtestIndex + 1;
+
+    return (
+      <TransitionView
+        currentSubtestName={examData?.subtestName || ""}
+        nextSubtestName={nextName}
+        onNext={handleProceedToNext}
+        subtests={subtestsInfo}
+        currentOrder={currentOrder}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-open-sans">

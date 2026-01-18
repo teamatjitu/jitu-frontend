@@ -36,6 +36,8 @@ import {
 } from "lucide-react";
 
 import { TryoutDetail } from "./interface";
+import { RegisterModal } from "../DashboardModule/components/RegisterModal";
+import { toast } from "sonner";
 
 const TryoutDetailModule = () => {
   const router = useRouter();
@@ -59,6 +61,11 @@ const TryoutDetailModule = () => {
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
+
+  // Registration Modal State
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState("");
 
   const handleUnlock = async () => {
     if (!tryoutId) return;
@@ -198,21 +205,37 @@ const TryoutDetailModule = () => {
 
   const handleRegister = async () => {
     if (!tryoutId) return;
+    setRegisterError("");
+    setRegisterModalOpen(true);
+  };
 
-    setIsRegistering(true);
-    setError("");
+  const onConfirmRegister = async () => {
+    if (!tryoutId) return;
+    setRegisterLoading(true);
+    setRegisterError("");
 
     try {
-      // Jika sudah finish, tidak perlu start attempt baru
-      if (tryoutData?.latestAttemptStatus !== "FINISHED") {
-        await ensureAttempt();
+      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Gagal mendaftar tryout");
       }
-      setTryoutData((prev) => (prev ? { ...prev, isRegistered: true } : prev));
-      setShowStartModal(true);
+
+      toast.success(data.message || "Berhasil mendaftar tryout!");
+      setRegisterModalOpen(false);
+      
+      // Redirect ke Dashboard setelah berhasil mendaftar/membeli
+      router.push("/dashboard");
     } catch (e: any) {
-      setError(e?.message || "Gagal memulai tryout");
+      setRegisterError(e.message);
     } finally {
-      setIsRegistering(false);
+      setRegisterLoading(false);
     }
   };
 
@@ -954,12 +977,24 @@ const TryoutDetailModule = () => {
                   })}
                 </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
-  );
-};
-
-export default TryoutDetailModule;
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+            
+                    <RegisterModal
+                      isOpen={registerModalOpen}
+                      onClose={() => setRegisterModalOpen(false)}
+                      onConfirm={onConfirmRegister}
+                      tryoutTitle={tryoutData?.title || ""}
+                      tokenCost={tryoutData?.tokenCost || 0}
+                      userBalance={session?.user?.tokenBalance || 0}
+                      isLoading={registerLoading}
+                      error={registerError}
+                    />
+                  </div>
+                </div>
+              );
+            };
+            
+            export default TryoutDetailModule;
+            

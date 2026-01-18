@@ -73,7 +73,7 @@ const Navbar = () => {
           {session ? (
             <Button
               onClick={() => router.push("/dashboard")}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-lg shadow-blue-200"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6  shadow-sm"
             >
               Dashboard
             </Button>
@@ -113,14 +113,6 @@ const HeroSection = () => {
         <div className="flex flex-col lg:flex-row items-center gap-16">
           {/* Text Content */}
           <div className="flex-1 text-center lg:text-left space-y-8">
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium animate-fade-in-up">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              Platform Persiapan UTBK #1 Terupdate
-            </div>
-
             <h1 className="text-5xl lg:text-7xl font-extrabold text-gray-900 tracking-tight leading-[1.1]">
               Raih Kampus <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
@@ -179,22 +171,6 @@ const HeroSection = () => {
                 alt="Students studying together"
                 className="w-full h-auto object-cover transform transition-transform duration-700 hover:scale-105"
               />
-
-              <div className="absolute bottom-8 left-8 bg-white/90 backdrop-blur p-4 rounded-xl shadow-lg border border-white/50 animate-bounce-slow hidden sm:block">
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-full">
-                    <BarChart3 className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-                      Peluang Lolos
-                    </p>
-                    <p className="text-xl font-bold text-gray-900">
-                      High (85%)
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -380,9 +356,6 @@ const TestimonialsSection = () => {
     <section id="testimoni" className="py-24 bg-white border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 mb-4 px-4 py-1 text-sm rounded-full">
-            Testimoni Siswa
-          </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Kata Mereka yang Sudah <span className="text-blue-600">Lolos</span>
           </h2>

@@ -37,6 +37,8 @@ import {
   ScoreHistory,
 } from "@/lib/api/DashboardApi";
 import { toast } from "sonner";
+import { RegisterModal } from "./components/RegisterModal";
+import { BACKEND_URL } from "@/lib/api";
 
 ChartJS.register(
   CategoryScale,
@@ -59,6 +61,14 @@ const DashboardModule = () => {
   >([]);
   const [scoreHistory, setScoreHistory] = useState<ScoreHistory[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Registration Modal State
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [selectedTryout, setSelectedTryout] = useState<OngoingTryout | null>(
+    null
+  );
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState("");
 
   useEffect(() => {
     if (!isPending) {
@@ -92,6 +102,45 @@ const DashboardModule = () => {
       toast.error("Gagal memuat data dashboard");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterClick = (tryout: OngoingTryout) => {
+    setSelectedTryout(tryout);
+    setRegisterError("");
+    setRegisterModalOpen(true);
+  };
+
+  const onConfirmRegister = async () => {
+    if (!selectedTryout) return;
+    setRegisterLoading(true);
+    setRegisterError("");
+
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/tryout/${selectedTryout.id}/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Gagal mendaftar tryout");
+      }
+
+      toast.success(data.message);
+      setRegisterModalOpen(false);
+
+      // Refresh data
+      loadDashboardData();
+    } catch (err: any) {
+      setRegisterError(err.message);
+    } finally {
+      setRegisterLoading(false);
     }
   };
 
@@ -317,14 +366,42 @@ const DashboardModule = () => {
                               </Button>
                               <Button
                                 className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                                onClick={() =>
-                                  router.push(`/tryout/${tryout.id}`)
-                                }
+                                onClick={() => handleRegisterClick(tryout)}
                               >
                                 Daftar Try Out
                                 <ChevronRight className="w-4 h-4" />
                               </Button>
                             </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Registered State */}
+                      {tryout.isRegistered && (
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">
+                                  Kamu sudah terdaftar!
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Silakan kerjakan tryout ini sekarang.
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6"
+                              onClick={() =>
+                                router.push(`/tryout/${tryout.id}`)
+                              }
+                            >
+                              Kerjakan
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -368,7 +445,11 @@ const DashboardModule = () => {
               <Card
                 key={tryout.id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 cursor-pointer group"
-                onClick={() => router.push(`/tryout/${tryout.id}`)}
+                onClick={() => {
+                   // Quick action based on registration status?
+                   // For now, simple redirect to detail
+                   router.push(`/tryout/${tryout.id}`)
+                }}
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4 mb-4">
@@ -418,6 +499,17 @@ const DashboardModule = () => {
           </div>
         </section>
       </div>
+
+      <RegisterModal
+        isOpen={registerModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        onConfirm={onConfirmRegister}
+        tryoutTitle={selectedTryout?.title || ""}
+        tokenCost={selectedTryout?.solutionPrice || 0}
+        userBalance={userStats?.tokenBalance || 0}
+        isLoading={registerLoading}
+        error={registerError}
+      />
     </div>
   );
 };
