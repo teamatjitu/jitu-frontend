@@ -62,7 +62,6 @@ const TryoutDetailModule = () => {
 
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
-  const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Registration Modal State
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -84,33 +83,6 @@ const TryoutDetailModule = () => {
       fetchBalance();
     }
   }, [registerModalOpen]);
-
-  const handleUnlock = async () => {
-    if (!tryoutId) return;
-
-    setIsUnlocking(true);
-    setError("");
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/unlock`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Gagal membuka pembahasan");
-      }
-
-      // Refresh data untuk memperbarui status unlockedSolutions
-      await fetchDetail();
-    } catch (e: any) {
-      setError(e?.message || "Terjadi kesalahan saat membuka pembahasan");
-    } finally {
-      setIsUnlocking(false);
-    }
-  };
 
   const fetchDetail = async () => {
     if (!tryoutId) return;
@@ -272,16 +244,6 @@ const TryoutDetailModule = () => {
           return;
         }
 
-        // Cek proteksi pembayaran pembahasan
-        const needsUnlock =
-          !tryoutData.isFree && tryoutData.unlockedSolutions.length === 0;
-        if (needsUnlock) {
-          setError(
-            "Pembahasan terkunci. Silakan buka pembahasan terlebih dahulu.",
-          );
-          return;
-        }
-
         // Langsung ke subtest 1 mode review
         router.push(
           `/tryout/${tryoutId}/exam/1?review=true&attemptId=${finishedId}`,
@@ -293,7 +255,6 @@ const TryoutDetailModule = () => {
       const id = await ensureAttempt();
 
       // Ambil order subtes yang harus dikerjakan (default ke 1 jika baru mulai)
-      // Perbaikan: Di backend, currentSubtestOrder default ke 1 saat pendaftaran
       const orderToStart = tryoutData?.currentSubtestOrder || 1;
 
       router.push(`/tryout/${tryoutId}/exam/${orderToStart}?attemptId=${id}`);
@@ -313,18 +274,7 @@ const TryoutDetailModule = () => {
       tryoutData.latestAttemptStatus === "FINISHED" || isCompletedSubtest;
 
     if (isReviewMode) {
-      // 2. CEK PROTEKSI PEMBAYARAN: Jika tidak gratis dan belum di-unlock
-      const needsUnlock =
-        !tryoutData.isFree && tryoutData.unlockedSolutions.length === 0;
-
-      if (needsUnlock) {
-        setError(
-          "Pembahasan ini terkunci. Silakan klik 'Buka Pembahasan' terlebih dahulu.",
-        );
-        return;
-      }
-
-      // 3. Ambil ID Attempt untuk review
+      // 2. Ambil ID Attempt untuk review
       const finishedAttemptId = tryoutData.latestFinishedAttemptId;
 
       if (!finishedAttemptId) {
@@ -504,43 +454,21 @@ const TryoutDetailModule = () => {
               <div className="flex items-start gap-4">
                 {tryoutData.isRegistered ? (
                   <>
-                    {/* Cek apakah pembahasan perlu dibeli atau sudah terbuka */}
-                    {tryoutData.latestAttemptStatus === "FINISHED" &&
-                    !tryoutData.isFree &&
-                    tryoutData.unlockedSolutions.length === 0 ? (
-                      <>
-                        <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <Lock className="w-7 h-7 text-orange-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            Pembahasan Terkunci
-                          </h3>
-                          <p className="text-gray-600">
-                            Gunakan token untuk membuka pembahasan lengkap dan
-                            analisis hasil.
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            {tryoutData.latestAttemptStatus === "FINISHED"
-                              ? "Ujian Telah Selesai!"
-                              : "Kamu Sudah Terdaftar!"}
-                          </h3>
-                          <p className="text-gray-600">
-                            {tryoutData.latestAttemptStatus === "FINISHED"
-                              ? "Pelajari kembali hasil pengerjaanmu melalui pembahasan"
-                              : "Mulai try out sekarang dan ukur kemampuanmu"}
-                          </p>
-                        </div>
-                      </>
-                    )}
+                    <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        {tryoutData.latestAttemptStatus === "FINISHED"
+                          ? "Ujian Telah Selesai!"
+                          : "Kamu Sudah Terdaftar!"}
+                      </h3>
+                      <p className="text-gray-600">
+                        {tryoutData.latestAttemptStatus === "FINISHED"
+                          ? "Pelajari kembali hasil pengerjaanmu melalui pembahasan"
+                          : "Mulai try out sekarang dan ukur kemampuanmu"}
+                      </p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -580,30 +508,13 @@ const TryoutDetailModule = () => {
                           </div>
                         </div>
 
-                        {/* CEK APAKAH SUDAH UNLOCK ATAU GRATIS */}
-                        {tryoutData.isFree ||
-                        tryoutData.unlockedSolutions.length > 0 ? (
-                          <Button
-                            onClick={handleStart}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
-                          >
-                            <BookOpen className="w-5 h-5" />
-                            Lihat Pembahasan
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={handleUnlock}
-                            disabled={isUnlocking}
-                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                          >
-                            {isUnlocking ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                              <Lock className="w-5 h-5" />
-                            )}
-                            Buka Pembahasan ({tryoutData.tokenCost} Token)
-                          </Button>
-                        )}
+                        <Button
+                          onClick={handleStart}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+                        >
+                          <BookOpen className="w-5 h-5" />
+                          Lihat Pembahasan
+                        </Button>
                       </div>
                     ) : (
                       /* JIKA MASIH BERJALAN ATAU BARU DAFTAR */
