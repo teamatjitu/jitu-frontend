@@ -1,4 +1,5 @@
 export interface TryoutDetail {
+  unlockedSolutions: any;
   id: string;
   title: string;
   number: string;
@@ -15,10 +16,11 @@ export interface TryoutDetail {
   categories: CategoryDetail[];
   benefits: string[];
   requirements: string[];
-  latestFinishedAttemptId?: string | null;
-  latestAttemptStatus?: 'IN_PROGRESS' | 'FINISHED' | null;
-  unlockedSolutions: any[] ;
-
+  latestFinishedAttemptId: string | null;
+  latestAttemptStatus: "IN_PROGRESS" | "FINISHED" | "NOT_STARTED" | null;
+  latestAttemptId?: string | null;
+  currentSubtestOrder?: number;
+  latestScore?: number;
 }
 
 export interface CategoryDetail {

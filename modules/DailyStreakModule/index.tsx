@@ -44,8 +44,16 @@ const DailyStreakModule = () => {
       setCurrentProblem(questionData.question);
       setIsAnswered(questionData.alreadyAnswered);
       
-      if (questionData.alreadyAnswered && questionData.isCorrect !== undefined) {
-        setIsCorrect(questionData.isCorrect);
+      if (questionData.alreadyAnswered) {
+        if (questionData.isCorrect !== undefined) {
+          setIsCorrect(questionData.isCorrect);
+        }
+        if (questionData.userAnswer) {
+          setSelectedAnswer(questionData.userAnswer);
+        }
+        // Fetch explanation if needed, but current API doesn't return it in getDailyQuestion for answered state.
+        // We might need to assume it's shown or handled elsewhere.
+        // For now, let's at least show the user's answer.
       }
     } catch (error) {
       console.error("Failed to load daily data:", error);
@@ -205,59 +213,84 @@ const DailyStreakModule = () => {
                   </div>
                 )}
 
-                {/* Options */}
-                <div className="space-y-3">
-                  {currentProblem.options.map((option, index) => {
-                    const isSelected = selectedAnswer === option.id;
-                    const isCorrectAnswer = false; // We don't reveal correct answer from frontend
-                    const isWrongAnswer = isAnswered && isSelected && !isCorrect;
-                    const optionLabel = String.fromCharCode(65 + index); // A, B, C, D...
+                {/* Question Content */}
+                <div className="space-y-6">
+                  {/* Options / Input */}
+                  {currentProblem.type === "ISIAN_SINGKAT" ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <input
+                          type="text"
+                          className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-lg"
+                          placeholder="Ketik jawaban Anda di sini..."
+                          value={selectedAnswer || ""}
+                          onChange={(e) => !isAnswered && setSelectedAnswer(e.target.value)}
+                          disabled={isAnswered}
+                        />
+                      </div>
+                      {isAnswered && (
+                        <div className={`p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {isCorrect ? <CheckCircle2 className="w-4 h-4"/> : null}
+                          {isCorrect ? "Jawaban Anda Benar!" : "Jawaban Anda Salah."}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {currentProblem.options.map((option, index) => {
+                        const isSelected = selectedAnswer === option.id;
+                        // ... existing logic for options
+                        const isCorrectAnswer = false; // Hidden
+                        const isWrongAnswer = isAnswered && isSelected && !isCorrect;
+                        const optionLabel = String.fromCharCode(65 + index);
 
-                    return (
-                      <button
-                        key={option.id}
-                        onClick={() =>
-                          !isAnswered && setSelectedAnswer(option.id)
-                        }
-                        disabled={isAnswered}
-                        className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
-                          isCorrectAnswer
-                            ? "border-green-500 bg-green-50"
-                            : isWrongAnswer
-                            ? "border-red-500 bg-red-50"
-                            : isSelected
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-orange-300 hover:bg-orange-50/50"
-                        } ${
-                          isAnswered
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer hover:shadow-md"
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() =>
+                              !isAnswered && setSelectedAnswer(option.id)
+                            }
+                            disabled={isAnswered}
+                            className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
                               isCorrectAnswer
-                                ? "bg-green-500 text-white"
+                                ? "border-green-500 bg-green-50"
                                 : isWrongAnswer
-                                ? "bg-red-500 text-white"
+                                ? "border-red-500 bg-red-50"
                                 : isSelected
-                                ? "bg-orange-500 text-white"
-                                : "bg-gray-200 text-gray-700"
+                                ? "border-orange-500 bg-orange-50"
+                                : "border-gray-200 hover:border-orange-300 hover:bg-orange-50/50"
+                            } ${
+                              isAnswered
+                                ? "cursor-not-allowed"
+                                : "cursor-pointer hover:shadow-md"
                             }`}
                           >
-                            {optionLabel}
-                          </div>
-                          <span className="text-base text-gray-900 flex-1">
-                            {option.content}
-                          </span>
-                          {isCorrectAnswer && (
-                            <CheckCircle2 className="w-6 h-6 text-green-500" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                                  isCorrectAnswer
+                                    ? "bg-green-500 text-white"
+                                    : isWrongAnswer
+                                    ? "bg-red-500 text-white"
+                                    : isSelected
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-gray-200 text-gray-700"
+                                }`}
+                              >
+                                {optionLabel}
+                              </div>
+                              <span className="text-base text-gray-900 flex-1">
+                                {option.content}
+                              </span>
+                              {isCorrectAnswer && (
+                                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}

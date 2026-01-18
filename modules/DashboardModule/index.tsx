@@ -476,11 +476,19 @@ const DashboardModule = () => {
 
                       <div className="p-6 pt-0 mt-auto">
                         <Button
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white  shadow-lg h-12 text-base font-semibold"
+                          className={`w-full ${tryout.status === "FINISHED" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"} text-white shadow-lg h-12 text-base font-semibold`}
                           onClick={() => router.push(`/tryout/${tryout.id}`)}
                         >
-                          Kerjakan Sekarang
-                          <ChevronRight className="w-5 h-5 ml-2" />
+                          {tryout.status === "FINISHED"
+                            ? "Lihat Pembahasan"
+                            : tryout.status === "IN_PROGRESS"
+                              ? "Lanjutkan Ujian"
+                              : "Kerjakan Sekarang"}
+                          {tryout.status === "FINISHED" ? (
+                            <BookOpen className="w-5 h-5 ml-2" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 ml-2" />
+                          )}
                         </Button>
                       </div>
                     </CardContent>

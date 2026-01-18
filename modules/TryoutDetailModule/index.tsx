@@ -18,6 +18,7 @@ import {
 
 import {
   ArrowLeft,
+  Trophy,
   Clock,
   Calendar,
   Users,
@@ -38,6 +39,7 @@ import {
 import { TryoutDetail } from "./interface";
 import { RegisterModal } from "../DashboardModule/components/RegisterModal";
 import { toast } from "sonner";
+import { getUserStats } from "@/lib/api/DashboardApi";
 
 const TryoutDetailModule = () => {
   const router = useRouter();
@@ -66,6 +68,22 @@ const TryoutDetailModule = () => {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+  const [userBalance, setUserBalance] = useState(0);
+
+  // Fetch latest balance when modal opens
+  useEffect(() => {
+    if (registerModalOpen) {
+      const fetchBalance = async () => {
+        try {
+          const stats = await getUserStats();
+          setUserBalance(stats.tokenBalance);
+        } catch (e) {
+          console.error("Failed to fetch balance", e);
+        }
+      };
+      fetchBalance();
+    }
+  }, [registerModalOpen]);
 
   const handleUnlock = async () => {
     if (!tryoutId) return;
@@ -140,6 +158,9 @@ const TryoutDetailModule = () => {
 
         latestFinishedAttemptId: data.latestFinishedAttemptId ?? null,
         latestAttemptStatus: data.latestAttemptStatus ?? null,
+        latestAttemptId: data.latestAttemptId ?? null,
+        currentSubtestOrder: data.currentSubtestOrder ?? 1,
+        latestScore: data.latestScore ?? 0,
       };
 
       setTryoutData(mappedData);
@@ -229,7 +250,7 @@ const TryoutDetailModule = () => {
 
       toast.success(data.message || "Berhasil mendaftar tryout!");
       setRegisterModalOpen(false);
-      
+
       // Redirect ke Dashboard setelah berhasil mendaftar/membeli
       router.push("/dashboard");
     } catch (e: any) {
@@ -241,15 +262,41 @@ const TryoutDetailModule = () => {
 
   const handleStart = async () => {
     setError("");
-    // Jika status sudah FINISHED, jangan panggil ensureAttempt (agar tidak buat attempt baru)
-    if (tryoutData?.latestAttemptStatus === "FINISHED") {
-      setShowStartModal(true);
-      return;
-    }
 
     try {
-      await ensureAttempt();
-      setShowStartModal(true);
+      // 1. MODE REVIEW (FINISHED)
+      if (tryoutData?.latestAttemptStatus === "FINISHED") {
+        const finishedId = tryoutData.latestFinishedAttemptId;
+        if (!finishedId) {
+          setError("Data pembahasan belum tersedia.");
+          return;
+        }
+
+        // Cek proteksi pembayaran pembahasan
+        const needsUnlock =
+          !tryoutData.isFree && tryoutData.unlockedSolutions.length === 0;
+        if (needsUnlock) {
+          setError(
+            "Pembahasan terkunci. Silakan buka pembahasan terlebih dahulu.",
+          );
+          return;
+        }
+
+        // Langsung ke subtest 1 mode review
+        router.push(
+          `/tryout/${tryoutId}/exam/1?review=true&attemptId=${finishedId}`,
+        );
+        return;
+      }
+
+      // 2. MODE UJIAN (NOT_STARTED / IN_PROGRESS)
+      const id = await ensureAttempt();
+
+      // Ambil order subtes yang harus dikerjakan (default ke 1 jika baru mulai)
+      // Perbaikan: Di backend, currentSubtestOrder default ke 1 saat pendaftaran
+      const orderToStart = tryoutData?.currentSubtestOrder || 1;
+
+      router.push(`/tryout/${tryoutId}/exam/${orderToStart}?attemptId=${id}`);
     } catch (e: any) {
       setError(e?.message || "Gagal memulai tryout");
     }
@@ -519,13 +566,26 @@ const TryoutDetailModule = () => {
                   <>
                     {/* JIKA SUDAH FINISH */}
                     {tryoutData.latestAttemptStatus === "FINISHED" ? (
-                      <>
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        {/* Summary Score for Finished Attempt */}
+                        <div className="bg-emerald-50 border border-emerald-100 px-6 py-3 rounded-2xl flex items-center gap-3 shadow-sm">
+                          <Trophy className="w-6 h-6 text-emerald-600" />
+                          <div>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none mb-1">
+                              Skor Akhir
+                            </p>
+                            <p className="text-2xl font-black text-emerald-900 leading-none">
+                              {tryoutData.latestScore ?? 0}
+                            </p>
+                          </div>
+                        </div>
+
                         {/* CEK APAKAH SUDAH UNLOCK ATAU GRATIS */}
                         {tryoutData.isFree ||
                         tryoutData.unlockedSolutions.length > 0 ? (
                           <Button
                             onClick={handleStart}
-                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                           >
                             <BookOpen className="w-5 h-5" />
                             Lihat Pembahasan
@@ -544,13 +604,13 @@ const TryoutDetailModule = () => {
                             Buka Pembahasan ({tryoutData.tokenCost} Token)
                           </Button>
                         )}
-                      </>
+                      </div>
                     ) : (
                       /* JIKA MASIH BERJALAN ATAU BARU DAFTAR */
                       <Button
                         onClick={handleStart}
                         disabled={isStartingAttempt}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                       >
                         {isStartingAttempt ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -713,288 +773,19 @@ const TryoutDetailModule = () => {
           </div>
         </div>
 
-        {/* Start Tryout Modal */}
-        <Dialog open={showStartModal} onOpenChange={setShowStartModal}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-gray-900">
-                {tryoutData.latestAttemptStatus === "FINISHED"
-                  ? "Pembahasan Try Out"
-                  : "Mulai Try Out"}
-              </DialogTitle>
-              <DialogDescription className="text-gray-600">
-                {tryoutData.latestAttemptStatus === "FINISHED"
-                  ? "Pilih subtes untuk melihat pembahasan soal dan kunci jawaban."
-                  : "Pilih subtes untuk memulai. Subtes harus dikerjakan secara berurutan."}
-              </DialogDescription>
-            </DialogHeader>
+        <RegisterModal
+          isOpen={registerModalOpen}
+          onClose={() => setRegisterModalOpen(false)}
+          onConfirm={onConfirmRegister}
+          tryoutTitle={tryoutData?.title || ""}
+          tokenCost={tryoutData?.tokenCost || 0}
+          userBalance={userBalance}
+          isLoading={registerLoading}
+          error={registerError}
+        />
+      </div>
+    </div>
+  );
+};
 
-            <div className="space-y-6 mt-4">
-              {/* Tes Potensi Skolastik Group */}
-              <div>
-                <h3 className="text-lg font-bold text-emerald-700 mb-3">
-                  Tes Potensi Skolastik
-                </h3>
-                <div className="space-y-3">
-                  {tryoutData.categories.slice(0, 4).map((category, index) => {
-                    const isLocked = isSubtestLocked(index);
-                    const isCompleted =
-                      completedSubtests.includes(category.id) ||
-                      tryoutData.latestAttemptStatus === "FINISHED";
-
-                    return (
-                      <Card
-                        key={category.id}
-                        className={`border-2 transition-all ${
-                          isLocked
-                            ? "border-gray-200 bg-gray-50 opacity-60"
-                            : isCompleted
-                              ? "border-emerald-200 bg-emerald-50"
-                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
-                        }`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div
-                                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                    isLocked
-                                      ? "bg-gray-300"
-                                      : isCompleted
-                                        ? "bg-emerald-500"
-                                        : "bg-blue-500"
-                                  }`}
-                                >
-                                  {isLocked ? (
-                                    <Lock className="w-5 h-5 text-white" />
-                                  ) : isCompleted ? (
-                                    <CheckCircle2 className="w-5 h-5 text-white" />
-                                  ) : (
-                                    <span className="text-white font-bold">
-                                      {index + 1}
-                                    </span>
-                                  )}
-                                </div>
-                                <div>
-                                  <h3
-                                    className={`font-bold ${
-                                      isLocked
-                                        ? "text-gray-500"
-                                        : "text-gray-900"
-                                    }`}
-                                  >
-                                    {category.name}
-                                  </h3>
-                                  <div
-                                    className={`flex items-center gap-4 text-sm ${
-                                      isLocked
-                                        ? "text-gray-400"
-                                        : "text-gray-600"
-                                    }`}
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      <FileText className="w-4 h-4" />
-                                      {category.questionCount} Soal
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="w-4 h-4" />
-                                      {category.duration} Menit
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <Button
-                              onClick={() =>
-                                handleStartSubtest(index + 1, isCompleted)
-                              } // Untuk Literasi gunakan actualIndex + 1
-                              disabled={
-                                isLocked ||
-                                isStartingAttempt ||
-                                (tryoutData.latestAttemptStatus ===
-                                  "FINISHED" &&
-                                  !tryoutData.isFree &&
-                                  tryoutData.unlockedSolutions.length === 0)
-                              }
-                              className={`${
-                                isLocked
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : isCompleted
-                                    ? tryoutData.latestAttemptStatus ===
-                                        "FINISHED" &&
-                                      !tryoutData.isFree &&
-                                      tryoutData.unlockedSolutions.length === 0
-                                      ? "bg-orange-400 text-white" // Warna orange untuk status terkunci
-                                      : "bg-emerald-500 hover:bg-emerald-600"
-                                    : "bg-blue-500 hover:bg-blue-600"
-                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
-                            >
-                              {isStartingAttempt ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : tryoutData.latestAttemptStatus ===
-                                  "FINISHED" || isCompleted ? (
-                                <>
-                                  {/* Jika Belum Unlock dan Tidak Gratis, Tampilkan Icon Gembok */}
-                                  {!tryoutData.isFree &&
-                                  tryoutData.unlockedSolutions.length === 0 ? (
-                                    <>
-                                      <Lock className="w-4 h-4" />
-                                      Terkunci
-                                    </>
-                                  ) : (
-                                    <>
-                                      <BookOpen className="w-4 h-4" />
-                                      Pembahasan
-                                    </>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-4 h-4" />
-                                  Mulai
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Tes Literasi Group */}
-              <div>
-                <h3 className="text-lg font-bold text-emerald-700 mb-3">
-                  Tes Literasi
-                </h3>
-                <div className="space-y-3">
-                  {tryoutData.categories.slice(4, 7).map((category, index) => {
-                    const actualIndex = index + 4;
-                    const isLocked = isSubtestLocked(actualIndex);
-                    const isCompleted =
-                      completedSubtests.includes(category.id) ||
-                      tryoutData.latestAttemptStatus === "FINISHED";
-
-                    return (
-                      <Card
-                        key={category.id}
-                        className={`border-2 transition-all ${
-                          isLocked
-                            ? "border-gray-200 bg-gray-50 opacity-60"
-                            : isCompleted
-                              ? "border-emerald-200 bg-emerald-50"
-                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
-                        }`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div
-                                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                    isLocked
-                                      ? "bg-gray-300"
-                                      : isCompleted
-                                        ? "bg-emerald-500"
-                                        : "bg-blue-500"
-                                  }`}
-                                >
-                                  {isLocked ? (
-                                    <Lock className="w-5 h-5 text-white" />
-                                  ) : isCompleted ? (
-                                    <CheckCircle2 className="w-5 h-5 text-white" />
-                                  ) : (
-                                    <span className="text-white font-bold">
-                                      {actualIndex + 1}
-                                    </span>
-                                  )}
-                                </div>
-                                <div>
-                                  <h3
-                                    className={`font-bold ${
-                                      isLocked
-                                        ? "text-gray-500"
-                                        : "text-gray-900"
-                                    }`}
-                                  >
-                                    {category.name}
-                                  </h3>
-                                  <div
-                                    className={`flex items-center gap-4 text-sm ${
-                                      isLocked
-                                        ? "text-gray-400"
-                                        : "text-gray-600"
-                                    }`}
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      <FileText className="w-4 h-4" />
-                                      {category.questionCount} Soal
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="w-4 h-4" />
-                                      {category.duration} Menit
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <Button
-                              onClick={() =>
-                                handleStartSubtest(actualIndex + 1, isCompleted)
-                              }
-                              disabled={isLocked || isStartingAttempt}
-                              className={`${
-                                isLocked
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : isCompleted
-                                    ? "bg-emerald-500 hover:bg-emerald-600"
-                                    : "bg-blue-500 hover:bg-blue-600"
-                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
-                            >
-                              {isStartingAttempt ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : tryoutData.latestAttemptStatus ===
-                                  "FINISHED" || isCompleted ? (
-                                <>
-                                  <BookOpen className="w-4 h-4" />
-                                  Lihat Pembahasan
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-4 h-4" />
-                                  Mulai
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-            
-                    <RegisterModal
-                      isOpen={registerModalOpen}
-                      onClose={() => setRegisterModalOpen(false)}
-                      onConfirm={onConfirmRegister}
-                      tryoutTitle={tryoutData?.title || ""}
-                      tokenCost={tryoutData?.tokenCost || 0}
-                      userBalance={session?.user?.tokenBalance || 0}
-                      isLoading={registerLoading}
-                      error={registerError}
-                    />
-                  </div>
-                </div>
-              );
-            };
-            
-            export default TryoutDetailModule;
-            
+export default TryoutDetailModule;

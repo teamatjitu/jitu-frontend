@@ -16,6 +16,7 @@ export interface DailyQuestion {
 export interface DailyQuestionResponse {
   alreadyAnswered: boolean;
   isCorrect?: boolean;
+  userAnswer?: string;
   question: DailyQuestion;
 }
 

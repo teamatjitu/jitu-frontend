@@ -47,12 +47,21 @@ type UiQuestion = {
   userAnswer?: string;
 };
 
+type UiSubtestInfo = {
+  id: string;
+  name: string;
+  order: number;
+  durationMinutes: number;
+  questionCount: number;
+};
+
 type UiExamData = {
   attemptId: string;
   tryoutTitle: string;
   subtestName: string;
   durationMinutes: number;
   questions: UiQuestion[];
+  allSubtests: UiSubtestInfo[]; // Data dinamis dari backend
 };
 
 type AnswersMap = Record<string, string>;
@@ -63,7 +72,7 @@ const SUBTEST_FLOW = ["PU", "PPU", "PBM", "PK", "LBI", "LBE", "PM"] as const;
 
 const getSubtestIndex = (subtestParam: string) => {
   const n = Number(subtestParam);
-  if (!Number.isNaN(n) && n >= 1 && n <= 7) return n - 1;
+  if (!Number.isNaN(n) && n >= 1) return n - 1;
 
   const upper = String(subtestParam).toUpperCase();
   const idx = (SUBTEST_FLOW as readonly string[]).indexOf(upper);
@@ -101,8 +110,8 @@ export default function TryoutExamModule() {
   const [lastSyncedAnswers, setLastSyncedAnswers] = useState<
     Record<string, string>
   >({});
-  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const questionContainerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +120,14 @@ export default function TryoutExamModule() {
     () => getSubtestIndex(String(subtestId)),
     [subtestId]
   );
-  const hasNextSubtest = subtestIndex < SUBTEST_FLOW.length - 1;
+  
+  const hasNextSubtest = useMemo(() => {
+    if (examData?.allSubtests && examData.allSubtests.length > 0) {
+      return subtestIndex < examData.allSubtests.length - 1;
+    }
+    return subtestIndex < SUBTEST_FLOW.length - 1;
+  }, [examData?.allSubtests, subtestIndex]);
+
   const nextSubtestParam = String(subtestIndex + 2);
 
   const startAttempt = async (): Promise<string> => {
@@ -208,7 +224,14 @@ export default function TryoutExamModule() {
       subtestName: s(raw?.subtestName),
       durationMinutes: Number(raw?.durationMinutes || 0),
       questions,
+      allSubtests: Array.isArray(raw?.allSubtests) ? raw.allSubtests : [],
     };
+  };
+
+  const handleExit = () => {
+    if (confirm("Apakah Anda yakin ingin keluar? Progress jawaban Anda saat ini sudah tersimpan, tetapi waktu ujian akan terus berjalan jika Anda belum menyelesaikan subtes.")) {
+        router.replace(`/tryout/${tryoutId}`);
+    }
   };
 
   useEffect(() => {
@@ -529,7 +552,7 @@ export default function TryoutExamModule() {
       const isLastQuestion =
         currentQuestionIndex === examData.questions.length - 1;
       if (isLastQuestion) {
-        setShowFinishConfirm(true);
+        finishCurrentSubtest();
       } else {
         setCurrentQuestionIndex((i) => i + 1);
       }
@@ -593,23 +616,17 @@ export default function TryoutExamModule() {
   const unansweredCount = examData.questions.length - answeredCount;
 
   if (isTransitioning) {
-    const nextName = SUBTEST_FLOW[subtestIndex + 1] || "Subtes Berikutnya";
-    
-    // Construct subtest info list for the stepper
-    const subtestsInfo = SUBTEST_FLOW.map((name, idx) => ({
-      name,
-      order: idx + 1,
-    }));
-
-    // Current order adalah subtest yang BARU SAJA selesai (subtestIndex + 1)
-    const currentOrder = subtestIndex + 1;
+    const currentOrder = Number(subtestId);
+    const nextSubtest = examData?.allSubtests.find((s) => s.order === currentOrder + 1);
+    const nextName = nextSubtest?.name || "Selesai Ujian";
 
     return (
       <TransitionView
         currentSubtestName={examData?.subtestName || ""}
         nextSubtestName={nextName}
-        onNext={handleProceedToNext}
-        subtests={subtestsInfo}
+        onNext={nextSubtest ? handleProceedToNext : () => finishCurrentSubtest()}
+        onExit={handleExit}
+        subtests={examData?.allSubtests || []}
         currentOrder={currentOrder}
       />
     );
@@ -672,9 +689,9 @@ export default function TryoutExamModule() {
                         Pindah Subtes:
                       </p>
                       <div className="space-y-1">
-                        {SUBTEST_FLOW.map((sub, idx) => (
+                        {(examData?.allSubtests?.length ? examData.allSubtests : SUBTEST_FLOW.map((s, i) => ({ name: s, order: i + 1 }))).map((sub: any, idx) => (
                           <Button
-                            key={sub}
+                            key={sub.id || idx}
                             variant={
                               subtestIndex === idx ? "primary" : "outline"
                             }
@@ -688,7 +705,7 @@ export default function TryoutExamModule() {
                             }
                           >
                             <List className="w-3 h-3 mr-2" />
-                            {sub}
+                            {sub.name}
                           </Button>
                         ))}
                       </div>
@@ -760,7 +777,7 @@ export default function TryoutExamModule() {
 
                 {!isReviewMode && (
                   <Button
-                    onClick={() => setShowFinishConfirm(true)}
+                    onClick={() => finishCurrentSubtest()}
                     disabled={isSaving || isSubmittingFinish}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl font-bold text-base shadow-sm"
                   >
@@ -1004,48 +1021,6 @@ export default function TryoutExamModule() {
           </div>
         </div>
       </div>
-
-      <Dialog open={showFinishConfirm} onOpenChange={setShowFinishConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Selesaikan Subtes {examData?.subtestName}?
-            </DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin mengakhiri pengerjaan subtes ini?
-              <br />
-              <br />
-              <span className="font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 block mt-2 text-center">
-                Peringatan: Anda TIDAK DAPAT kembali ke subtes ini setelah
-                selesai.
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowFinishConfirm(false)}
-              disabled={isSubmittingFinish}
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={finishCurrentSubtest}
-              disabled={isSubmittingFinish}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isSubmittingFinish ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Memproses...
-                </>
-              ) : (
-                "Ya, Selesaikan"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
