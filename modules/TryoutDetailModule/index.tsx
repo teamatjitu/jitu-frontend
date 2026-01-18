@@ -1,10 +1,6 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { BACKEND_URL } from "@/lib/api";
-import { useSession } from "@/lib/auth-client";
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +11,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
 import {
   ArrowLeft,
   Clock,
@@ -32,266 +27,53 @@ import {
   Award,
   Video,
   Lock,
-  Loader2,
 } from "lucide-react";
-
 import { TryoutDetail } from "./interface";
 
-const TryoutDetailModule = () => {
+interface TryoutDetailModuleProps {
+  tryoutId: number;
+  tryoutData: TryoutDetail;
+}
+
+const TryoutDetailModule = ({
+  tryoutId,
+  tryoutData,
+}: TryoutDetailModuleProps) => {
   const router = useRouter();
-  const params = useParams();
-
-  const tryoutId = useMemo(() => {
-    const id = (params as any)?.id;
-    return Array.isArray(id) ? id[0] : id;
-  }, [params]);
-
-  const { data: session } = useSession();
-
-  const [tryoutData, setTryoutData] = useState<TryoutDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
   const [isRegistering, setIsRegistering] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
-  const [completedSubtests, setCompletedSubtests] = useState<number[]>([]);
-
-  const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [isStartingAttempt, setIsStartingAttempt] = useState(false);
-  const [isUnlocking, setIsUnlocking] = useState(false);
-
-  const handleUnlock = async () => {
-    if (!tryoutId) return;
-
-    setIsUnlocking(true);
-    setError("");
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/unlock`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Gagal membuka pembahasan");
-      }
-
-      // Refresh data untuk memperbarui status unlockedSolutions
-      await fetchDetail();
-    } catch (e: any) {
-      setError(e?.message || "Terjadi kesalahan saat membuka pembahasan");
-    } finally {
-      setIsUnlocking(false);
-    }
-  };
-
-  const fetchDetail = async () => {
-    if (!tryoutId) return;
-
-    setError("");
-    try {
-      setIsLoading(true);
-
-      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(msg || "Gagal mengambil data try out");
-      }
-
-      const data = await res.json();
-
-      const mappedData: TryoutDetail = {
-        id: data.id,
-        title: data.title,
-        description: data.description || "Tidak ada deskripsi",
-        badge: data.badge || "UTBK",
-        number: data.number || "1",
-
-        isFree: data.isFree,
-        tokenCost: data.tokenCost,
-
-        participants: data.participants ?? 0,
-        totalQuestions: data.totalQuestions ?? 0,
-        duration: data.duration ?? 0,
-        startDate: data.startDate,
-        endDate: data.endDate,
-
-        isRegistered: !!data.isRegistered,
-        unlockedSolutions: data.unlockedSolutions || [],
-
-        benefits: data.benefits || [],
-        requirements: data.requirements || [],
-
-        categories: data.categories || [],
-
-        latestFinishedAttemptId: data.latestFinishedAttemptId ?? null,
-        latestAttemptStatus: data.latestAttemptStatus ?? null,
-      };
-
-      setTryoutData(mappedData);
-
-      const finishedIds = (mappedData.categories || [])
-        .filter((cat: any) => cat?.isCompleted)
-        .map((cat: any) => cat?.id);
-
-      setCompletedSubtests(finishedIds);
-    } catch (err: any) {
-      console.error("Fetch Error:", err);
-      setError(err?.message || "Gagal mengambil data try out");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDetail();
-  }, [tryoutId]);
-
-  const startAttempt = async (): Promise<string> => {
-    if (!tryoutId) throw new Error("Tryout ID tidak ditemukan.");
-    if (!session?.user?.id) {
-      throw new Error("Kamu belum login atau session belum siap.");
-    }
-
-    const res = await fetch(`${BACKEND_URL}/exam/${tryoutId}/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ userId: session.user.id }),
-    });
-
-    if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      throw new Error(msg || "Gagal memulai attempt");
-    }
-
-    const data = await res.json();
-
-    const id = data?.attemptId || data?.id;
-    if (!id)
-      throw new Error(
-        "Attempt berhasil dibuat, tapi attemptId tidak ditemukan di response.",
-      );
-
-    return String(id);
-  };
-
-  const ensureAttempt = async (): Promise<string> => {
-    if (attemptId) return attemptId;
-
-    setIsStartingAttempt(true);
-    try {
-      const id = await startAttempt();
-      setAttemptId(id);
-      return id;
-    } finally {
-      setIsStartingAttempt(false);
-    }
-  };
+  // Initialize completedSubtests from categories
+  const [completedSubtests, setCompletedSubtests] = useState<number[]>(
+    tryoutData.categories.filter((cat) => cat.isCompleted).map((cat) => cat.id)
+  );
 
   const handleRegister = async () => {
-    if (!tryoutId) return;
-
     setIsRegistering(true);
-    setError("");
-
-    try {
-      // Jika sudah finish, tidak perlu start attempt baru
-      if (tryoutData?.latestAttemptStatus !== "FINISHED") {
-        await ensureAttempt();
-      }
-      setTryoutData((prev) => (prev ? { ...prev, isRegistered: true } : prev));
-      setShowStartModal(true);
-    } catch (e: any) {
-      setError(e?.message || "Gagal memulai tryout");
-    } finally {
-      setIsRegistering(false);
-    }
+    // Simulate registration API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsRegistering(false);
+    // Reload or update state
+    window.location.reload();
   };
 
-  const handleStart = async () => {
-    setError("");
-    // Jika status sudah FINISHED, jangan panggil ensureAttempt (agar tidak buat attempt baru)
-    if (tryoutData?.latestAttemptStatus === "FINISHED") {
-      setShowStartModal(true);
-      return;
-    }
-
-    try {
-      await ensureAttempt();
-      setShowStartModal(true);
-    } catch (e: any) {
-      setError(e?.message || "Gagal memulai tryout");
-    }
+  const handleStart = () => {
+    // Show modal with subtest selection
+    setShowStartModal(true);
   };
 
-  const handleStartSubtest = async (
-    subtestId: number,
-    isCompletedSubtest = false,
-  ) => {
-    if (!tryoutId || !tryoutData) return;
-
-    // 1. Tentukan apakah masuk ke Mode Review
-    const isReviewMode =
-      tryoutData.latestAttemptStatus === "FINISHED" || isCompletedSubtest;
-
-    if (isReviewMode) {
-      // 2. CEK PROTEKSI PEMBAYARAN: Jika tidak gratis dan belum di-unlock
-      const needsUnlock =
-        !tryoutData.isFree && tryoutData.unlockedSolutions.length === 0;
-
-      if (needsUnlock) {
-        setError(
-          "Pembahasan ini terkunci. Silakan klik 'Buka Pembahasan' terlebih dahulu.",
-        );
-        return;
-      }
-
-      // 3. Ambil ID Attempt untuk review
-      const finishedAttemptId = tryoutData.latestFinishedAttemptId;
-
-      if (!finishedAttemptId) {
-        setError("Data pembahasan belum tersedia. Silakan refresh halaman.");
-        return;
-      }
-
-      // Navigasi ke Review Mode
-      router.push(
-        `/tryout/${tryoutId}/exam/${subtestId}?review=true&attemptId=${encodeURIComponent(
-          finishedAttemptId,
-        )}`,
-      );
-      return;
-    }
-
-    // --- Mode Ujian Normal ---
-    setError("");
-    try {
-      const id = await ensureAttempt();
-      router.push(
-        `/tryout/${tryoutId}/exam/${subtestId}?attemptId=${encodeURIComponent(
-          id,
-        )}`,
-      );
-    } catch (e: any) {
-      setError(e?.message || "Gagal memulai subtes");
-    }
+  const handleStartSubtest = (subtestId: number, isReview = false) => {
+    // Navigate to specific subtest with review mode if completed
+    const url = `/tryout/${tryoutId}/exam/${subtestId}${
+      isReview ? "?review=true" : ""
+    }`;
+    router.push(url);
   };
 
   const isSubtestLocked = (subtestIndex: number) => {
-    if (!tryoutData) return true;
-    // Jika sudah FINISHED, semua subtest terbuka untuk direview
-    if (tryoutData.latestAttemptStatus === "FINISHED") return false;
-
+    // First subtest is always unlocked
     if (subtestIndex === 0) return false;
-    const previousSubtestId = tryoutData.categories[subtestIndex - 1]?.id;
+    // Check if previous subtest is completed
+    const previousSubtestId = tryoutData.categories[subtestIndex - 1].id;
     return !completedSubtests.includes(previousSubtestId);
   };
 
@@ -304,46 +86,17 @@ const TryoutDetailModule = () => {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-        <p className="text-gray-500 font-medium">
-          Sedang memuat data try out...
-        </p>
-      </div>
-    );
-  }
-
-  if (error || !tryoutData) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <AlertCircle className="w-12 h-12 text-red-500" />
-        <h3 className="text-lg font-bold text-gray-900">Gagal Memuat Data</h3>
-        <p className="text-gray-500">{error || "Try Out tidak ditemukan"}</p>
-        <div className="flex gap-2">
-          <Button onClick={() => router.push("/tryout")} variant="outline">
-            Kembali
-          </Button>
-          <Button onClick={fetchDetail} variant="primary">
-            Coba Lagi
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen pl-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 pt-24 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Back Button - Fixed path to avoid history loops */}
+        {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={() => router.push("/tryout")}
+          onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Kembali ke Daftar
+          Kembali
         </Button>
 
         {/* Header Card */}
@@ -386,7 +139,7 @@ const TryoutDetailModule = () => {
                       <span className="text-xs font-medium">Peserta</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
-                      {Number(tryoutData.participants).toLocaleString()}
+                      {tryoutData.participants.toLocaleString()}
                     </div>
                   </div>
 
@@ -434,43 +187,17 @@ const TryoutDetailModule = () => {
               <div className="flex items-start gap-4">
                 {tryoutData.isRegistered ? (
                   <>
-                    {/* Cek apakah pembahasan perlu dibeli atau sudah terbuka */}
-                    {tryoutData.latestAttemptStatus === "FINISHED" &&
-                    !tryoutData.isFree &&
-                    tryoutData.unlockedSolutions.length === 0 ? (
-                      <>
-                        <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <Lock className="w-7 h-7 text-orange-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            Pembahasan Terkunci
-                          </h3>
-                          <p className="text-gray-600">
-                            Gunakan token untuk membuka pembahasan lengkap dan
-                            analisis hasil.
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            {tryoutData.latestAttemptStatus === "FINISHED"
-                              ? "Ujian Telah Selesai!"
-                              : "Kamu Sudah Terdaftar!"}
-                          </h3>
-                          <p className="text-gray-600">
-                            {tryoutData.latestAttemptStatus === "FINISHED"
-                              ? "Pelajari kembali hasil pengerjaanmu melalui pembahasan"
-                              : "Mulai try out sekarang dan ukur kemampuanmu"}
-                          </p>
-                        </div>
-                      </>
-                    )}
+                    <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        Kamu Sudah Terdaftar!
+                      </h3>
+                      <p className="text-gray-600">
+                        Mulai try out sekarang dan ukur kemampuanmu
+                      </p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -493,66 +220,30 @@ const TryoutDetailModule = () => {
 
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 {tryoutData.isRegistered ? (
-                  <>
-                    {/* JIKA SUDAH FINISH */}
-                    {tryoutData.latestAttemptStatus === "FINISHED" ? (
-                      <>
-                        {/* CEK APAKAH SUDAH UNLOCK ATAU GRATIS */}
-                        {tryoutData.isFree ||
-                        tryoutData.unlockedSolutions.length > 0 ? (
-                          <Button
-                            onClick={handleStart}
-                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
-                          >
-                            <BookOpen className="w-5 h-5" />
-                            Lihat Pembahasan
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={handleUnlock}
-                            disabled={isUnlocking}
-                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                          >
-                            {isUnlocking ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                              <Lock className="w-5 h-5" />
-                            )}
-                            Buka Pembahasan ({tryoutData.tokenCost} Token)
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      /* JIKA MASIH BERJALAN ATAU BARU DAFTAR */
-                      <Button
-                        onClick={handleStart}
-                        disabled={isStartingAttempt}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                      >
-                        {isStartingAttempt ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <Play className="w-5 h-5" />
-                        )}
-                        {tryoutData.latestAttemptStatus === "IN_PROGRESS"
-                          ? "Lanjutkan Ujian"
-                          : "Mulai Sekarang"}
-                      </Button>
-                    )}
-                  </>
+                  <Button
+                    onClick={handleStart}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Play className="w-5 h-5" />
+                    Mulai Sekarang
+                  </Button>
                 ) : (
-                  /* JIKA BELUM DAFTAR */
                   <Button
                     onClick={handleRegister}
-                    disabled={isRegistering || isStartingAttempt}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    disabled={isRegistering}
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-6 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isRegistering ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Mendaftar...
+                      </>
                     ) : (
-                      <CheckCircle2 className="w-5 h-5" />
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        Daftar Sekarang
+                      </>
                     )}
-                    Daftar Sekarang
                   </Button>
                 )}
               </div>
@@ -560,10 +251,10 @@ const TryoutDetailModule = () => {
           </CardContent>
         </Card>
 
-        {/* DETAIL & SUBTESTS UI */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Details */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Period */}
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -590,6 +281,7 @@ const TryoutDetailModule = () => {
               </CardContent>
             </Card>
 
+            {/* Categories */}
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -625,6 +317,7 @@ const TryoutDetailModule = () => {
               </CardContent>
             </Card>
 
+            {/* Benefits */}
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -651,6 +344,7 @@ const TryoutDetailModule = () => {
 
           {/* Right Column - Requirements */}
           <div className="space-y-6">
+            {/* Requirements */}
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -674,6 +368,7 @@ const TryoutDetailModule = () => {
               </CardContent>
             </Card>
 
+            {/* Info Card */}
             <Card className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl shadow-lg border-0 overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
               <CardContent className="p-6 relative z-10">
@@ -687,6 +382,37 @@ const TryoutDetailModule = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Tips Card */}
+            <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg border-0 overflow-hidden">
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="text-white">
+                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Tips Mengerjakan
+                  </h3>
+                  <ul className="space-y-2 text-sm text-purple-100">
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Kerjakan di tempat yang tenang</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Pastikan koneksi internet stabil</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Siapkan alat tulis untuk coret-coretan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Atur waktu dengan baik</span>
+                    </li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -695,14 +421,11 @@ const TryoutDetailModule = () => {
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gray-900">
-                {tryoutData.latestAttemptStatus === "FINISHED"
-                  ? "Pembahasan Try Out"
-                  : "Mulai Try Out"}
+                Mulai Try Out
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                {tryoutData.latestAttemptStatus === "FINISHED"
-                  ? "Pilih subtes untuk melihat pembahasan soal dan kunci jawaban."
-                  : "Pilih subtes untuk memulai. Subtes harus dikerjakan secara berurutan."}
+                Pilih subtes untuk memulai. Subtes harus dikerjakan secara
+                berurutan.
               </DialogDescription>
             </DialogHeader>
 
@@ -715,9 +438,7 @@ const TryoutDetailModule = () => {
                 <div className="space-y-3">
                   {tryoutData.categories.slice(0, 4).map((category, index) => {
                     const isLocked = isSubtestLocked(index);
-                    const isCompleted =
-                      completedSubtests.includes(category.id) ||
-                      tryoutData.latestAttemptStatus === "FINISHED";
+                    const isCompleted = completedSubtests.includes(category.id);
 
                     return (
                       <Card
@@ -726,8 +447,8 @@ const TryoutDetailModule = () => {
                           isLocked
                             ? "border-gray-200 bg-gray-50 opacity-60"
                             : isCompleted
-                              ? "border-emerald-200 bg-emerald-50"
-                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
                         }`}
                       >
                         <CardContent className="p-4">
@@ -739,8 +460,8 @@ const TryoutDetailModule = () => {
                                     isLocked
                                       ? "bg-gray-300"
                                       : isCompleted
-                                        ? "bg-emerald-500"
-                                        : "bg-blue-500"
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
                                   }`}
                                 >
                                   {isLocked ? (
@@ -781,51 +502,35 @@ const TryoutDetailModule = () => {
                                   </div>
                                 </div>
                               </div>
+                              {isLocked && (
+                                <p className="text-xs text-gray-500 ml-13">
+                                  Selesaikan subtes sebelumnya terlebih dahulu
+                                </p>
+                              )}
+                              {isCompleted && (
+                                <p className="text-xs text-emerald-600 ml-13 font-medium">
+                                  ✓ Subtes sudah selesai dikerjakan
+                                </p>
+                              )}
                             </div>
 
                             <Button
                               onClick={() =>
-                                handleStartSubtest(index + 1, isCompleted)
-                              } // Untuk Literasi gunakan actualIndex + 1
-                              disabled={
-                                isLocked ||
-                                isStartingAttempt ||
-                                (tryoutData.latestAttemptStatus ===
-                                  "FINISHED" &&
-                                  !tryoutData.isFree &&
-                                  tryoutData.unlockedSolutions.length === 0)
+                                handleStartSubtest(category.id, isCompleted)
                               }
+                              disabled={isLocked}
                               className={`${
                                 isLocked
                                   ? "bg-gray-300 cursor-not-allowed"
                                   : isCompleted
-                                    ? tryoutData.latestAttemptStatus ===
-                                        "FINISHED" &&
-                                      !tryoutData.isFree &&
-                                      tryoutData.unlockedSolutions.length === 0
-                                      ? "bg-orange-400 text-white" // Warna orange untuk status terkunci
-                                      : "bg-emerald-500 hover:bg-emerald-600"
-                                    : "bg-blue-500 hover:bg-blue-600"
-                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
+                                  ? "bg-emerald-500 hover:bg-emerald-600"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
                             >
-                              {isStartingAttempt ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : tryoutData.latestAttemptStatus ===
-                                  "FINISHED" || isCompleted ? (
+                              {isCompleted ? (
                                 <>
-                                  {/* Jika Belum Unlock dan Tidak Gratis, Tampilkan Icon Gembok */}
-                                  {!tryoutData.isFree &&
-                                  tryoutData.unlockedSolutions.length === 0 ? (
-                                    <>
-                                      <Lock className="w-4 h-4" />
-                                      Terkunci
-                                    </>
-                                  ) : (
-                                    <>
-                                      <BookOpen className="w-4 h-4" />
-                                      Pembahasan
-                                    </>
-                                  )}
+                                  <BookOpen className="w-4 h-4" />
+                                  Lihat Pembahasan
                                 </>
                               ) : (
                                 <>
@@ -851,9 +556,7 @@ const TryoutDetailModule = () => {
                   {tryoutData.categories.slice(4, 7).map((category, index) => {
                     const actualIndex = index + 4;
                     const isLocked = isSubtestLocked(actualIndex);
-                    const isCompleted =
-                      completedSubtests.includes(category.id) ||
-                      tryoutData.latestAttemptStatus === "FINISHED";
+                    const isCompleted = completedSubtests.includes(category.id);
 
                     return (
                       <Card
@@ -862,8 +565,8 @@ const TryoutDetailModule = () => {
                           isLocked
                             ? "border-gray-200 bg-gray-50 opacity-60"
                             : isCompleted
-                              ? "border-emerald-200 bg-emerald-50"
-                              : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-blue-200 bg-blue-50 hover:shadow-md cursor-pointer"
                         }`}
                       >
                         <CardContent className="p-4">
@@ -875,8 +578,8 @@ const TryoutDetailModule = () => {
                                     isLocked
                                       ? "bg-gray-300"
                                       : isCompleted
-                                        ? "bg-emerald-500"
-                                        : "bg-blue-500"
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
                                   }`}
                                 >
                                   {isLocked ? (
@@ -917,25 +620,32 @@ const TryoutDetailModule = () => {
                                   </div>
                                 </div>
                               </div>
+                              {isLocked && (
+                                <p className="text-xs text-gray-500 ml-13">
+                                  Selesaikan subtes sebelumnya terlebih dahulu
+                                </p>
+                              )}
+                              {isCompleted && (
+                                <p className="text-xs text-emerald-600 ml-13 font-medium">
+                                  ✓ Subtes sudah selesai dikerjakan
+                                </p>
+                              )}
                             </div>
 
                             <Button
                               onClick={() =>
-                                handleStartSubtest(actualIndex + 1, isCompleted)
+                                handleStartSubtest(category.id, isCompleted)
                               }
-                              disabled={isLocked || isStartingAttempt}
+                              disabled={isLocked}
                               className={`${
                                 isLocked
                                   ? "bg-gray-300 cursor-not-allowed"
                                   : isCompleted
-                                    ? "bg-emerald-500 hover:bg-emerald-600"
-                                    : "bg-blue-500 hover:bg-blue-600"
-                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-60`}
+                                  ? "bg-emerald-500 hover:bg-emerald-600"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2`}
                             >
-                              {isStartingAttempt ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : tryoutData.latestAttemptStatus ===
-                                  "FINISHED" || isCompleted ? (
+                              {isCompleted ? (
                                 <>
                                   <BookOpen className="w-4 h-4" />
                                   Lihat Pembahasan
@@ -952,6 +662,20 @@ const TryoutDetailModule = () => {
                       </Card>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-semibold mb-1">Catatan Penting:</p>
+                  <ul className="space-y-1 text-blue-800">
+                    <li>• Subtes harus dikerjakan secara berurutan</li>
+                    <li>• Pastikan koneksi internet stabil</li>
+                    <li>• Jawaban akan tersimpan otomatis</li>
+                  </ul>
                 </div>
               </div>
             </div>

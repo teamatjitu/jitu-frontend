@@ -1,31 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { LoginData } from "./interface";
-import { signIn, useSession } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { UserWithRole } from "@/lib/types";
-import Link from "next/link";
 
 const LoginModule = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { data: session, isPending } = useSession();
-
-  // Redirect jika sudah login
-  useEffect(() => {
-    if (!isPending && session) {
-      if ((session.user as unknown as UserWithRole).role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
-    }
-  }, [session, isPending, router]);
 
   const [loginData, setLoginData] = useState<LoginData>({
     email: "",
@@ -46,27 +31,21 @@ const LoginModule = () => {
         password: loginData.password,
       },
       {
-        onSuccess: (ctx) => {
-          const user = ctx.data.user as unknown as UserWithRole;
-          if (user.role === "ADMIN") {
-            router.push("/admin");
-          } else {
-            router.push("/dashboard");
-          }
+        onSuccess: () => {
+          router.push("/dashboard");
         },
         onError: (ctx) => {
-          toast.error(
-            ctx.error.message || "Gagal masuk. Cek email dan password.",
-          );
+          alert(ctx.error.message);
         },
-      },
+      }
     );
+    console.log("Login submitted:", loginData);
   };
 
   const handleGoogleLogin = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}` + "/dashboard",
+      // callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard`,
     });
   };
 
@@ -78,7 +57,7 @@ const LoginModule = () => {
           <div className="relative h-12 mb-6">
             <Image
               src="/jitu-logo.png"
-              alt="logo"
+              alt="title"
               fill
               className="object-contain"
               priority
@@ -94,25 +73,23 @@ const LoginModule = () => {
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-8 border">
+        <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="space-y-4">
             {/* Email Input */}
             <div>
               <label
                 htmlFor="email"
-                className="text-sm font-semibold text-primary-400 mb-2 block"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Email
               </label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
-                  id="email"
                   type="email"
                   placeholder="Email Kamu"
                   value={loginData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
-                  className="pl-10"
                 />
               </div>
             </div>
@@ -121,19 +98,17 @@ const LoginModule = () => {
             <div>
               <label
                 htmlFor="password"
-                className="text-sm font-semibold text-primary-400 mb-2 block"
+                className="text-sm font-semibold text-primary-400 mb-2"
               >
                 Password
               </label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
-                  id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={loginData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
-                  className="pl-10"
                 />
                 <button
                   type="button"
@@ -150,23 +125,17 @@ const LoginModule = () => {
             </div>
 
             {/* Forgot Password */}
-
             <div className="text-right">
-              <Link href={"/forgot-password"}>
-                <button
-                  type="button"
-                  className="text-sm text-primary-300 hover:underline"
-                >
-                  Lupa password?
-                </button>
-              </Link>
+              <button
+                type="button"
+                className="text-sm text-primary-300 hover:underline"
+              >
+                Lupa password?
+              </button>
             </div>
 
             {/* Login Button */}
-            <Button
-              onClick={handleSubmit}
-              className="w-full font-bold py-6 rounded-xl"
-            >
+            <Button onClick={handleSubmit} className="w-full">
               Masuk
             </Button>
 
@@ -176,9 +145,7 @@ const LoginModule = () => {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">
-                  Akses Cepat
-                </span>
+                <span className="px-4 bg-white text-gray-500">Akses Cepat</span>
               </div>
             </div>
 
@@ -186,7 +153,7 @@ const LoginModule = () => {
             <Button
               onClick={handleGoogleLogin}
               variant={"outline"}
-              className="w-full py-6 rounded-xl gap-3 font-semibold border-gray-200 hover:bg-gray-50 transition-all"
+              className="w-full"
             >
               <Image
                 src="/icons/google.svg"
@@ -202,8 +169,8 @@ const LoginModule = () => {
           <p className="text-center text-sm text-gray-600 mt-6">
             Belum punya akun?{" "}
             <a
-              href="/register"
-              className="text-primary font-bold hover:underline"
+              href="register"
+              className="text-primary-300 font-medium hover:underline"
             >
               Daftar Sekarang
             </a>

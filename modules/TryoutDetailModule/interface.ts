@@ -1,5 +1,5 @@
 export interface TryoutDetail {
-  id: string;
+  id: number;
   title: string;
   number: string;
   badge: string;
@@ -15,10 +15,6 @@ export interface TryoutDetail {
   categories: CategoryDetail[];
   benefits: string[];
   requirements: string[];
-  latestFinishedAttemptId?: string | null;
-  latestAttemptStatus?: 'IN_PROGRESS' | 'FINISHED' | null;
-  unlockedSolutions: any[] ;
-
 }
 
 export interface CategoryDetail {

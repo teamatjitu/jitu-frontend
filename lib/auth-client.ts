@@ -1,16 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
-// Point to self (Vercel) so that requests go through the Next.js Proxy
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173",
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000",
 });
 
-export const {
-  signIn,
-  signUp,
-  useSession,
-  signOut,
-  changePassword,
-  requestPasswordReset,
-  resetPassword,
-} = authClient;
+export const { signIn, signUp, useSession, signOut } = authClient;

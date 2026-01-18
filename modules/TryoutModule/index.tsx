@@ -1,8 +1,9 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Users,
   Plus,
@@ -15,81 +16,24 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  Loader2,
+  Gift,
+  Sparkles,
 } from "lucide-react";
-
-// Components
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-
-// Local Interfaces & Payloads
-import { stats } from "./payload"; // Kita tetap pakai stats dummy dulu
-import { Stat, TryOutCard } from "./interface";
+import { stats, subjects, tryOutData } from "./payload";
+import { Stat, Subject, TryOutCard } from "./interface";
+import { useRouter } from "next/navigation";
 import { checkReferralCode } from "@/modules/ReferralModule/payload";
 import { ReferralCheckResult } from "@/modules/ReferralModule/interface";
 
-// Config
-import { BACKEND_URL } from "@/lib/api";
-
 const TryoutModule = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
-  // --- States ---
-  const [tryouts, setTryouts] = useState<TryOutCard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Referral States
   const [referralCode, setReferralCode] = useState<string>("");
   const [checkResult, setCheckResult] = useState<ReferralCheckResult | null>(
     null
   );
   const [isChecking, setIsChecking] = useState(false);
-
-  // --- Effects ---
-
-  // 1. Fetch Data Tryout dari Backend
-  // 1. Fetch Data Tryout dari Backend
-  useEffect(() => {
-    const fetchTryouts = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch(`${BACKEND_URL}/tryout`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Tambahkan ini jika menggunakan session/cookie
-        });
-
-        if (!res.ok) throw new Error("Gagal mengambil data tryout");
-
-        const data = await res.json();
-
-        // Mapping response backend ke UI Frontend
-        // Sesuai dengan TryOutCardDto di backend Anda
-        const mappedData: TryOutCard[] = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          // KUNCI: Backend sudah mengirimkan 'number' dan 'participants'
-          // Jangan dihitung ulang dengan Regex atau _count lagi
-          number: item.number || "?",
-          participants: item.participants || 0,
-          badge: item.badge || "SNBT",
-          canEdit: false,
-        }));
-
-        setTryouts(mappedData);
-      } catch (error) {
-        console.error("Error fetching tryouts:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTryouts();
-  }, []);
-
-  // --- Handlers ---
 
   const handleTryoutClick = (id: number) => {
     router.push(`/tryout/${id}`);
@@ -97,7 +41,6 @@ const TryoutModule = () => {
 
   const handleCheckReferral = () => {
     setIsChecking(true);
-    // Simulasi delay API referral (bisa diganti fetch nanti)
     setTimeout(() => {
       const result = checkReferralCode(referralCode);
       setCheckResult(result);
@@ -110,8 +53,6 @@ const TryoutModule = () => {
       handleCheckReferral();
     }
   };
-
-  // --- Render ---
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -135,7 +76,7 @@ const TryoutModule = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="relative shrink-0">
                 <div className="w-20 h-20 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white/30 shadow-xl">
-                  {session?.user?.name?.charAt(0) || "U"}
+                  {session?.user.name.charAt(0)}
                 </div>
                 <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -143,7 +84,7 @@ const TryoutModule = () => {
               </div>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-                  {session?.user?.name || "User"}
+                  {session?.user.name}
                 </h2>
                 <p className="text-blue-100 flex items-center gap-2 text-sm sm:text-base mb-2">
                   <Target className="w-4 h-4" />
@@ -247,6 +188,7 @@ const TryoutModule = () => {
             </CardHeader>
             <CardContent className="p-6 sm:p-8">
               <div className="space-y-6">
+                {/* Input Section */}
                 <div>
                   <label
                     htmlFor="referralCode"
@@ -276,7 +218,7 @@ const TryoutModule = () => {
                     >
                       {isChecking ? (
                         <span className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Mengecek...
                         </span>
                       ) : (
@@ -286,6 +228,7 @@ const TryoutModule = () => {
                   </div>
                 </div>
 
+                {/* Result Section */}
                 {checkResult && (
                   <div
                     className={`rounded-2xl p-6 border-2 transition-all duration-300 ${
@@ -362,6 +305,7 @@ const TryoutModule = () => {
                   </div>
                 )}
 
+                {/* Helper Text */}
                 {!checkResult && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <p className="text-sm text-gray-600 text-center">
@@ -375,7 +319,7 @@ const TryoutModule = () => {
           </Card>
         </section>
 
-        {/* Try Out Section (DYNAMIC) */}
+        {/* Try Out Section */}
         <section>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
@@ -395,67 +339,49 @@ const TryoutModule = () => {
             </Button>
           </div>
 
-          {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
-            </div>
-          ) : tryouts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">
-                Belum ada Try Out
-              </h3>
-              <p className="text-gray-500 mt-1">
-                Saat ini belum ada jadwal try out yang tersedia.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {tryouts.map((item: TryOutCard) => (
-                <Card
-                  key={item.id}
-                  onClick={() => handleTryoutClick(item.id)}
-                  className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
-                >
-                  <CardContent className="p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-blue-100 group-hover:to-blue-200 rounded-2xl flex items-center justify-center transition-all shadow-sm">
-                          <span className="text-3xl font-black text-gray-700 group-hover:text-[#1A7BFF] transition-colors">
-                            {item.number}
-                          </span>
-                        </div>
-                        <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                          {item.badge}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {tryOutData.map((item: TryOutCard) => (
+              <Card
+                key={item.id}
+                onClick={() => handleTryoutClick(item.id)}
+                className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
+              >
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-blue-100 group-hover:to-blue-200 rounded-2xl flex items-center justify-center transition-all shadow-sm">
+                        <span className="text-3xl font-black text-gray-700 group-hover:text-[#1A7BFF] transition-colors">
+                          {item.number}
                         </span>
                       </div>
+                      <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                        {item.badge}
+                      </span>
                     </div>
+                  </div>
 
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-4 group-hover:text-[#1A7BFF] transition-colors line-clamp-2">
-                      {item.title}
-                    </h3>
+                  <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-4 group-hover:text-[#1A7BFF] transition-colors">
+                    {item.title}
+                  </h3>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-orange-600" />
-                        </div>
-                        <span className="text-xs font-medium text-gray-600">
-                          Gratis & Berbayar
-                        </span>
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-orange-600" />
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
-                        <Users className="w-4 h-4" />
-                        {item.participants.toLocaleString()}
-                      </div>
+                      <span className="text-xs font-medium text-gray-600">
+                        Gratis & Berbayar
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                      <Users className="w-4 h-4" />
+                      {item.participants.toLocaleString()}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
       </div>
     </div>

@@ -3,12 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { dailyProblems } from "@/modules/DailyStreakModule/payload";
+import { dailyProblems } from "../payload";
+import { DailyProblem } from "../interface";
 
 const DailyStreak = () => {
   const [streak, setStreak] = useState(0);
   const [answeredToday, setAnsweredToday] = useState(false);
-  const [currentProblem, setCurrentProblem] = useState<any | null>(null);
+  const [currentProblem, setCurrentProblem] = useState<DailyProblem | null>(
+    null
+  );
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
 
@@ -85,7 +88,7 @@ const DailyStreak = () => {
             <div>
               <p className="font-semibold mb-4">{currentProblem.question}</p>
               <div className="flex flex-col space-y-2">
-                {currentProblem.options.map((option: any, index: number) => (
+                {currentProblem.options.map((option, index) => (
                   <Button
                     key={index}
                     variant={selectedAnswer === index ? "primary" : "outline"}
