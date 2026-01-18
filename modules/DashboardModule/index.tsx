@@ -1,16 +1,21 @@
 "use client";
-import { useSession, signOut } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import {
-  Filter,
   Calendar,
   Users,
   Coins,
   ChevronRight,
   Info,
+  CheckCircle2,
+  Trophy,
+  BookOpen,
+  TrendingUp,
+  Camera,
+  Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,6 +31,7 @@ import { ScoreData, Subtest } from "./interface";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserWithRole } from "@/lib/types";
+import { useSession } from "@/lib/auth-client";
 import {
   getUserStats,
   getOngoingTryouts,
@@ -39,6 +45,7 @@ import {
 import { toast } from "sonner";
 import { RegisterModal } from "./components/RegisterModal";
 import { BACKEND_URL } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 ChartJS.register(
   CategoryScale,
@@ -47,7 +54,34 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+);
+
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  color,
+  action,
+}: {
+  title: string;
+  value: string | number;
+  icon: any;
+  color: string;
+  action?: React.ReactNode;
+}) => (
+  <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+    <CardContent className="p-6 flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+      </div>
+      <div className={`p-3 rounded-xl ${color}`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      {action && <div className="absolute bottom-4 right-4">{action}</div>}
+    </CardContent>
+  </Card>
 );
 
 const DashboardModule = () => {
@@ -65,10 +99,14 @@ const DashboardModule = () => {
   // Registration Modal State
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [selectedTryout, setSelectedTryout] = useState<OngoingTryout | null>(
-    null
+    null,
   );
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+
+  // Profile Upload State
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isPending) {
@@ -123,7 +161,7 @@ const DashboardModule = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-        }
+        },
       );
 
       const data = await res.json();
@@ -144,6 +182,32 @@ const DashboardModule = () => {
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/dashboard/profile`, {
+        method: "PUT",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Gagal mengupload foto");
+
+      toast.success("Foto profil berhasil diperbarui!");
+      window.location.reload(); // Refresh to update session/UI
+    } catch (err) {
+      toast.error("Gagal mengupload foto");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   if (isPending || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -156,348 +220,298 @@ const DashboardModule = () => {
     return null;
   }
 
-  const toggleSubtest = (id: string) => {
-    setActiveSubtests((prev) => {
-      if (id === "total") {
-        return ["total"];
-      }
-      const newSubtests = prev.filter((sub) => sub !== "total");
-      if (newSubtests.includes(id)) {
-        return newSubtests.filter((sub) => sub !== id);
-      } else {
-        return [...newSubtests, id];
-      }
-    });
-  };
-
-  const chartData = {
-    labels: scoreHistory.map((score) => score.to),
-    datasets: subtests
-      .filter(
-        (subtest) =>
-          activeSubtests.includes(subtest.id) ||
-          activeSubtests.includes("total")
-      )
-      .map((subtest) => {
-        const color = subtest.color.replace("bg-", "").replace("-500", "");
-        const colorMap: { [key: string]: string } = {
-          blue: "#3B82F6",
-          purple: "#A855F7",
-          green: "#10B981",
-          orange: "#F97316",
-          red: "#EF4444",
-          yellow: "#EAB308",
-          indigo: "#6366F1",
-        };
-        return {
-          label: subtest.label,
-          data: scoreHistory.map(
-            (score) => score[subtest.id as keyof ScoreData]
-          ),
-          borderColor: colorMap[color as keyof typeof colorMap] || "blue",
-          backgroundColor:
-            (colorMap[color as keyof typeof colorMap] || "blue") + "33",
-          fill: true,
-          tension: 0.4,
-        };
-      }),
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-      },
-      title: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+  const myTryouts = ongoingTryouts.filter((t) => t.isRegistered);
+  const marketTryouts = [
+    ...ongoingTryouts.filter((t) => !t.isRegistered),
+    ...availableTryoutsData.filter(
+      (at) => !ongoingTryouts.some((ot) => ot.id === at.id), // Avoid duplicates if API returns overlapping data
+    ),
+  ];
 
   return (
-    <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Header */}
-        <div className="pt-8 pb-4">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">
-            Selamat datang kembali! Pantau progress belajar kamu di sini.
-          </p>
+    <div className="min-h-screen pl-20 bg-gray-50/50 pt-24 pb-20 font-open-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <Avatar
+                className="w-16 h-16 border-4 border-white shadow-lg cursor-pointer transition-transform group-hover:scale-105"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <AvatarImage src={session.user.image || ""} />
+                <AvatarFallback className="bg-blue-100 text-blue-600 text-xl font-bold">
+                  {session.user.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  </div>
+                )}
+
+                {!isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                )}
+              </Avatar>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Halo, {session.user.name.split(" ")[0]}! 👋
+              </h1>
+              <p className="text-gray-500 mt-1">
+                Siap untuk mengejar kampus impianmu hari ini?
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              className="bg-white border-blue-100 text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-xl shadow-sm h-12"
+              onClick={() => router.push("/shop")}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Coins className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-blue-400 font-semibold uppercase">
+                    Saldo Token
+                  </p>
+                  <p className="text-lg font-bold leading-none">
+                    {userStats?.tokenBalance ?? 0}
+                  </p>
+                </div>
+              </div>
+            </Button>
+          </div>
         </div>
 
-        {/* Profile Card */}
-        <Card className="bg-linear-to-br from-[#1A7BFF] to-[#0D5FD9] rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden border-0 hover:shadow-blue-500/30 transition-shadow duration-300">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-24 -mb-24"></div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard
+            title="Tryout Dimiliki"
+            value={myTryouts.length}
+            icon={BookOpen}
+            color="bg-blue-500"
+          />
+          <StatCard
+            title="Rata-rata Skor"
+            value={
+              scoreHistory.length > 0
+                ? Math.round(
+                    scoreHistory.reduce((acc, curr) => acc + curr.total, 0) /
+                      scoreHistory.length,
+                  )
+                : "-"
+            }
+            icon={TrendingUp}
+            color="bg-emerald-500"
+          />
+          <StatCard
+            title="Peringkat Global"
+            value="#-"
+            icon={Trophy}
+            color="bg-orange-500"
+          />
+        </div>
 
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="relative shrink-0">
-                <div className="w-20 h-20 bg-blue-200 rounded-2xl flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white/30 shadow-xl">
-                  {session.user.name.charAt(0)}
-                </div>
-                <div className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 rounded-full border-4 border-[#1A7BFF] flex items-center justify-center shadow-lg">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-                  {session.user.name}
-                </h2>
-                <p className="text-blue-100 mb-3 text-sm sm:text-base">
-                  {session.user.email}
-                </p>
-              </div>
-            </div>
+        {/* Content Tabs */}
+        <Tabs defaultValue="my-tryouts" className="w-full space-y-6">
+          <TabsList className="bg-white p-1 rounded-xl border border-gray-100 shadow-sm w-fit">
+            <TabsTrigger
+              value="my-tryouts"
+              className="rounded-lg px-6 py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 font-medium"
+            >
+              Tryout Saya
+              <Badge className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 border-0">
+                {myTryouts.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger
+              value="explore"
+              className="rounded-lg px-6 py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 font-medium"
+            >
+              Jelajahi Tryout
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="rounded-lg px-6 py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 font-medium"
+            >
+              Riwayat Nilai
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="bg-blue-400/30 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/30 w-full sm:w-auto">
-              <div className="text-3xl sm:text-4xl font-bold mb-1">
-                {userStats?.tokenBalance ?? 0}
-              </div>
-              <div className="text-sm text-blue-100 mb-3">Kuota Premium</div>
-              <Button
-                variant="outline"
-                className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-6 py-2.5 rounded-xl font-semibold hover:bg-white/30 transition-all w-full"
-                onClick={() => router.push("/shop")}
-              >
-                <Coins className="w-4 h-4 mr-2" />
-                Beli Kuota
-              </Button>
-            </div>
-          </div>
-        </Card>
+          {/* TAB 1: MY TRYOUTS */}
+          <TabsContent
+            value="my-tryouts"
+            className="space-y-6 animate-in fade-in-50 duration-300"
+          >
+            {myTryouts.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {myTryouts.map((tryout) => (
+                  <Card
+                    key={tryout.id}
+                    className="border-none shadow-sm hover:shadow-lg transition-all duration-300 bg-white group overflow-hidden"
+                  >
+                    <CardContent className="p-0 flex flex-col h-full">
+                      <div className="p-6 flex-1">
+                        <div className="flex justify-between items-start mb-4">
+                          <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 px-3 py-1">
+                            Sudah Terdaftar
+                          </Badge>
+                          <Badge variant="outline" className="border-gray-200">
+                            SNBT
+                          </Badge>
+                        </div>
 
-        {/* Try Out Berlangsung Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-              Try Out Berlangsung
-              <span className="text-red-500">•</span>
-            </h2>
-            <p className="text-gray-600">
-              Try Out yang sedang dalam periode pendaftaran
-            </p>
-          </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                          {tryout.title}
+                        </h3>
 
-          {ongoingTryouts.length > 0 ? (
-            ongoingTryouts.map((tryout) => (
-              <Card
-                key={tryout.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden"
-              >
-                <CardContent className="p-0">
-                  <div className="flex items-center gap-6 p-6">
-                    {/* Large Number Display */}
-                    <div className="flex flex-col items-center">
-                      <Badge className="bg-green-500 text-white px-3 py-1 text-xs font-bold mb-2">
-                        SNBT
-                      </Badge>
-                      <div className="text-7xl font-bold text-gray-900">
-                        {tryout.title.match(/\d+/)?.[0] || "N/A"}
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="h-32 w-px bg-gray-200"></div>
-
-                    {/* Try Out Details */}
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 mb-1">
-                        {tryout.isPublic ? "Gratis" : "Berbayar"}
-                      </p>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        {tryout.title}
-                      </h3>
-                      <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                        {tryout.scheduledStart && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-green-500" />
-                            <span>
-                              {new Date(
-                                tryout.scheduledStart
-                              ).toLocaleDateString("id-ID", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-gray-400" />
-                          <span>
-                            {tryout.participants.toLocaleString()} Peserta
+                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4" />
+                            {tryout.scheduledStart
+                              ? new Date(
+                                  tryout.scheduledStart,
+                                ).toLocaleDateString("id-ID")
+                              : "Jadwal Fleksibel"}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Users className="w-4 h-4" />
+                            {tryout.participants} Peserta
                           </span>
                         </div>
                       </div>
 
-                      {/* Not Registered State */}
-                      {!tryout.isRegistered && (
-                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                <Info className="w-5 h-5 text-gray-500" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">
-                                  Kamu belum mendaftar Try Out
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Beli kuota Try Out atau daftar Try Out gratis
-                                  untuk mulai latihan!
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Button
-                                variant="outline"
-                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                                onClick={() => router.push("/shop")}
-                              >
-                                Beli Kuota Premium
-                              </Button>
-                              <Button
-                                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                                onClick={() => handleRegisterClick(tryout)}
-                              >
-                                Daftar Try Out
-                                <ChevronRight className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Registered State */}
-                      {tryout.isRegistered && (
-                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
-                                <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">
-                                  Kamu sudah terdaftar!
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Silakan kerjakan tryout ini sekarang.
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6"
-                              onClick={() =>
-                                router.push(`/tryout/${tryout.id}`)
-                              }
-                            >
-                              Kerjakan
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      <div className="p-6 pt-0 mt-auto">
+                        <Button
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 shadow-lg h-12 text-base font-semibold"
+                          onClick={() => router.push(`/tryout/${tryout.id}`)}
+                        >
+                          Kerjakan Sekarang
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="border-dashed border-2 border-gray-200 bg-gray-50/50">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <BookOpen className="w-8 h-8 text-gray-400" />
                   </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    Belum ada Tryout Aktif
+                  </h3>
+                  <p className="text-gray-500 max-w-sm mb-6">
+                    Kamu belum mendaftar tryout apapun. Yuk cari tryout yang
+                    cocok buat kamu!
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      document.getElementById("explore-trigger")?.click()
+                    }
+                  >
+                    Cari Tryout
+                  </Button>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            )}
+          </TabsContent>
+
+          {/* TAB 2: EXPLORE / MARKETPLACE */}
+          <TabsContent
+            value="explore"
+            className="space-y-6 animate-in fade-in-50 duration-300"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {marketTryouts.map((tryout) => (
+                <Card
+                  key={tryout.id}
+                  className="border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 bg-white"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <Badge
+                        className={`${tryout.isPublic ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"} hover:bg-opacity-80 border-0`}
+                      >
+                        {tryout.isPublic ? "Gratis" : "Premium"}
+                      </Badge>
+                      <div className="text-sm font-bold text-gray-400">
+                        #{tryout.title.match(/\d+/)?.[0] || "TO"}
+                      </div>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 h-[3.5rem]">
+                      {tryout.title}
+                    </h3>
+
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-6">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {tryout.participants}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {tryout.scheduledStart
+                          ? new Date(tryout.scheduledStart).toLocaleDateString(
+                              "id-ID",
+                              { month: "short", day: "numeric" },
+                            )
+                          : "-"}
+                      </span>
+                    </div>
+
+                    <Button
+                      className={`w-full justify-between group ${tryout.isPublic ? "bg-emerald-600 hover:bg-emerald-700" : "border-blue-200 text-white "}`}
+                      onClick={() =>
+                        handleRegisterClick(tryout as OngoingTryout)
+                      }
+                    >
+                      {tryout.isPublic ? "Daftar Gratis" : "Beli Sekarang"}
+                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent
+            value="history"
+            className="animate-in fade-in-50 duration-300"
+          >
+            <Card className="border-none shadow-sm bg-white">
               <CardContent className="p-8 text-center">
-                <p className="text-gray-500">
-                  Tidak ada try out yang sedang berlangsung
+                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <TrendingUp className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Riwayat Nilai Segera Hadir
+                </h3>
+                <p className="text-gray-500 mt-2">
+                  Fitur grafik perkembangan nilai sedang kami siapkan untukmu.
                 </p>
               </CardContent>
             </Card>
-          )}
-        </section>
-
-        {/* Try Out Tersedia Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Try Out Tersedia
-              </h2>
-              <p className="text-gray-600">Try Out yang bisa kamu ikuti</p>
-            </div>
-            <Button
-              variant="ghost"
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
-              onClick={() => router.push("/tryout")}
-            >
-              Jelajahi Try Out Tersedia
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableTryoutsData.slice(0, 6).map((tryout) => (
-              <Card
-                key={tryout.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 cursor-pointer group"
-                onClick={() => {
-                   // Quick action based on registration status?
-                   // For now, simple redirect to detail
-                   router.push(`/tryout/${tryout.id}`)
-                }}
-              >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex flex-col items-center">
-                      <Badge className="bg-green-500 text-white px-2.5 py-0.5 text-xs font-bold mb-2">
-                        SNBT
-                      </Badge>
-                      <div className="text-5xl font-bold text-gray-900">
-                        {tryout.title.match(/\d+/)?.[0] || "N/A"}
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <p className="text-xs text-gray-600 mb-1">
-                        {tryout.isPublic ? "Gratis" : "Berbayar"}
-                      </p>
-                      <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                        {tryout.title}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {tryout.scheduledStart && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-600">•</span>
-                        <span className="text-gray-700">
-                          {new Date(tryout.scheduledStart).toLocaleDateString(
-                            "id-ID",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4" />
-                      <span>
-                        {tryout.participants.toLocaleString()} Peserta
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <RegisterModal
