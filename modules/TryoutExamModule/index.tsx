@@ -1,235 +1,656 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { BACKEND_URL } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, ChevronLeft, Flag } from "lucide-react";
-import { SubtestExam, ExamState } from "./interface";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  Flag,
+  Loader2,
+  BookOpen,
+  CheckCircle2,
+  XCircle,
+  List,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+type UiOption = { id: string; text: string };
 
-interface TryoutExamModuleProps {
-  examData: SubtestExam;
-}
+type UiQuestion = {
+  id: string;
+  questionText: string;
+  options: UiOption[];
+  correctAnswerId?: string;
+  correctAnswerText?: string;
+  solution?: string;
+  type?: string;
+  userAnswer?: string;
+};
 
-const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
+type UiExamData = {
+  attemptId: string;
+  tryoutTitle: string;
+  subtestName: string;
+  durationMinutes: number;
+  questions: UiQuestion[];
+};
+
+type AnswersMap = Record<string, string>;
+
+const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+
+const SUBTEST_FLOW = ["PU", "PPU", "PBM", "PK", "LBI", "LBE", "PM"] as const;
+
+const getSubtestIndex = (subtestParam: string) => {
+  const n = Number(subtestParam);
+  if (!Number.isNaN(n) && n >= 1 && n <= 7) return n - 1;
+
+  const upper = String(subtestParam).toUpperCase();
+  const idx = (SUBTEST_FLOW as readonly string[]).indexOf(upper);
+  return idx >= 0 ? idx : 0;
+};
+
+export default function TryoutExamModule() {
   const router = useRouter();
+  const params = useParams<{ id: string; subtestId: string }>();
   const searchParams = useSearchParams();
+
+  const tryoutId = params?.id;
+  const subtestId = params?.subtestId;
+
   const isReviewMode = searchParams.get("review") === "true";
+  const attemptIdFromQuery = searchParams.get("attemptId");
 
-  // Generate mock user answers for review mode (some correct, some wrong)
-  const generateMockUserAnswers = () => {
-    const answers: { [key: number]: number } = {};
-    examData.questions.forEach((question, index) => {
-      const safeCorrectAnswer = question.correctAnswer ?? 0;
-      // Make some answers correct, some wrong for demonstration
-      if (index % 3 === 0) {
-        // Every 3rd question: correct answer
-        answers[question.id] = safeCorrectAnswer;
-      } else if (index % 3 === 1) {
-        // Every 3rd + 1 question: wrong answer
-        answers[question.id] = (safeCorrectAnswer + 1) % 5;
-      } else {
-        // Every 3rd + 2 question: another wrong answer
-        answers[question.id] = (safeCorrectAnswer + 2) % 5;
+  const { data: session } = useSession();
+
+  const [attemptId, setAttemptId] = useState<string | null>(
+    attemptIdFromQuery ? String(attemptIdFromQuery) : null
+  );
+
+  const [examData, setExamData] = useState<UiExamData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [startingAttempt, setStartingAttempt] = useState(false);
+  const [error, setError] = useState("");
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<AnswersMap>({});
+  const [markedQuestions, setMarkedQuestions] = useState<string[]>([]);
+  const [timeRemainingSec, setTimeRemainingSec] = useState<number | null>(null);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSyncedAnswers, setLastSyncedAnswers] = useState<
+    Record<string, string>
+  >({});
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
+
+  const subtestIndex = useMemo(
+    () => getSubtestIndex(String(subtestId)),
+    [subtestId]
+  );
+  const hasNextSubtest = subtestIndex < SUBTEST_FLOW.length - 1;
+  const nextSubtestParam = String(subtestIndex + 2);
+
+  const startAttempt = async (): Promise<string> => {
+    if (!tryoutId) throw new Error("Tryout ID tidak ditemukan.");
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("Kamu belum login / session belum siap.");
+
+    const res = await fetch(
+      `${BACKEND_URL}/exam/${encodeURIComponent(tryoutId)}/start`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId }),
       }
-    });
-    return answers;
+    );
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || "Gagal memulai attempt");
+    }
+
+    const data = await res.json();
+    const id = data?.attemptId || data?.id;
+    if (!id) throw new Error("Attempt ID tidak ditemukan.");
+    return String(id);
   };
 
-  const [examState, setExamState] = useState<ExamState>({
-    currentQuestionIndex: 0,
-    answers: isReviewMode ? generateMockUserAnswers() : {},
-    markedQuestions: [],
-    timeRemaining: examData.duration * 60, // Convert minutes to seconds
-  });
-
-  // Timer (disabled in review mode)
-  useEffect(() => {
-    if (isReviewMode) return; // Don't run timer in review mode
-
-    const timer = setInterval(() => {
-      setExamState((prev) => {
-        if (prev.timeRemaining <= 0) {
-          clearInterval(timer);
-          handleFinish();
-          return prev;
-        }
-        return { ...prev, timeRemaining: prev.timeRemaining - 1 };
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isReviewMode]);
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${String(hours).padStart(2, "0")} : ${String(minutes).padStart(
-      2,
-      "0"
-    )} : ${String(secs).padStart(2, "0")}`;
+  const ensureAttempt = async (): Promise<string> => {
+    if (attemptId) return attemptId;
+    setStartingAttempt(true);
+    try {
+      const id = await startAttempt();
+      setAttemptId(id);
+      return id;
+    } finally {
+      setStartingAttempt(false);
+    }
   };
 
-  const currentQuestion = examData.questions[examState.currentQuestionIndex];
+  const mapQuestionsPayloadToUi = (
+    raw: any,
+    effectiveAttemptId: string
+  ): UiExamData => {
+    const rawQuestions = Array.isArray(raw?.questions) ? raw.questions : [];
 
-  const handleAnswerSelect = (optionIndex: number) => {
-    if (isReviewMode) return; // Disable answer selection in review mode
-    setExamState((prev) => ({
-      ...prev,
-      answers: {
-        ...prev.answers,
-        [currentQuestion.id]: optionIndex,
-      },
-    }));
-  };
+    const questions: UiQuestion[] = rawQuestions.map((q: any) => {
+      const options = (q?.options || []).map((o: any) => ({
+        id: s(o?.id),
+        text: s(o?.text),
+      }));
 
-  const handleMarkQuestion = () => {
-    setExamState((prev) => {
-      const isMarked = prev.markedQuestions.includes(currentQuestion.id);
+      const ua = q?.userAnswer;
+      const valUserAnswer = ua?.questionItemId || ua?.inputText || "";
+
       return {
-        ...prev,
-        markedQuestions: isMarked
-          ? prev.markedQuestions.filter((id) => id !== currentQuestion.id)
-          : [...prev.markedQuestions, currentQuestion.id],
+        id: s(q?.id),
+        questionText: s(q?.questionText),
+        options: options,
+        type: s(q?.type),
+        solution: s(q?.solution),
+        correctAnswerId: s(q?.correctAnswerId),
+        correctAnswerText: s(q?.correctAnswerText),
+        userAnswer: valUserAnswer,
       };
     });
+
+    return {
+      attemptId: effectiveAttemptId,
+      tryoutTitle: s(raw?.tryoutTitle),
+      subtestName: s(raw?.subtestName),
+      durationMinutes: Number(raw?.durationMinutes || 0),
+      questions,
+    };
   };
 
-  const handleQuestionNavigate = (index: number) => {
-    setExamState((prev) => ({ ...prev, currentQuestionIndex: index }));
-  };
+  useEffect(() => {
+    const load = async () => {
+      if (!tryoutId || !subtestId) return;
 
-  const handlePrevious = () => {
-    if (examState.currentQuestionIndex > 0) {
-      handleQuestionNavigate(examState.currentQuestionIndex - 1);
-    }
-  };
+      try {
+        setLoading(true);
+        setError("");
 
-  const handleNext = () => {
-    if (examState.currentQuestionIndex < examData.questions.length - 1) {
-      handleQuestionNavigate(examState.currentQuestionIndex + 1);
-    }
-  };
+        // 1. PENTING: Reset timer ke null setiap ganti subtes
+        // agar tidak memicu auto-finish dari nilai subtes sebelumnya
+        setTimeRemainingSec(null);
 
-  const handleFinish = () => {
-    // Save answers and navigate back
-    // In real app, submit to backend
-    alert("Try out selesai! Jawaban Anda telah tersimpan.");
-    router.back();
-  };
+        let effectiveAttemptId = attemptId || "";
 
-  const getQuestionStatus = (questionId: number, index: number) => {
-    const isAnswered = examState.answers[questionId] !== undefined;
-    const isMarked = examState.markedQuestions.includes(questionId);
-    const isCurrent = examState.currentQuestionIndex === index;
+        if (!isReviewMode) {
+          effectiveAttemptId = await ensureAttempt();
+        } else {
+          effectiveAttemptId =
+            effectiveAttemptId || (attemptIdFromQuery as string) || "";
+        }
 
-    // In review mode, check if answer is correct or incorrect
-    if (isReviewMode && isAnswered) {
-      const question = examData.questions.find((q) => q.id === questionId);
-      if (question) {
-        const isCorrect =
-          examState.answers[questionId] === question.correctAnswer;
-        if (isCurrent) return "current-review";
-        return isCorrect ? "correct" : "incorrect";
+        const currentUserId = session?.user?.id || "";
+
+        const url = `${BACKEND_URL}/tryout/${encodeURIComponent(
+          tryoutId
+        )}/exam/${encodeURIComponent(
+          String(subtestId)
+        )}?userId=${encodeURIComponent(
+          currentUserId
+        )}&attemptId=${encodeURIComponent(effectiveAttemptId)}`;
+
+        const res = await fetch(url, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.status === 404 || res.status === 500) {
+          router.replace(`/tryout/${tryoutId}`);
+          return;
+        }
+
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || "Gagal memuat data soal.");
+        }
+
+        const raw = await res.json();
+        const mapped = mapQuestionsPayloadToUi(raw, effectiveAttemptId);
+
+        setExamData(mapped);
+        setCurrentQuestionIndex(0);
+
+        const initialAnswers: AnswersMap = {};
+        mapped.questions.forEach((q) => {
+          if (q.userAnswer) {
+            initialAnswers[q.id] = q.userAnswer;
+          }
+        });
+        setAnswers(initialAnswers);
+
+        setLastSyncedAnswers({});
+        setMarkedQuestions([]);
+
+        // 2. Set timer ke durasi default subtest ini sambil menunggu SSE terkoneksi
+        setTimeRemainingSec(mapped.durationMinutes * 60);
+      } catch (e: any) {
+        setError(e?.message || "Gagal memuat ujian");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    load();
+    // 3. Dependency Array harus lengkap agar fungsi load berjalan ulang saat subtestId berubah
+  }, [
+    tryoutId,
+    subtestId,
+    isReviewMode,
+    session?.user?.id,
+    attemptId,
+    attemptIdFromQuery,
+    router,
+  ]);
+
+  const submitAnswerWithAttempt = async (
+    attemptIdParam: string,
+    questionId: string,
+    value: string,
+    isText: boolean
+  ) => {
+    const payload: any = { questionId };
+    if (isText) {
+      payload.inputText = value;
+      payload.answerId = null;
+    } else {
+      payload.answerId = value;
+      payload.inputText = null;
     }
 
-    if (isCurrent) return "current";
-    if (isMarked) return "marked";
-    if (isAnswered) return "answered";
-    return "unanswered";
+    const res = await fetch(
+      `${BACKEND_URL}/exam/${encodeURIComponent(attemptIdParam)}/answer`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!res.ok) throw new Error("Gagal menyimpan jawaban");
   };
 
-  const getQuestionButtonClass = (status: string) => {
-    switch (status) {
-      case "current":
-        return "bg-yellow-400 text-gray-900 ring-4 ring-yellow-200";
-      case "current-review":
-        return "bg-yellow-400 text-gray-900 ring-4 ring-yellow-200";
-      case "correct":
-        return "bg-emerald-500 text-white hover:bg-emerald-600";
-      case "incorrect":
-        return "bg-red-500 text-white hover:bg-red-600";
-      case "marked":
-        return "bg-red-400 text-white";
-      case "answered":
-        return "bg-blue-400 text-white";
-      default:
-        return "bg-gray-100 text-gray-700 hover:bg-gray-200";
+  const saveCurrentQuestionIfDirty = async () => {
+    if (isReviewMode) return;
+    if (!examData || !examData.questions[currentQuestionIndex]) return;
+
+    const currentQ = examData.questions[currentQuestionIndex];
+    const qid = currentQ.id;
+    const chosen = answers[qid];
+
+    if (!chosen) return;
+    if (lastSyncedAnswers[qid] === chosen) return;
+
+    setIsSaving(true);
+    try {
+      const effectiveAttemptId = await ensureAttempt();
+      const isTextAnswer = currentQ.options.length === 0;
+      await submitAnswerWithAttempt(
+        effectiveAttemptId,
+        qid,
+        chosen,
+        isTextAnswer
+      );
+      setLastSyncedAnswers((prev) => ({ ...prev, [qid]: chosen }));
+    } catch (e) {
+      console.error("Auto-save failed:", e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const answeredCount = Object.keys(examState.answers).length;
+  const finishCurrentSubtest = async () => {
+    if (isReviewMode) return;
+
+    if (!examData || !attemptId) return;
+    setIsSubmittingFinish(true);
+    setShowFinishConfirm(false);
+
+    try {
+      await saveCurrentQuestionIfDirty();
+
+      if (hasNextSubtest) {
+        router.push(
+          `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
+            attemptId
+          )}`
+        );
+      } else {
+        await fetch(
+          `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/finish`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
+
+        router.replace(`/tryout/${tryoutId}`);
+      }
+    } catch (e: any) {
+      setError(e?.message || "Terjadi kesalahan saat menyelesaikan subtes");
+      setIsSubmittingFinish(false);
+    }
+  };
+
+  const sseRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    // Jika review mode atau tidak ada attempt, jangan jalankan SSE
+    if (isReviewMode || !attemptId) return;
+
+    // Tutup koneksi lama jika ada sebelum membuka yang baru
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
+    }
+
+    // Buka koneksi SSE baru dengan menyertakan order subtest (subtestIndex + 1)
+    const es = new EventSource(
+      `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/stream/${
+        subtestIndex + 1
+      }`
+    );
+    sseRef.current = es;
+
+    es.onmessage = (evt) => {
+      try {
+        const raw =
+          typeof evt.data === "string" ? JSON.parse(evt.data) : evt.data;
+        const remainingSeconds = Number(
+          raw?.remainingSeconds ?? raw?.data?.remainingSeconds
+        );
+        const status = raw?.status ?? raw?.data?.status;
+
+        if (Number.isFinite(remainingSeconds)) {
+          setTimeRemainingSec(remainingSeconds);
+        }
+
+        // Jika waktu subtes ini habis (Sinyal dari backend)
+        if (status === "SUBTEST_FINISHED") {
+          console.log("Waktu subtes habis, pindah otomatis...");
+          finishCurrentSubtest(); // Jalankan fungsi selesai subtes
+        }
+
+        if (status === "FINISHED") {
+          es.close();
+          router.replace(`/tryout/${tryoutId}`);
+        }
+      } catch (err) {
+        console.error("SSE Parse Error:", err);
+      }
+    };
+
+    es.onerror = () => {
+      console.error("SSE Connection Error. Reconnecting...");
+      es.close();
+    };
+
+    return () => {
+      if (sseRef.current) {
+        sseRef.current.close();
+        sseRef.current = null;
+      }
+    };
+    // TAMBAHKAN subtestId dan subtestIndex di sini agar useEffect jalan ulang saat pindah subtes
+  }, [attemptId, isReviewMode, router, tryoutId, subtestId, subtestIndex]);
+
+  useEffect(() => {
+    if (isReviewMode || !examData || loading) return;
+    if ((timeRemainingSec ?? 999) <= 0 && !isSubmittingFinish) {
+      finishCurrentSubtest();
+    }
+  }, [timeRemainingSec, isReviewMode, examData, loading]);
+
+  const handleAnswerSelect = (value: string) => {
+    if (isReviewMode) return;
+    if (!examData?.questions[currentQuestionIndex]) return;
+    const qid = examData.questions[currentQuestionIndex].id;
+    setAnswers((prev) => ({ ...prev, [qid]: value }));
+  };
+
+  const handleNext = async () => {
+    if (!examData) return;
+
+    if (isReviewMode) {
+      const isLastQuestion =
+        currentQuestionIndex === examData.questions.length - 1;
+      if (isLastQuestion) {
+        if (hasNextSubtest) {
+          router.push(
+            `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${attemptId}&review=true`
+          );
+        } else {
+          router.push(`/tryout/${tryoutId}`);
+        }
+      } else {
+        setCurrentQuestionIndex((i) => i + 1);
+      }
+      return;
+    }
+
+    // Normal Mode
+    try {
+      await saveCurrentQuestionIfDirty();
+      const isLastQuestion =
+        currentQuestionIndex === examData.questions.length - 1;
+      if (isLastQuestion) {
+        setShowFinishConfirm(true);
+      } else {
+        setCurrentQuestionIndex((i) => i + 1);
+      }
+    } catch (e: any) {
+      setError(e?.message);
+    }
+  };
+
+  const handlePrevious = async () => {
+    if (!isReviewMode) await saveCurrentQuestionIfDirty();
+    setCurrentQuestionIndex((i) => Math.max(0, i - 1));
+  };
+
+  const handleBackNavigation = async () => {
+    if (!isReviewMode) await saveCurrentQuestionIfDirty();
+    router.replace(`/tryout/${tryoutId}`);
+  };
+
+  // Tambahkan "| null" pada parameter seconds
+  const formatTime = (seconds: number | null) => {
+    // Guard clause: jika null, kembalikan teks default
+    if (seconds === null) return "00 : 00 : 00";
+
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${String(h).padStart(2, "0")} : ${String(m).padStart(
+      2,
+      "0"
+    )} : ${String(s).padStart(2, "0")}`;
+  };
+  const currentQuestion = examData?.questions[currentQuestionIndex];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-2">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <div className="text-gray-600 font-medium">Memuat...</div>
+      </div>
+    );
+  }
+
+  if (error || !examData || !currentQuestion) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4 p-6">
+        <h3 className="text-lg font-bold text-gray-900">Gagal Memuat</h3>
+        <p className="text-gray-600 text-center max-w-xl">
+          {error || "Data tidak tersedia."}
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => router.replace(`/tryout/${tryoutId}`)}
+        >
+          Kembali Dashboard
+        </Button>
+      </div>
+    );
+  }
+
+  const answeredCount = Object.keys(answers).length;
   const unansweredCount = examData.questions.length - answeredCount;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 font-open-sans">
       <div className="bg-white border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
-              onClick={() => router.back()}
+              onClick={handleBackNavigation}
               className="text-gray-600 hover:text-gray-900"
+              disabled={isSaving || isSubmittingFinish}
             >
               <ChevronLeft className="w-5 h-5" />
               Kembali
             </Button>
             <div className="h-6 w-px bg-gray-300"></div>
-            <h1 className="text-lg font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-gray-900 line-clamp-1">
               {examData.tryoutTitle} - {examData.subtestName}
+              {isReviewMode && (
+                <span className="ml-2 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-sm">
+                  (Mode Pembahasan)
+                </span>
+              )}
             </h1>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="pt-16 pb-8 px-4">
+      <div className="pt-20 pb-8 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - Question Navigation */}
-          <div className="lg:col-span-3">
-            <Card className="sticky top-20 bg-white shadow-sm">
+          <div className="lg:col-span-3 h-fit space-y-4">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
-                {/* Subtest Info */}
-                <div className="mb-4">
+                <div className="mb-6">
                   <h2 className="font-bold text-gray-900 mb-1">
                     {examData.subtestName}
                   </h2>
-                  <p className="text-sm text-gray-600">
-                    {examData.questions.length} Soal | {examData.duration} Menit
-                  </p>
+                  {!isReviewMode ? (
+                    <div
+                      className={`mt-4 p-4 rounded-xl border flex flex-col items-center justify-center ${
+                        (timeRemainingSec ?? 999) < 300
+                          ? "bg-red-50 border-red-200 text-red-900"
+                          : "bg-blue-50 border-blue-200 text-blue-900"
+                      }`}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wider mb-1">
+                        Sisa Waktu
+                      </p>
+                      <div className="text-3xl font-mono font-bold">
+                        {formatTime(timeRemainingSec)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold uppercase text-gray-500 mb-2">
+                        Pindah Subtes:
+                      </p>
+                      <div className="space-y-1">
+                        {SUBTEST_FLOW.map((sub, idx) => (
+                          <Button
+                            key={sub}
+                            variant={
+                              subtestIndex === idx ? "primary" : "outline"
+                            }
+                            className="w-full justify-start"
+                            onClick={() =>
+                              router.push(
+                                `/tryout/${tryoutId}/exam/${
+                                  idx + 1
+                                }?attemptId=${attemptId}&review=true`
+                              )
+                            }
+                          >
+                            <List className="w-3 h-3 mr-2" />
+                            {sub}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Timer (hidden in review mode) */}
-                {!isReviewMode && (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                    <p className="text-xs text-blue-700 font-semibold mb-1">
-                      Waktu Tersisa
-                    </p>
-                    <div className="text-2xl font-mono font-bold text-blue-900">
-                      {formatTime(examState.timeRemaining)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Question Grid */}
                 <div className="mb-6">
                   <p className="text-sm font-semibold text-gray-700 mb-3">
-                    Navigasi Soal
+                    Nomor Soal
                   </p>
                   <div className="grid grid-cols-5 gap-2">
-                    {examData.questions.map((question, index) => {
-                      const status = getQuestionStatus(question.id, index);
+                    {examData.questions.map((q, index) => {
+                      const isCurrent = currentQuestionIndex === index;
+                      const userAnswer = answers[q.id];
+                      const isAnswered =
+                        userAnswer !== undefined && userAnswer !== "";
+
+                      let baseBtnClass =
+                        "bg-gray-100 text-gray-700 hover:bg-gray-200";
+
+                      if (isReviewMode) {
+                        const isCorrectAnswer =
+                          (q.correctAnswerId &&
+                            userAnswer === q.correctAnswerId) ||
+                          (q.correctAnswerText &&
+                            userAnswer?.toLowerCase().trim() ===
+                              q.correctAnswerText.toLowerCase().trim());
+
+                        if (isAnswered) {
+                          baseBtnClass = isCorrectAnswer
+                            ? "bg-green-100 text-green-800" // Jawaban user BENAR -> Hijau
+                            : "bg-red-100 text-red-800"; // Jawaban user SALAH -> Merah
+                        } else {
+                          // Unanswered in review mode, treat as incorrect
+                          baseBtnClass = "bg-red-100 text-red-800"; // Kosong
+                        }
+                      } else { // Exam mode
+                        const isMarked = markedQuestions.includes(q.id);
+                        if (isMarked)
+                          baseBtnClass = "bg-yellow-400 text-black";
+                        else if (isAnswered)
+                          baseBtnClass = "bg-blue-500 text-white hover:bg-blue-600";
+                      }
+
+                      // Apply current styling AFTER base color is determined
+                      let finalBtnClass = baseBtnClass;
+                      if (isCurrent) {
+                          finalBtnClass += " ring-2 ring-blue-500";
+                      }
+
                       return (
                         <button
-                          key={question.id}
-                          onClick={() => handleQuestionNavigate(index)}
-                          className={`w-full aspect-square rounded-lg font-semibold text-sm transition-all ${getQuestionButtonClass(
-                            status
-                          )}`}
+                          key={q.id}
+                          disabled={isSaving || isSubmittingFinish}
+                          onClick={async () => {
+                            if (!isReviewMode)
+                              await saveCurrentQuestionIfDirty();
+                            setCurrentQuestionIndex(index);
+                          }}
+                          className={`aspect-square rounded-lg font-semibold text-sm transition-all ${finalBtnClass}`}
                         >
                           {index + 1}
                         </button>
@@ -238,232 +659,111 @@ const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
                   </div>
                 </div>
 
-                {/* Submit Button (hidden in review mode) */}
                 {!isReviewMode && (
                   <Button
-                    onClick={handleFinish}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6 rounded-xl font-bold text-base shadow-lg"
+                    onClick={() => setShowFinishConfirm(true)}
+                    disabled={isSaving || isSubmittingFinish}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl font-bold text-base shadow-sm"
                   >
-                    Selesai Mengerjakan
+                    {hasNextSubtest
+                      ? "Selesai & Lanjut Subtes"
+                      : "Selesai Ujian"}
                   </Button>
-                )}
-
-                {/* Review Mode Info */}
-                {isReviewMode && (
-                  <>
-                    <div className="mb-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
-                      <p className="text-sm text-emerald-800 font-semibold text-center">
-                        Mode Pembahasan
-                      </p>
-                      <p className="text-xs text-emerald-700 text-center mt-1">
-                        Lihat kunci jawaban dan pembahasan
-                      </p>
-                    </div>
-
-                    {/* Review Stats */}
-                    <div className="mb-4 p-4 bg-white rounded-xl border border-gray-200 space-y-3">
-                      <p className="text-sm font-semibold text-gray-700 mb-2">
-                        Hasil Pengerjaan
-                      </p>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded bg-emerald-500"></div>
-                            <span className="text-gray-600">Benar:</span>
-                          </div>
-                          <span className="font-semibold text-emerald-600">
-                            {
-                              examData.questions.filter(
-                                (q) =>
-                                  examState.answers[q.id] === q.correctAnswer
-                              ).length
-                            }
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded bg-red-500"></div>
-                            <span className="text-gray-600">Salah:</span>
-                          </div>
-                          <span className="font-semibold text-red-600">
-                            {
-                              examData.questions.filter(
-                                (q) =>
-                                  examState.answers[q.id] !== undefined &&
-                                  examState.answers[q.id] !== q.correctAnswer
-                              ).length
-                            }
-                          </span>
-                        </div>
-                        <div className="pt-2 border-t border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-700 font-medium">
-                              Skor:
-                            </span>
-                            <span className="font-bold text-blue-600 text-lg">
-                              {Math.round(
-                                (examData.questions.filter(
-                                  (q) =>
-                                    examState.answers[q.id] === q.correctAnswer
-                                ).length /
-                                  examData.questions.length) *
-                                  100
-                              )}
-                              %
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Stats (hidden in review mode) */}
-                {!isReviewMode && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Terjawab:</span>
-                      <span className="font-semibold text-blue-600">
-                        {answeredCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Belum Dijawab:</span>
-                      <span className="font-semibold text-gray-700">
-                        {unansweredCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Ditandai:</span>
-                      <span className="font-semibold text-red-600">
-                        {examState.markedQuestions.length}
-                      </span>
-                    </div>
-                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Main Content - Question */}
           <div className="lg:col-span-9">
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-white shadow-sm border-gray-200 min-h-[500px]">
               <CardContent className="p-8">
-                {/* Question Header */}
-                <div className="mb-6">
+                <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      Soal {examState.currentQuestionIndex + 1}
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Soal No. {currentQuestionIndex + 1}
                     </h3>
-                    <div className="text-sm text-gray-600">
-                      {examState.currentQuestionIndex + 1} dari{" "}
-                      {examData.questions.length}
-                    </div>
                   </div>
-                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 transition-all duration-300"
+                      className="h-full bg-blue-500 transition-all duration-300 ease-out"
                       style={{
                         width: `${
-                          ((examState.currentQuestionIndex + 1) /
+                          ((currentQuestionIndex + 1) /
                             examData.questions.length) *
                           100
                         }%`,
                       }}
-                    ></div>
+                    />
                   </div>
                 </div>
 
-                {/* Question Text */}
-                <div className="mb-6">
-                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
+                <div className="mb-8 prose prose-lg max-w-none text-gray-800">
+                  <p className="whitespace-pre-wrap leading-relaxed">
                     {currentQuestion.questionText}
                   </p>
                 </div>
 
-                {/* Options */}
-                <div className="space-y-3 mb-8">
-                  {currentQuestion.options.map((option, index) => {
-                    const userAnswer = examState.answers[currentQuestion.id];
-                    const isUserAnswer = userAnswer === index;
-                    const isCorrect = index === currentQuestion.correctAnswer;
-                    const isUserCorrect =
-                      isReviewMode && isUserAnswer && isCorrect;
-                    const isUserWrong =
-                      isReviewMode && isUserAnswer && !isCorrect;
-                    const isCorrectAnswer =
-                      isReviewMode && isCorrect && !isUserAnswer;
+                <div className="space-y-3 mb-10">
+                  {currentQuestion.options.map((opt) => {
+                    const userAnswerId = answers[currentQuestion.id];
+                    const isSelected = userAnswerId === opt.id;
+
+                    const isCorrectKey =
+                      currentQuestion.correctAnswerId === opt.id;
+
+                    let containerClass =
+                      "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50";
+                    let dotClass = "border-gray-300 bg-white";
+                    let textClass = "text-gray-700";
+
+                    if (isReviewMode) {
+                      if (isCorrectKey) {
+                        containerClass =
+                          "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
+                        dotClass = "border-emerald-500 bg-emerald-500";
+                        textClass = "text-emerald-900 font-bold";
+                      } else if (isSelected && !isCorrectKey) {
+                        containerClass =
+                          "border-red-500 bg-red-50 ring-1 ring-red-200";
+                        dotClass = "border-red-500 bg-red-500";
+                        textClass =
+                          "text-red-900 font-medium line-through decoration-red-500/50";
+                      } else {
+                        containerClass = "border-gray-100 bg-white opacity-60";
+                      }
+                    } else if (isSelected) {
+                      containerClass =
+                        "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500";
+                      dotClass = "border-blue-500 bg-blue-500";
+                      textClass = "text-blue-900 font-medium";
+                    }
 
                     return (
                       <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(index)}
+                        key={opt.id}
+                        onClick={() => handleAnswerSelect(opt.id)}
                         disabled={isReviewMode}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                          isUserCorrect
-                            ? "border-emerald-500 bg-emerald-50 shadow-md"
-                            : isUserWrong
-                            ? "border-red-500 bg-red-50 shadow-md"
-                            : isCorrectAnswer
-                            ? "border-emerald-500 bg-emerald-50/50 shadow-md"
-                            : isUserAnswer
-                            ? "border-blue-500 bg-blue-50 shadow-md"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        } ${isReviewMode ? "cursor-default" : ""}`}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${containerClass} relative`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                isUserCorrect
-                                  ? "border-emerald-500 bg-emerald-500"
-                                  : isUserWrong
-                                  ? "border-red-500 bg-red-500"
-                                  : isCorrectAnswer
-                                  ? "border-emerald-500 bg-emerald-500"
-                                  : isUserAnswer
-                                  ? "border-blue-500 bg-blue-500"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {(isUserAnswer ||
-                                isCorrectAnswer ||
-                                isUserCorrect) && (
-                                <div className="w-3 h-3 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                            <span
-                              className={`text-base ${
-                                isUserCorrect
-                                  ? "text-emerald-900 font-medium"
-                                  : isUserWrong
-                                  ? "text-red-900 font-medium"
-                                  : isCorrectAnswer
-                                  ? "text-emerald-900 font-medium"
-                                  : isUserAnswer
-                                  ? "text-blue-900 font-medium"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              {option}
-                            </span>
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${dotClass}`}
+                          >
+                            {(isSelected || isCorrectKey) && (
+                              <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                            )}
                           </div>
+                          <span className={`text-base flex-1 ${textClass}`}>
+                            {opt.text}
+                          </span>
+
                           {isReviewMode && (
-                            <div className="flex items-center gap-2">
-                              {isUserCorrect && (
-                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-600 text-white">
-                                  ✓ Jawaban Kamu (Benar)
-                                </span>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                              {isCorrectKey && (
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                               )}
-                              {isUserWrong && (
-                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-600 text-white">
-                                  ✗ Jawaban Kamu (Salah)
-                                </span>
-                              )}
-                              {isCorrectAnswer && (
-                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-600 text-white">
-                                  ✓ Jawaban Benar
-                                </span>
+                              {isSelected && !isCorrectKey && (
+                                <XCircle className="w-6 h-6 text-red-500" />
                               )}
                             </div>
                           )}
@@ -471,12 +771,46 @@ const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
                       </button>
                     );
                   })}
+
+                  {currentQuestion.options.length === 0 && (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <input
+                          className={`w-full p-3 border rounded-lg outline-none ${
+                            isReviewMode
+                              ? answers[currentQuestion.id]
+                                  ?.toLowerCase()
+                                  .trim() ===
+                                currentQuestion.correctAnswerText
+                                  ?.toLowerCase()
+                                  .trim()
+                                ? "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold"
+                                : "border-red-500 bg-red-50 text-red-900"
+                              : "focus:ring-2 focus:ring-blue-500"
+                          }`}
+                          placeholder="Ketik jawaban Anda..."
+                          value={answers[currentQuestion.id] || ""}
+                          onChange={(e) => handleAnswerSelect(e.target.value)}
+                          disabled={isReviewMode}
+                        />
+                      </div>
+                      {isReviewMode && (
+                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm font-medium flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Kunci Jawaban: {currentQuestion.correctAnswerText}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Solution (only in review mode) */}
                 {isReviewMode && currentQuestion.solution && (
-                  <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200">
-                    <div className="prose prose-sm max-w-none">
+                  <div className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                    <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-500" />
+                      Pembahasan
+                    </h4>
+                    <div className="prose prose-sm max-w-none text-slate-700">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {currentQuestion.solution}
                       </ReactMarkdown>
@@ -484,56 +818,118 @@ const TryoutExamModule = ({ examData }: TryoutExamModuleProps) => {
                   </div>
                 )}
 
-                {/* Bottom Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                  {!isReviewMode && (
+                <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+                  {!isReviewMode ? (
                     <Button
-                      onClick={handleMarkQuestion}
+                      onClick={() => {
+                        const qid = currentQuestion.id;
+                        setMarkedQuestions((prev) =>
+                          prev.includes(qid)
+                            ? prev.filter((x) => x !== qid)
+                            : [...prev, qid]
+                        );
+                      }}
                       variant="outline"
-                      className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                        examState.markedQuestions.includes(currentQuestion.id)
-                          ? "border-red-500 text-red-600 bg-red-50"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      disabled={isSaving || isSubmittingFinish}
+                      className={`gap-2 ${
+                        markedQuestions.includes(currentQuestion.id)
+                          ? "text-red-600 border-red-200 bg-red-50"
+                          : "text-gray-600"
                       }`}
                     >
-                      <Flag className="w-4 h-4 mr-2" />
-                      {examState.markedQuestions.includes(currentQuestion.id)
-                        ? "Tandai soal"
-                        : "Tandai soal"}
+                      <Flag className="w-4 h-4" />
+                      {markedQuestions.includes(currentQuestion.id)
+                        ? "Lepas Tanda"
+                        : "Tandai Soal"}
                     </Button>
+                  ) : (
+                    <div />
                   )}
-                  {isReviewMode && <div></div>}
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 ml-auto">
                     <Button
                       onClick={handlePrevious}
-                      disabled={examState.currentQuestionIndex === 0}
+                      disabled={
+                        currentQuestionIndex === 0 ||
+                        isSaving ||
+                        isSubmittingFinish
+                      }
                       variant="outline"
-                      className="px-6 py-3 rounded-xl font-semibold border-gray-300 disabled:opacity-50"
+                      className="gap-2"
                     >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      <ArrowLeft className="w-4 h-4" />
                       Sebelumnya
                     </Button>
                     <Button
                       onClick={handleNext}
-                      disabled={
-                        examState.currentQuestionIndex ===
-                        examData.questions.length - 1
-                      }
-                      className="px-6 py-3 rounded-xl font-semibold bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
+                      disabled={isSaving || isSubmittingFinish}
+                      className="gap-2 bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
                     >
-                      Selanjutnya
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {currentQuestionIndex === examData.questions.length - 1
+                        ? isReviewMode
+                          ? hasNextSubtest
+                            ? "Lanjut Subtes (Review)"
+                            : "Selesai Review"
+                          : hasNextSubtest
+                          ? "Lanjut Subtes"
+                          : "Selesai"
+                        : "Selanjutnya"}
+                      <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
+                {error && (
+                  <p className="mt-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+                    {error}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+
+      <Dialog open={showFinishConfirm} onOpenChange={setShowFinishConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Selesaikan Subtes {examData?.subtestName}?
+            </DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin mengakhiri pengerjaan subtes ini?
+              <br />
+              <br />
+              <span className="font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 block mt-2 text-center">
+                Peringatan: Anda TIDAK DAPAT kembali ke subtes ini setelah
+                selesai.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowFinishConfirm(false)}
+              disabled={isSubmittingFinish}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={finishCurrentSubtest}
+              disabled={isSubmittingFinish}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmittingFinish ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                "Ya, Selesaikan"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default TryoutExamModule;
+}

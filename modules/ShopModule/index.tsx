@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,36 +7,55 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircleIcon, CheckCircle2Icon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { AlertCircleIcon, Clock, History, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 import TokenCard from "./components/TokenCard";
-import { tokenPackages } from "./payload";
+import { contactInfos } from "./payload";
 
 import { BACKEND_URL } from "@/lib/api";
 
+interface TokenPackage {
+  id: string;
+  name: string;
+  tokenAmount: number;
+  price: number;
+}
+
 const ShopModule = () => {
+  const [packages, setPackages] = useState<TokenPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const [isModalOpened, setIsModalOpened] = useState(false);
-  const [selectedPkg, setSelectedPkg] = useState<number | null>(null);
+  const [selectedPkg, setSelectedPkg] = useState<TokenPackage | null>(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [showContact, setShowContact] = useState(false);
   const [qrCode, setQrCode] = useState("");
 
-  const [alerts, setAlerts] = useState<
-    { type: "success" | "error"; title: string; message: string }[]
-  >([]);
+  const router = useRouter();
 
-  function showAlert(
-    type: "success" | "error",
-    title: string,
-    message: string
-  ) {
-    setAlerts((prev) => [...prev, { type, title, message }]);
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/shop/packages`);
+        if (res.ok) {
+          const data = await res.json();
+          setPackages(data);
+        } else {
+          toast.error("Gagal memuat paket token");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Terjadi kesalahan jaringan");
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
 
-    setTimeout(() => {
-      setAlerts((prev) => prev.slice(1));
-    }, 5000);
-  }
+    fetchPackages();
+  }, []);
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -51,6 +70,43 @@ const ShopModule = () => {
           <p className="text-gray-600">
             Pilih paket token yang sesuai dengan kebutuhan latihan kamu
           </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div
+            onClick={() => router.push("/shop/pending")}
+            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">
+                  Cek Transaksi Pending
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Lihat transaksi token try out yang belum selesai dibayar
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            onClick={() => router.push("/shop/past")}
+            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                <History className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">Cek Transaksi Lama</h3>
+                <p className="text-gray-500 text-sm">
+                  Lihat riwayat pembelian token try out kamu sebelumnya
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Info Banner */}
@@ -80,39 +136,68 @@ const ShopModule = () => {
               Pilih paket yang sesuai dengan intensitas belajar kamu
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {tokenPackages.map((pkg, idx) => (
-              <TokenCard
-                key={pkg.id}
-                pkg={pkg}
-                onPressBuy={() => {
-                  setSelectedPkg(idx);
-                  setIsModalOpened(true);
-                }}
-              />
-            ))}
-          </div>
+
+          {loadingPackages ? (
+            <div className="text-center py-10">Memuat paket...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+              {packages.map((pkg) => {
+                // Kalkulasi kosmetik untuk UI
+                const originalPrice = Math.round(pkg.price * 1.2); // Asumsi diskon 20%
+                const discount = 20;
+                const savings = originalPrice - pkg.price;
+                const pricePerToken = Math.round(pkg.price / pkg.tokenAmount);
+
+                // Tentukan warna berdasarkan jumlah token
+                let categoryBg = "from-blue-600 to-indigo-700";
+                if (pkg.tokenAmount >= 50)
+                  categoryBg = "from-purple-600 to-pink-600";
+                else if (pkg.tokenAmount >= 25)
+                  categoryBg = "from-emerald-600 to-teal-600";
+
+                return (
+                  <TokenCard
+                    key={pkg.id}
+                    pkg={{
+                      id: Number(pkg.id),
+                      title: pkg.name,
+                      subtitle: "Akses Premium Tryout & Pembahasan",
+                      tokenAmount: pkg.tokenAmount,
+                      originalPrice: originalPrice,
+                      finalPrice: pkg.price,
+                      discount: discount,
+                      savings: savings,
+                      pricePerToken: String(pricePerToken),
+                      categoryBg: categoryBg,
+                      popular: pkg.tokenAmount === 50, // Tandai paket 50 sebagai populer
+                      badge: pkg.tokenAmount >= 50 ? "Best Value" : undefined,
+                    }}
+                    onPressBuy={() => {
+                      setSelectedPkg(pkg);
+                      setIsModalOpened(true);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
 
-      <div className="fixed bottom-4 right-4 flex flex-col gap-2">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={index}
-            variant={alert.type === "success" ? "default" : "destructive"}
-          >
-            {alert.type === "success" ? (
-              <CheckCircle2Icon className="w-5 h-5 mr-2" />
-            ) : (
-              <AlertCircleIcon className="w-5 h-5 mr-2" />
-            )}
-            <AlertTitle>{alert.title}</AlertTitle>
-            <AlertDescription>{alert.message}</AlertDescription>
-          </Alert>
-        ))}
-      </div>
+      <Dialog
+        open={isModalOpened}
+        onOpenChange={(state) => {
+          setIsModalOpened(state);
 
-      <Dialog open={isModalOpened} onOpenChange={setIsModalOpened} modal>
+          if (!state) {
+            setIsModalLoading(false);
+            setTransactionId(null);
+            setSelectedPkg(null);
+            setShowContact(false);
+          }
+        }}
+        modal
+      >
         <DialogContent>
           {!isModalLoading && !transactionId && (
             <>
@@ -129,15 +214,10 @@ const ShopModule = () => {
                   onClick={() => {
                     setIsModalLoading(true);
 
-                    fetch(
-                      `${BACKEND_URL}/api/shop/create/${
-                        tokenPackages[selectedPkg!].id
-                      }`,
-                      {
-                        method: "POST",
-                        credentials: "include",
-                      }
-                    )
+                    fetch(`${BACKEND_URL}/shop/create/${selectedPkg?.id}`, {
+                      method: "POST",
+                      credentials: "include",
+                    })
                       .then((res) => {
                         if (!res.ok) {
                           throw new Error(res.statusText);
@@ -150,15 +230,16 @@ const ShopModule = () => {
                         setIsModalLoading(false);
                         setTransactionId(data.id);
                         setQrCode(data.qris);
+                        setShowContact(false);
                       })
                       .catch((e: Error) => {
                         // console.error(e);
                         setIsModalLoading(false);
-                        showAlert(
-                          "error",
-                          "Gagal Membuat Transaksi",
-                          "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi."
-                        );
+
+                        toast.error("Gagal Membuat Transaksi", {
+                          description:
+                            "Terjadi kesalahan saat membuat transaksi. Silahkan coba lagi.",
+                        });
                       });
                   }}
                 >
@@ -175,7 +256,7 @@ const ShopModule = () => {
             </div>
           )}
 
-          {!isModalLoading && transactionId && (
+          {!isModalLoading && transactionId && !showContact && (
             <div className="flex flex-col items-center gap-4">
               <h2 className="text-2xl font-bold mb-4">
                 Silahkan Lakukan Pembayaran
@@ -185,7 +266,7 @@ const ShopModule = () => {
                   {qrCode ? (
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
-                        qrCode
+                        qrCode,
                       )}`}
                       alt="QRIS code"
                       className="w-48 h-48"
@@ -200,46 +281,52 @@ const ShopModule = () => {
               </div>
               <Button
                 onClick={() => {
-                  setIsModalLoading(true);
-
-                  fetch(`${BACKEND_URL}/api/shop/check/${transactionId}`, {
-                    method: "POST",
-                    credentials: "include",
-                  })
-                    .then((res) => res.json())
-                    .then((data: { type: string }) => {
-                      console.log(data);
-                      setIsModalLoading(false);
-
-                      if (data.type === "PAID") {
-                        showAlert(
-                          "success",
-                          "Pembayaran Berhasil",
-                          "Terima kasih! Pembayaran kamu telah kami terima dan token sudah ditambahkan ke akun kamu."
-                        );
-                        setIsModalOpened(false);
-                        setTransactionId(null);
-                        setSelectedPkg(null);
-                      } else {
-                        showAlert(
-                          "error",
-                          "Pembayaran Belum Diterima",
-                          "Pembayaran kamu belum kami terima. Silahkan pastikan kamu sudah melakukan pembayaran dengan benar."
-                        );
-                      }
-                    })
-                    .catch((e: Error) => {
-                      console.error(e);
-                      setIsModalLoading(false);
-                      showAlert(
-                        "error",
-                        "Gagal Memeriksa Status Transaksi",
-                        "Terjadi kesalahan saat memeriksa status transaksi. Silahkan coba lagi."
-                      );
-                    });
+                  setShowContact(true);
                 }}
               >
                 Saya sudah melakukan pembayaran
+              </Button>
+            </div>
+          )}
+
+          {!isModalLoading && transactionId && showContact && (
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-bold mb-4">Pembayaran Diproses</h2>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-center">
+                  Pembayaran kamu akan segera kami proses. Apabila dalam 1x24
+                  jam belum terverifikasi, silahkan hubungi kontak berikut:
+                </p>
+                {contactInfos.map((contact) => (
+                  <Alert key={contact.name} className="w-full max-w-md">
+                    <AlertCircleIcon className="h-5 w-5 shrink-0" />
+                    <div>
+                      <AlertTitle className="font-medium">
+                        {contact.name}
+                      </AlertTitle>
+                      <AlertDescription className="text-sm mt-2">
+                        {Object.entries(contact.contacts).map(
+                          ([method, info]) => (
+                            <div key={method}>
+                              <strong>{method}:</strong> {info || "-"}
+                            </div>
+                          ),
+                        )}
+                      </AlertDescription>
+                    </div>
+                  </Alert>
+                ))}
+                <p className="text-xs text-gray-500">
+                  Transaction ID: {transactionId}
+                </p>
+              </div>
+              <Button
+                className="mt-4"
+                onClick={() => {
+                  setShowContact(false);
+                }}
+              >
+                Tunjukkan kembali QRIS
               </Button>
             </div>
           )}

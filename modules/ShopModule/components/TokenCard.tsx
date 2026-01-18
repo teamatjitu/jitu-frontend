@@ -17,13 +17,6 @@ const TokenCard = ({
         : "border-gray-100"
     }`}
   >
-    {/* Popular Badge */}
-    {pkg.popular && (
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center py-2 px-4 text-xs font-bold">
-        ⭐ PALING POPULER
-      </div>
-    )}
-
     <div
       className={`bg-gradient-to-r ${pkg.categoryBg} p-6 text-white relative overflow-hidden`}
     >
