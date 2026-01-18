@@ -241,8 +241,8 @@ export default function TryoutExamModule() {
         setLastSyncedAnswers({});
         setMarkedQuestions([]);
 
-        // 2. Set timer ke durasi default subtest ini sambil menunggu SSE terkoneksi
-        setTimeRemainingSec(mapped.durationMinutes * 60);
+        // 2. Timer akan di-set oleh SSE stream yang terkoneksi setelah ini
+        // setTimeRemainingSec(mapped.durationMinutes * 60);
       } catch (e: any) {
         setError(e?.message || "Gagal memuat ujian");
       } finally {
