@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "JituPTN",
   description: "Website Resmi JituPTN",
 };
-
+//dummy comment
 export default function RootLayout({
   children,
 }: Readonly<{
