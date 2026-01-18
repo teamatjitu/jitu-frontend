@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
@@ -9,566 +9,632 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
-  CheckCircle2,
-  Trophy,
   Target,
   BarChart3,
-  Users,
-  Brain,
-  Coins,
-  Calendar,
-  BookOpen,
-  Calculator,
-  PenTool,
-  Globe,
-  Languages,
+  Trophy,
+  Zap,
+  CheckCircle2,
+  PlayCircle,
+  ChevronRight,
+  Star,
+  Plus,
+  Minus,
+  Quote,
 } from "lucide-react";
+import Link from "next/link";
 
-// --- Mock Data ---
-const SUBJECTS_DATA = [
-  {
-    id: 1,
-    name: "Penalaran Umum",
-    icon: Brain,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-  },
-  {
-    id: 2,
-    name: "Pengetahuan Kuantitatif",
-    icon: Calculator,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-  },
-  {
-    id: 3,
-    name: "Pemahaman Bacaan",
-    icon: BookOpen,
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-  },
-  {
-    id: 4,
-    name: "Penalaran Matematika",
-    icon: BarChart3,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
-  },
-  {
-    id: 5,
-    name: "Literasi Bahasa Indonesia",
-    icon: PenTool,
-    color: "text-rose-600",
-    bgColor: "bg-rose-50",
-  },
-  {
-    id: 6,
-    name: "Literasi Bahasa Inggris",
-    icon: Languages,
-    color: "text-indigo-600",
-    bgColor: "bg-indigo-50",
-  },
-];
+// --- Components ---
 
-const PublicNavbar = () => {
+const Navbar = () => {
   const router = useRouter();
   const { data: session } = useSession();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => router.push("/")}
-          >
-            <Image
-              src="/logo.png"
-              alt="JituPTN Logo"
-              width={40}
-              height={40}
-              className="object-contain"
-            />
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-              JituPTN
-            </span>
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 py-3"
+          : "bg-white/50 backdrop-blur-sm py-5 border-b border-transparent"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div
+          className="flex items-center gap-2 cursor-pointer group"
+          onClick={() => router.push("/")}
+        >
+          <div className="relative w-8 h-8">
+            <Image src={"/logo.png"} alt="Logo Jitu" layout="fill" />
           </div>
+          <span className="text-xl font-bold text-gray-900 tracking-tight">
+            Jitu<span className="text-blue-600">PTN</span>
+          </span>
+        </div>
 
-          <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8">
+          {["Fitur", "Testimoni", "FAQ"].map((item) => (
             <a
-              href="#features"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
             >
-              Fitur
+              {item}
             </a>
-            <a
-              href="#subjects"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
-            >
-              Materi
-            </a>
-            <a
-              href="#preview"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
-            >
-              Tryout
-            </a>
-          </div>
+          ))}
+        </div>
 
-          <div className="flex items-center gap-4">
-            {session ? (
+        <div className="flex items-center gap-4">
+          {session ? (
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-lg shadow-blue-200"
+            >
+              Dashboard
+            </Button>
+          ) : (
+            <>
               <Button
-                onClick={() => router.push("/dashboard")}
+                variant="ghost"
+                onClick={() => router.push("/login")}
+                className="text-gray-700 hover:text-blue-600 font-medium hidden sm:flex"
+              >
+                Masuk
+              </Button>
+              <Button
+                onClick={() => router.push("/register")}
                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
               >
-                Dashboard Saya
+                Daftar Gratis
               </Button>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push("/login")}
-                  className="text-gray-700 hover:text-blue-600"
-                >
-                  Masuk
-                </Button>
-                <Button
-                  onClick={() => router.push("/register")}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-lg shadow-blue-200"
-                >
-                  Daftar Gratis
-                </Button>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </nav>
   );
 };
 
-const Footer = () => (
-  <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="JituPTN Logo"
-              width={32}
-              height={32}
-              className="opacity-90  brightness-200"
-            />
-            <span className="text-xl font-bold">JituPTN</span>
-          </div>
-          <p className="text-gray-400 text-sm">
-            Platform simulasi Tryout UTBK SNBT terbaik dengan sistem penilaian
-            IRT dan analisis mendalam.
-          </p>
-        </div>
-        <div>
-          <h4 className="font-bold mb-4">Layanan</h4>
-          <ul className="space-y-2 text-gray-400 text-sm">
-            <li>
-              <a href="#" className="hover:text-white">
-                Tryout SNBT
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-white">
-                Analisis Peluang
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-white">
-                Bank Soal
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="font-bold mb-4">Perusahaan</h4>
-          <ul className="space-y-2 text-gray-400 text-sm">
-            <li>
-              <a href="#" className="hover:text-white">
-                Tentang Kami
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-white">
-                Hubungi Kami
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-white">
-                Syarat & Ketentuan
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="font-bold mb-4">Ikuti Kami</h4>
-          <div className="flex gap-4">
-            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white cursor-pointer transition-all">
-              IG
+const HeroSection = () => {
+  const router = useRouter();
+
+  return (
+    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-white">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-blue-50 rounded-full blur-3xl -z-10 opacity-50" />
+      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-orange-50 rounded-full blur-3xl -z-10 opacity-50" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="flex flex-col lg:flex-row items-center gap-16">
+          {/* Text Content */}
+          <div className="flex-1 text-center lg:text-left space-y-8">
+            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium animate-fade-in-up">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              Platform Persiapan UTBK #1 Terupdate
             </div>
-            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white cursor-pointer transition-all">
-              TW
+
+            <h1 className="text-5xl lg:text-7xl font-extrabold text-gray-900 tracking-tight leading-[1.1]">
+              Raih Kampus <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                Impianmu
+              </span>{" "}
+              Sekarang.
+            </h1>
+
+            <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+              Simulasi ujian dengan sistem penilaian IRT (Item Response Theory)
+              yang presisi, analisis peluang lolos real-time, dan bank soal HOTS
+              standar SNBT 2026.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+              <Button
+                size="lg"
+                onClick={() => router.push("/register")}
+                className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl   w-full sm:w-auto"
+              >
+                Coba Tryout Gratis
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+
+              <Link href={"/login"}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-14 px-8 text-lg rounded-full border-2 hover:bg-gray-50 text-gray-700 w-full sm:w-auto"
+                >
+                  Punya Akun?
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-8 flex items-center justify-center lg:justify-start gap-8 text-sm text-gray-500 font-medium">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> 100+ Paket
+                Soal
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> Update 2026
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> Analisis AI
+              </div>
+            </div>
+          </div>
+
+          {/* Visual Content */}
+          <div className="flex-1 w-full relative group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-[2rem] rotate-3 opacity-10 group-hover:rotate-6 transition-transform duration-500" />
+            <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+              <img
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2671&auto=format&fit=crop"
+                alt="Students studying together"
+                className="w-full h-auto object-cover transform transition-transform duration-700 hover:scale-105"
+              />
+
+              <div className="absolute bottom-8 left-8 bg-white/90 backdrop-blur p-4 rounded-xl shadow-lg border border-white/50 animate-bounce-slow hidden sm:block">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <BarChart3 className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                      Peluang Lolos
+                    </p>
+                    <p className="text-xl font-bold text-gray-900">
+                      High (85%)
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-        © 2026 Jitu Academy. All rights reserved.
+    </section>
+  );
+};
+
+const SocialProof = () => {
+  const universities = [
+    {
+      name: "UI",
+      logo: "/ui.png",
+    },
+    {
+      name: "ITB",
+      logo: "/itb.png",
+    },
+    {
+      name: "UGM",
+      logo: "/ugm.webp",
+    },
+    {
+      name: "ITS",
+      logo: "/its.png",
+    },
+    {
+      name: "UNAIR",
+      logo: "/unair.png",
+    },
+    {
+      name: "UNPAD",
+      logo: "/unpad.webp",
+    },
+  ];
+
+  return (
+    <section className="py-12 border-y border-gray-100 bg-white">
+      <div className="max-w-7xl mx-auto px-4 text-center">
+        <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-8">
+          Target Kampus Favorit Pengguna Kami
+        </p>
+        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
+          {universities.map((uni) => (
+            <div
+              key={uni.name}
+              className="relative w-16 h-16 md:w-20 md:h-20 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer hover:scale-110"
+              title={`Universitas ${uni.name}`}
+            >
+              <img
+                src={uni.logo}
+                alt={`${uni.name} Logo`}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const BentoFeatures = () => {
+  return (
+    <section id="fitur" className="py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            Bukan Sekadar Latihan Soal Biasa.
+          </h2>
+          <p className="text-lg text-gray-600">
+            Kami membangun ekosistem belajar yang dirancang khusus untuk
+            adaptasi dengan tekanan UTBK sesungguhnya.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(200px,auto)]">
+          {/* Feature 1: IRT - Large */}
+          <Card className="md:col-span-2 bg-white border-0 shadow-sm hover:shadow-xl transition-all overflow-hidden group">
+            <div className="p-8 h-full flex flex-col justify-between relative">
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+                  <Target className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  Sistem Penilaian IRT
+                </h3>
+                <p className="text-gray-600 max-w-md">
+                  Menggunakan Item Response Theory, sama seperti standar UTBK
+                  resmi. Skor kamu mencerminkan kemampuan asli, bukan sekadar
+                  jumlah benar-salah.
+                </p>
+              </div>
+              <div className="absolute right-0 bottom-0 w-64 h-64 bg-gradient-to-tl from-blue-50 to-transparent rounded-tl-full opacity-50 group-hover:scale-110 transition-transform duration-500" />
+            </div>
+          </Card>
+
+          {/* Feature 2: Gamification */}
+          <Card className="bg-white border-0 shadow-sm hover:shadow-xl transition-all overflow-hidden">
+            <div className="p-8 h-full">
+              <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-6">
+                <Trophy className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Daily Streak
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Bangun disiplin belajar. Pertahankan api streak setiap hari dan
+                menangkan rewards eksklusif.
+              </p>
+            </div>
+          </Card>
+
+          {/* Feature 3: Analysis */}
+          <Card className="bg-white border-0 shadow-sm hover:shadow-xl transition-all overflow-hidden">
+            <div className="p-8 h-full">
+              <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+                <BarChart3 className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Analisis Subtes
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Grafik performa detail per subtes (PU, PPU, PBM, dll) untuk
+                identifikasi kelemahanmu.
+              </p>
+            </div>
+          </Card>
+
+          {/* Feature 4: Realtime */}
+          <Card className="md:col-span-2 bg-gray-900 text-white border-0 shadow-sm hover:shadow-xl transition-all overflow-hidden relative">
+            <div className="p-8 relative z-10">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div>
+                  <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center mb-6">
+                    <Zap className="w-6 h-6 text-yellow-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    Blocking Time System
+                  </h3>
+                  <p className="text-gray-300 max-w-md">
+                    Simulasi waktu per sub-bab yang ketat melatih manajemen
+                    waktumu agar tidak panik saat hari-H.
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Abstract pattern */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TestimonialsSection = () => {
+  const testimonials = [
+    {
+      name: "Sarah Amalia",
+      role: "Lolos Kedokteran UI 2025",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop",
+      text: "Awalnya skeptis, tapi sistem IRT-nya beneran valid. Nilai TO di sini konsisten sama hasil asli UTBK gue. Recommended banget buat yang mau ngejar top PTN!",
+    },
+    {
+      name: "Rizky Pratama",
+      role: "Lolos STEI ITB 2025",
+      avatar:
+        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop",
+      text: "Fitur blocking time-nya bikin stress, TAPI itu yang gue butuhin. Pas hari H ujian beneran, gue jadi jauh lebih tenang karena udah terbiasa dikejar waktu.",
+    },
+    {
+      name: "Dinda Putri",
+      role: "Lolos Psikologi UGM 2025",
+      avatar:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop",
+      text: "Analisis per subtes-nya detail parah. Gue jadi tau kalo gue lemah di Penalaran Matematika dan bisa fokus perbaiki di sisa waktu 2 bulan.",
+    },
+  ];
+
+  return (
+    <section id="testimoni" className="py-24 bg-white border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 mb-4 px-4 py-1 text-sm rounded-full">
+            Testimoni Siswa
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Kata Mereka yang Sudah <span className="text-blue-600">Lolos</span>
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Bergabunglah dengan ribuan siswa yang telah berhasil menembus kampus
+            impian mereka bersama JituAcademy.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {testimonials.map((item, idx) => (
+            <Card
+              key={idx}
+              className="bg-gray-50 border-0 shadow-sm hover:shadow-lg transition-all duration-300"
+            >
+              <CardContent className="p-8 space-y-6">
+                <Quote className="w-10 h-10 text-blue-200" />
+                <p className="text-gray-700 leading-relaxed italic">
+                  "{item.text}"
+                </p>
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-200/50">
+                  <img
+                    src={item.avatar}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white"
+                  />
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">
+                      {item.name}
+                    </h4>
+                    <p className="text-blue-600 text-xs font-medium">
+                      {item.role}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const FAQSection = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      q: "Apakah Tryout di JituAcademy Gratis?",
+      a: "Kami menyediakan Paket Gratis yang bisa diakses kapan saja untuk mencoba fitur dasar. Untuk akses penuh ke bank soal, analisis mendalam, dan tryout premium, Anda bisa upgrade ke paket Premium dengan harga terjangkau.",
+    },
+    {
+      q: "Bagaimana sistem penilaiannya bekerja?",
+      a: "Kami menggunakan sistem Item Response Theory (IRT) yang diadopsi oleh LTMPT/SNPMB. Bobot setiap soal berbeda tergantung tingkat kesulitan dan respons peserta lain, memberikan prediksi skor yang jauh lebih akurat daripada sekadar menghitung jumlah benar.",
+    },
+    {
+      q: "Apakah bisa diakses lewat HP?",
+      a: "Tentu saja! Platform kami 100% responsif. Anda bisa mengerjakan latihan soal, melihat pembahasan, dan mengecek analisis grafik langsung dari smartphone atau tablet dengan nyaman.",
+    },
+    {
+      q: "Jika saya beli paket, masa aktifnya berapa lama?",
+      a: "Masa aktif paket Premium berlaku hingga pelaksanaan UTBK 2026 selesai. Jadi Anda cukup bayar sekali untuk akses sepuasnya sampai hari ujian.",
+    },
+  ];
+
+  return (
+    <section id="faq" className="py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
+          {/* Left Column: Header */}
+          <div className="lg:col-span-5 space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Pertanyaan yang Sering <br /> Diajukan
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Masih bingung? Berikut adalah jawaban untuk pertanyaan populer.
+              Jika tidak menemukan jawabanmu, silakan hubungi tim support kami.
+            </p>
+            <Button variant="outline" className="rounded-full px-6 border-2">
+              Hubungi WhatsApp Admin
+            </Button>
+          </div>
+
+          {/* Right Column: Accordion */}
+          <div className="lg:col-span-7 space-y-4">
+            {faqs.map((faq, idx) => (
+              <div
+                key={idx}
+                className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${
+                  openIndex === idx
+                    ? "border-blue-200 shadow-md"
+                    : "border-gray-200 hover:border-blue-100"
+                }`}
+              >
+                <button
+                  onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                  className="w-full flex items-center justify-between p-6 text-left"
+                >
+                  <span
+                    className={`font-semibold text-lg ${openIndex === idx ? "text-blue-600" : "text-gray-900"}`}
+                  >
+                    {faq.q}
+                  </span>
+                  {openIndex === idx ? (
+                    <Minus className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  ) : (
+                    <Plus className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
+                </button>
+                <div
+                  className={`px-6 overflow-hidden transition-all duration-300 ease-in-out ${
+                    openIndex === idx
+                      ? "max-h-48 opacity-100 pb-6"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <p className="text-gray-600 leading-relaxed">{faq.a}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Footer = () => (
+  <footer className="bg-white pt-20 pb-10 border-t border-gray-100">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+        <div className="md:col-span-5 space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="relative w-8 h-8">
+              <Image src={"/logo.png"} alt="Logo Jitu" layout="fill" />
+            </div>
+            <span className="text-xl font-bold text-gray-900">JituPTN</span>
+          </div>
+          <p className="text-gray-500 leading-relaxed max-w-sm">
+            Platform ed-tech yang berfokus membantu siswa Indonesia menembus PTN
+            impian melalui teknologi simulasi ujian yang adaptif dan akurat.
+          </p>
+          <div className="flex gap-4">
+            {/* Socials Placeholder */}
+            {["Instagram", "Twitter", "Youtube"].map((social, i) => (
+              <div
+                key={i}
+                className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer"
+              >
+                <span className="text-[10px] font-bold">
+                  {social.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <h4 className="font-bold text-gray-900 mb-6">Produk</h4>
+          <ul className="space-y-4 text-gray-500 text-sm">
+            <li className="hover:text-blue-600 cursor-pointer">Tryout SNBT</li>
+            <li className="hover:text-blue-600 cursor-pointer">Bank Soal</li>
+            <li className="hover:text-blue-600 cursor-pointer">Live Class</li>
+          </ul>
+        </div>
+
+        <div className="md:col-span-2">
+          <h4 className="font-bold text-gray-900 mb-6">Dukungan</h4>
+          <ul className="space-y-4 text-gray-500 text-sm">
+            <li className="hover:text-blue-600 cursor-pointer">
+              Pusat Bantuan
+            </li>
+            <li className="hover:text-blue-600 cursor-pointer">
+              Syarat & Ketentuan
+            </li>
+            <li className="hover:text-blue-600 cursor-pointer">
+              Kebijakan Privasi
+            </li>
+          </ul>
+        </div>
+
+        <div className="md:col-span-3">
+          <h4 className="font-bold text-gray-900 mb-6">Tetap Terhubung</h4>
+          <p className="text-gray-500 text-sm mb-4">
+            Dapatkan tips lolos PTN langsung ke emailmu.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Email kamu"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+        <p>© 2026 PT Jitu Edukasi Indonesia. All rights reserved.</p>
+        <p>Dibuat dengan ❤️ untuk Pejuang PTN.</p>
       </div>
     </div>
   </footer>
 );
 
+// --- Main Page Component ---
+
 const LandingPageModule = () => {
   const router = useRouter();
-  const { data: session } = useSession();
-  const [loading, setLoading] = useState(false); // Set false to show mock data immediately or skeleton
-
-  const [activeTryOuts, setActiveTryOuts] = useState<any[]>([
-    {
-      id: "5",
-      title: "Try Out UTBK SNBT 5 2026",
-      badge: "SNBT",
-      participants: 8016,
-      isFree: true,
-      dateRange: "9 - 18 Jan 2026",
-    },
-    {
-      id: "4",
-      title: "Try Out UTBK SNBT 4 2026",
-      badge: "SNBT",
-      participants: 22665,
-      isFree: true,
-      dateRange: "1 - 8 Jan 2026",
-    },
-    {
-      id: "3",
-      title: "Try Out UTBK SNBT 3 2026",
-      badge: "SNBT",
-      participants: 18540,
-      isFree: false,
-      dateRange: "Des 2025",
-    },
-  ]);
 
   return (
-    <div className="min-h-screen pt-20 bg-white font-sans">
-      <PublicNavbar />
+    <div className="min-h-screen bg-white font-sans selection:bg-blue-100 selection:text-blue-900">
+      <Navbar />
 
-      {/* 1. HERO SECTION */}
-      <section className="bg-[url('/grid-pattern.svg')] bg-fixed bg-center pt-20 pb-32">
-        <div className="max-w-7xl mx-auto px-4 text-center space-y-8">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight">
-            Taklukkan <span className="text-blue-600">UTBK SNBT</span> <br />
-            Masuk PTN Impian.
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Simulasi ujian dengan sistem penilaian IRT, analisis peluang lolos
-            real-time, dan gamifikasi yang membuat belajar jadi ketagihan.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Button
-              onClick={() => router.push(session ? "/dashboard" : "/register")}
-              className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl transition-all hover:scale-105"
-            >
-              {session ? "Buka Dashboard" : "Daftar Sekarang - Gratis"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("#preview")}
-              className="h-14 px-8 text-lg rounded-full border-2 hover:bg-gray-50 text-gray-700"
-            >
-              Lihat Jadwal Tryout
-            </Button>
-          </div>
+      <main>
+        <HeroSection />
+        <SocialProof />
+        <BentoFeatures />
+        <TestimonialsSection />
+        <FAQSection />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 max-w-4xl mx-auto border-t border-gray-100 mt-16">
-            {[
-              { label: "Siswa Bergabung", value: "150rb+" },
-              { label: "Total Tryout", value: "50+" },
-              { label: "Soal Terupdate", value: "10rb+" },
-              { label: "PTN Terdata", value: "95+" },
-            ].map((stat, idx) => (
-              <div key={idx} className="text-center">
-                <div className="text-3xl font-bold text-gray-900">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-gray-500 font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. FEATURES SECTION */}
-      <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Kenapa Memilih Jitu Academy?
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Kami tidak hanya memberikan soal, tapi juga strategi dan teknologi
-              untuk memaksimalkan skormu.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Target,
-                title: "Sistem IRT & Blocking Time",
-                desc: "Simulasi persis seperti aslinya. Penilaian menggunakan Item Response Theory untuk akurasi prediksi skor.",
-                color: "text-red-600",
-                bg: "bg-red-50",
-              },
-              {
-                icon: BarChart3,
-                title: "Analisis Mendalam",
-                desc: "Ketahui kelemahanmu per subtes. Dapatkan rekomendasi materi yang harus dipelajari ulang.",
-                color: "text-blue-600",
-                bg: "bg-blue-50",
-              },
-              {
-                icon: Brain,
-                title: "Soal High Order Thinking",
-                desc: "Kumpulan soal HOTS terbaru yang disusun oleh tim ahli sesuai kisi-kisi SNPMB 2026.",
-                color: "text-purple-600",
-                bg: "bg-purple-50",
-              },
-            ].map((feature, idx) => (
-              <Card
-                key={idx}
-                className="border-none shadow-sm hover:shadow-xl transition-all duration-300 group"
-              >
-                <CardContent className="p-8">
-                  <div
-                    className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
-                  >
-                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. GAMIFICATION SECTION */}
-      <section
-        id="gamification"
-        className="py-24 overflow-hidden relative bg-slate-50"
-      >
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-100/50 to-transparent -z-10" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center gap-16">
-            <div className="flex-1 space-y-8">
-              <h2 className="text-4xl font-bold text-gray-900">
-                Kumpulkan Token & <br /> Jaga Daily Streak!
+        {/* Simple CTA Section */}
+        <section className="py-24 px-4 bg-white relative overflow-hidden">
+          <div className="max-w-6xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2.5rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl group">
+            <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+                Mulai Perjalananmu Sekarang.
               </h2>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                Bosan dengan cara belajar lama? Di Jitu Academy, konsistensimu
-                dihargai. Kerjakan soal harian, pertahankan api streak, dan
-                kumpulkan token untuk membuka kunci pembahasan premium.
+              <p className="text-blue-100 text-lg">
+                Ribuan pesaingmu sudah mulai belajar hari ini. Jangan sampai
+                tertinggal. Daftar akun gratis dan akses tryout perdanamu.
               </p>
-              <ul className="space-y-4">
-                {[
-                  "Jawab soal harian untuk dapat Streak",
-                  "Tukarkan Token dengan Pembahasan Soal",
-                  "Leaderboard mingguan berhadiah",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
               <Button
                 onClick={() => router.push("/register")}
-                className="bg-gray-900 text-white px-8 py-6 rounded-xl hover:bg-gray-800 shadow-lg"
+                className="h-14 px-10 text-lg rounded-full bg-white text-blue-600 hover:bg-gray-50 font-bold shadow-lg transition-transform hover:scale-105"
               >
-                Mulai Kumpulkan Token
+                Daftar Gratis Sekarang
               </Button>
             </div>
-            <div className="flex-1 relative">
-              <div className="relative z-10 grid gap-6">
-                <Card className="bg-white shadow-2xl border-orange-100 transform md:-rotate-2 hover:rotate-0 transition-transform duration-500">
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="bg-orange-100 p-4 rounded-full">
-                      <Trophy className="w-8 h-8 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 font-semibold">
-                        Current Streak
-                      </p>
-                      <h4 className="text-3xl font-bold text-gray-900">
-                        7 Hari 🔥
-                      </h4>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-white shadow-2xl border-blue-100 transform md:translate-x-12 md:rotate-2 hover:rotate-0 transition-transform duration-500">
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="bg-blue-100 p-4 rounded-full">
-                      <Coins className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 font-semibold">
-                        Token Balance
-                      </p>
-                      <h4 className="text-3xl font-bold text-gray-900">
-                        250 JituPoints
-                      </h4>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 4. SUBJECTS SECTION (Materi) */}
-      <section id="subjects" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Materi Lengkap UTBK
-            </h2>
-            <p className="text-gray-600">
-              Pelajari semua subtes yang diujikan secara mendalam.
-            </p>
+            {/* Decorative circles - Animated */}
+            <div className="absolute top-0 left-0 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-1000" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 group-hover:scale-110 transition-transform duration-1000" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {SUBJECTS_DATA.map((subject) => {
-              const IconComponent = subject.icon;
-              return (
-                <Card
-                  key={subject.id}
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer group hover:-translate-y-1"
-                >
-                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3">
-                    <div
-                      className={`${subject.bgColor} p-4 rounded-xl group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <IconComponent className={`w-8 h-8 ${subject.color}`} />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 leading-tight min-h-[40px] flex items-center justify-center">
-                      {subject.name}
-                    </h3>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. PREVIEW TRYOUTS */}
-      <section id="preview" className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Jadwal Tryout Terdekat
-              </h2>
-              <p className="text-gray-600">
-                Siapkan dirimu, kursi terbatas untuk sesi live.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              className="text-blue-600 hover:bg-blue-50"
-              onClick={() => router.push("/login")}
-            >
-              Lihat Semua <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {activeTryOuts.map((tryOut) => (
-              <Card
-                key={tryOut.id}
-                className="group hover:shadow-lg transition-all duration-300 border-gray-200 bg-white"
-              >
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <Badge
-                      className={`${tryOut.isFree ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"} hover:bg-opacity-80`}
-                    >
-                      {tryOut.isFree ? "Gratis" : "Premium"}
-                    </Badge>
-                    <span className="text-xs font-semibold text-gray-400 border border-gray-200 px-2 py-1 rounded">
-                      {tryOut.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {tryOut.title}
-                  </h3>
-                  <div className="space-y-2 mb-6">
-                    {tryOut.dateRange && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>{tryOut.dateRange}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      <span>
-                        {tryOut.participants.toLocaleString()} Peserta
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-semibold transition-all"
-                    onClick={() => router.push("/login")}
-                  >
-                    Ikuti Tryout
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. CTA BOTTOM */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-5xl mx-auto bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden shadow-2xl">
-          <div className="relative z-10 space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Siap Mengejar Kampus Impian?
-            </h2>
-            <p className="text-blue-100 max-w-xl mx-auto text-lg">
-              Bergabunglah dengan ribuan pejuang PTN lainnya. Mulai dari gratis,
-              upgrade kapan saja.
-            </p>
-            <Button
-              onClick={() => router.push("/register")}
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-full font-bold shadow-lg transition-transform hover:scale-105"
-            >
-              Daftar Akun Gratis
-            </Button>
-          </div>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-20 -mt-20 blur-2xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-10 -mb-10 blur-2xl" />
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>
