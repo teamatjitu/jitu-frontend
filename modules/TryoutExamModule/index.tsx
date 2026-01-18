@@ -386,7 +386,8 @@ export default function TryoutExamModule() {
 
         // Jika waktu subtes ini habis (Sinyal dari backend)
         if (status === "SUBTEST_FINISHED") {
-          console.log("Waktu subtes habis, pindah otomatis...");
+          console.log("SSE: Waktu subtes habis, pindah otomatis...");
+          setTimeRemainingSec(0); // Force timer to 0 on frontend
           finishCurrentSubtest(); // Jalankan fungsi selesai subtes
         }
 
