@@ -5,6 +5,9 @@ import {
   NotebookPen,
   History,
   Flame,
+  Settings,
+  LogOut,
+  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -15,9 +18,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { signOut } from "@/lib/auth-client";
 
 // Menu items.
 const items = [
@@ -120,6 +125,44 @@ const Navbar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button
+                onClick={() => router.push("/profile")}
+                className="hover:bg-neutral-500/20 transition-colors text-neutral-700"
+              >
+                <div className="w-12 flex justify-center items-center rounded-xl">
+                  <User />
+                </div>
+                <span className="text-base font-semibold">Profil</span>
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button
+                onClick={async () => {
+                  await signOut({
+                    fetchOptions: {
+                      onSuccess: () => router.push("/login"),
+                    },
+                  });
+                }}
+                className="hover:bg-red-50 transition-colors text-red-600"
+              >
+                <div className="w-12 flex justify-center items-center rounded-xl">
+                  <LogOut />
+                </div>
+                <span className="text-base font-semibold">Keluar</span>
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 };

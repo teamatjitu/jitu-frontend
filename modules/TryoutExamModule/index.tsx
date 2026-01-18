@@ -6,6 +6,7 @@ import { BACKEND_URL } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,10 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { TransitionView } from "./components/TransitionView";
+import { FontSizeControl } from "./components/FontSizeControl";
+import renderMathInElement from "katex/contrib/auto-render";
+import "katex/dist/katex.min.css";
+import { toast } from "sonner";
 
 type UiOption = { id: string; text: string };
 
@@ -99,6 +104,8 @@ export default function TryoutExamModule() {
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
+  const questionContainerRef = useRef<HTMLDivElement>(null);
 
   const subtestIndex = useMemo(
     () => getSubtestIndex(String(subtestId)),
@@ -144,6 +151,29 @@ export default function TryoutExamModule() {
       setStartingAttempt(false);
     }
   };
+
+  useEffect(() => {
+    if (questionContainerRef.current) {
+      // Fix potential ampersand encoding issues before rendering math
+      const contentElements = questionContainerRef.current.querySelectorAll(".prose, .option-text");
+      contentElements.forEach((el) => {
+        if (el.innerHTML.includes("&amp;")) {
+          el.innerHTML = el.innerHTML.replace(/&amp;/g, "&");
+        }
+      });
+
+      renderMathInElement(questionContainerRef.current, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+        throwOnError: false,
+        trust: true,
+      });
+    }
+  }, [currentQuestionIndex, examData, fontSize]);
 
   const mapQuestionsPayloadToUi = (
     raw: any,
@@ -360,12 +390,19 @@ export default function TryoutExamModule() {
     }
   };
 
-  const finishCurrentSubtest = async () => {
+  const finishCurrentSubtest = async (isTimeout = false) => {
     if (isReviewMode) return;
 
     if (!examData || !attemptId) return;
     setIsSubmittingFinish(true);
     setShowFinishConfirm(false);
+
+    if (isTimeout) {
+      toast.error("Waktu habis! Jawaban tersimpan otomatis.", {
+        description: `Subtes ${examData.subtestName} telah berakhir.`,
+        duration: 5000,
+      });
+    }
 
     try {
       await saveCurrentQuestionIfDirty();
@@ -426,7 +463,7 @@ export default function TryoutExamModule() {
         // Jika waktu subtes ini habis (Sinyal dari backend)
         if (status === "SUBTEST_FINISHED") {
           console.log("Waktu subtes habis, pindah otomatis...");
-          finishCurrentSubtest(); // Jalankan fungsi selesai subtes
+          finishCurrentSubtest(true); // Kirim flag timeout
         }
 
         if (status === "FINISHED") {
@@ -455,9 +492,9 @@ export default function TryoutExamModule() {
   useEffect(() => {
     if (isReviewMode || !examData || loading) return;
     if ((timeRemainingSec ?? 999) <= 0 && !isSubmittingFinish) {
-      finishCurrentSubtest();
+      finishCurrentSubtest(true);
     }
-  }, [timeRemainingSec, isReviewMode, examData, loading]);
+  }, [timeRemainingSec, isReviewMode, examData, loading, isSubmittingFinish]);
 
   const handleAnswerSelect = (value: string) => {
     if (isReviewMode) return;
@@ -744,6 +781,11 @@ export default function TryoutExamModule() {
                     <h3 className="text-xl font-bold text-gray-900">
                       Soal No. {currentQuestionIndex + 1}
                     </h3>
+                    <FontSizeControl
+                      fontSize={fontSize}
+                      onIncrease={() => setFontSize((p) => Math.min(32, p + 2))}
+                      onDecrease={() => setFontSize((p) => Math.max(12, p - 2))}
+                    />
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -759,126 +801,138 @@ export default function TryoutExamModule() {
                   </div>
                 </div>
 
-                <div className="mb-8 prose prose-lg max-w-none text-gray-800">
-                  <p className="whitespace-pre-wrap leading-relaxed">
-                    {currentQuestion.questionText}
-                  </p>
-                </div>
+                <div ref={questionContainerRef}>
+                  <div className="mb-8 w-full overflow-x-auto pb-2 custom-scrollbar">
+                    <div 
+                      className="prose prose-lg max-w-none text-gray-800 whitespace-pre-wrap leading-relaxed"
+                      style={{ fontSize: `${fontSize}px` }}
+                      dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+                    />
+                  </div>
 
-                <div className="space-y-3 mb-10">
-                  {currentQuestion.options.map((opt) => {
-                    const userAnswerId = answers[currentQuestion.id];
-                    const isSelected = userAnswerId === opt.id;
+                  <div className="space-y-3 mb-10">
+                    {currentQuestion.options.map((opt, idx) => {
+                      const userAnswerId = answers[currentQuestion.id];
+                      const isSelected = userAnswerId === opt.id;
 
-                    const isCorrectKey =
-                      currentQuestion.correctAnswerId === opt.id;
+                      const isCorrectKey =
+                        currentQuestion.correctAnswerId === opt.id;
 
-                    let containerClass =
-                      "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50";
-                    let dotClass = "border-gray-300 bg-white";
-                    let textClass = "text-gray-700";
+                      let containerClass =
+                        "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50";
+                      let dotClass = "border-gray-300 bg-white";
+                      let textClass = "text-gray-700";
 
-                    if (isReviewMode) {
-                      if (isCorrectKey) {
+                      if (isReviewMode) {
+                        if (isCorrectKey) {
+                          containerClass =
+                            "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
+                          dotClass = "border-emerald-500 bg-emerald-500";
+                          textClass = "text-emerald-900 font-bold";
+                        } else if (isSelected && !isCorrectKey) {
+                          containerClass =
+                            "border-red-500 bg-red-50 ring-1 ring-red-200";
+                          dotClass = "border-red-500 bg-red-500";
+                          textClass =
+                            "text-red-900 font-medium line-through decoration-red-500/50";
+                        } else {
+                          containerClass = "border-gray-100 bg-white opacity-60";
+                        }
+                      } else if (isSelected) {
                         containerClass =
-                          "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
-                        dotClass = "border-emerald-500 bg-emerald-500";
-                        textClass = "text-emerald-900 font-bold";
-                      } else if (isSelected && !isCorrectKey) {
-                        containerClass =
-                          "border-red-500 bg-red-50 ring-1 ring-red-200";
-                        dotClass = "border-red-500 bg-red-500";
-                        textClass =
-                          "text-red-900 font-medium line-through decoration-red-500/50";
-                      } else {
-                        containerClass = "border-gray-100 bg-white opacity-60";
+                          "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500";
+                        dotClass = "border-blue-500 bg-blue-500";
+                        textClass = "text-blue-900 font-medium";
                       }
-                    } else if (isSelected) {
-                      containerClass =
-                        "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500";
-                      dotClass = "border-blue-500 bg-blue-500";
-                      textClass = "text-blue-900 font-medium";
-                    }
 
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => handleAnswerSelect(opt.id)}
-                        disabled={isReviewMode}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${containerClass} relative`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${dotClass}`}
-                          >
-                            {(isSelected || isCorrectKey) && (
-                              <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => handleAnswerSelect(opt.id)}
+                          disabled={isReviewMode}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${containerClass} relative`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 text-sm font-bold ${
+                                isSelected || isCorrectKey 
+                                  ? "border-transparent text-white " + (isReviewMode && isCorrectKey ? "bg-emerald-500" : isReviewMode && !isCorrectKey && isSelected ? "bg-red-500" : "bg-blue-500")
+                                  : "border-gray-300 text-gray-500 bg-white"
+                              }`}
+                            >
+                              {String.fromCharCode(65 + idx)}
+                            </div>
+                            <div 
+                              className={`text-base flex-1 option-text ${textClass}`}
+                              style={{ fontSize: `${fontSize}px` }}
+                              dangerouslySetInnerHTML={{ __html: opt.text }}
+                            />
+
+                            {isReviewMode && (
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                {isCorrectKey && (
+                                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                )}
+                                {isSelected && !isCorrectKey && (
+                                  <XCircle className="w-6 h-6 text-red-500" />
+                                )}
+                              </div>
                             )}
                           </div>
-                          <span className={`text-base flex-1 ${textClass}`}>
-                            {opt.text}
-                          </span>
+                        </button>
+                      );
+                    })}
 
-                          {isReviewMode && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                              {isCorrectKey && (
-                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                              )}
-                              {isSelected && !isCorrectKey && (
-                                <XCircle className="w-6 h-6 text-red-500" />
-                              )}
-                            </div>
-                          )}
+                    {currentQuestion.options.length === 0 && (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                          <input
+                            className={`w-full p-3 border rounded-lg outline-none ${
+                              isReviewMode
+                                ? answers[currentQuestion.id]
+                                    ?.toLowerCase()
+                                    .trim() ===
+                                  currentQuestion.correctAnswerText
+                                    ?.toLowerCase()
+                                    .trim()
+                                  ? "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold"
+                                  : "border-red-500 bg-red-50 text-red-900"
+                                : "focus:ring-2 focus:ring-blue-500"
+                            }`}
+                            placeholder="Ketik jawaban Anda..."
+                            style={{ fontSize: `${fontSize}px` }}
+                            value={answers[currentQuestion.id] || ""}
+                            onChange={(e) => handleAnswerSelect(e.target.value)}
+                            disabled={isReviewMode}
+                          />
                         </div>
-                      </button>
-                    );
-                  })}
-
-                  {currentQuestion.options.length === 0 && (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <input
-                          className={`w-full p-3 border rounded-lg outline-none ${
-                            isReviewMode
-                              ? answers[currentQuestion.id]
-                                  ?.toLowerCase()
-                                  .trim() ===
-                                currentQuestion.correctAnswerText
-                                  ?.toLowerCase()
-                                  .trim()
-                                ? "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold"
-                                : "border-red-500 bg-red-50 text-red-900"
-                              : "focus:ring-2 focus:ring-blue-500"
-                          }`}
-                          placeholder="Ketik jawaban Anda..."
-                          value={answers[currentQuestion.id] || ""}
-                          onChange={(e) => handleAnswerSelect(e.target.value)}
-                          disabled={isReviewMode}
-                        />
+                        {isReviewMode && (
+                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm font-medium flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" />
+                            Kunci Jawaban: {currentQuestion.correctAnswerText}
+                          </div>
+                        )}
                       </div>
-                      {isReviewMode && (
-                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm font-medium flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4" />
-                          Kunci Jawaban: {currentQuestion.correctAnswerText}
-                        </div>
-                      )}
+                    )}
+                  </div>
+
+                  {isReviewMode && currentQuestion.solution && (
+                    <div className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                      <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <BookOpen className="w-5 h-5 text-blue-500" />
+                        Pembahasan
+                      </h4>
+                      <div 
+                        className="prose prose-sm max-w-none text-slate-700"
+                        style={{ fontSize: `${fontSize}px` }}
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {currentQuestion.solution}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
                 </div>
-
-                {isReviewMode && currentQuestion.solution && (
-                  <div className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                    <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-blue-500" />
-                      Pembahasan
-                    </h4>
-                    <div className="prose prose-sm max-w-none text-slate-700">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {currentQuestion.solution}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between pt-6 border-t border-gray-100">
                   {!isReviewMode ? (

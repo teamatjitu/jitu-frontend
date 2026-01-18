@@ -1,6 +1,6 @@
 "use client";
 import Navbar from "@/components/elements/Navbar/Navbar";
-import Header from "@/components/elements/Navbar/Header"; // Pastikan file Header ini ada
+// import Header from "@/components/elements/Navbar/Header"; // Header dihapus dari layout
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 
@@ -26,8 +26,8 @@ export default function MainLayout({
         {/* 2. Area Konten Utama (Header + Children) */}
         {/* SidebarInset otomatis mengisi sisa ruang dan menghitung lebar yang pas */}
         <SidebarInset className="flex w-full flex-col overflow-hidden">
-          {/* Header menempel di atas */}
-          {!hideNavbar && <Header />}
+          {/* Header dihapus agar tampilan lebih bersih */}
+          {/* {!hideNavbar && <Header />} */}
 
           {/* Konten halaman yang bisa discroll */}
           <main className="flex-1 overflow-y-auto  ">{children}</main>
