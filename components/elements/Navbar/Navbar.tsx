@@ -3,7 +3,6 @@ import {
   Home,
   ShoppingBag,
   NotebookPen,
-  History,
   Flame,
   Settings,
   LogOut,
@@ -40,11 +39,6 @@ const items = [
     title: "Tryout",
     path: "tryout",
     icon: NotebookPen,
-  },
-  {
-    title: "History",
-    path: "history",
-    icon: History,
   },
   {
     title: "Shop",
@@ -87,7 +81,7 @@ const Navbar = () => {
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
+
               {/* --- MENU ITEMS (STYLE ORIGINAL) --- */}
               {items.map((item) => {
                 const isPath = path.endsWith(item.path);
@@ -141,7 +135,7 @@ const Navbar = () => {
               </button>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          
+
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <button
