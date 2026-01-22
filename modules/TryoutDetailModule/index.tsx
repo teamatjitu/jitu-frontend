@@ -38,6 +38,7 @@ import {
 
 import { TryoutDetail } from "./interface";
 import { RegisterModal } from "../DashboardModule/components/RegisterModal";
+import { UnlockSolutionModal } from "./components/UnlockSolutionModal";
 import { toast } from "sonner";
 import { getUserStats } from "@/lib/api/DashboardApi";
 
@@ -67,11 +68,16 @@ const TryoutDetailModule = () => {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+
+  // Unlock Solution Modal State
+  const [unlockModalOpen, setUnlockModalOpen] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
   const [userBalance, setUserBalance] = useState(0);
 
-  // Fetch latest balance when modal opens
+  // Fetch latest balance when a modal that needs it opens
   useEffect(() => {
-    if (registerModalOpen) {
+    if (unlockModalOpen) {
       const fetchBalance = async () => {
         try {
           const stats = await getUserStats();
@@ -82,7 +88,7 @@ const TryoutDetailModule = () => {
       };
       fetchBalance();
     }
-  }, [registerModalOpen]);
+  }, [unlockModalOpen]);
 
   const fetchDetail = async () => {
     if (!tryoutId) return;
@@ -223,12 +229,42 @@ const TryoutDetailModule = () => {
       toast.success(data.message || "Berhasil mendaftar tryout!");
       setRegisterModalOpen(false);
 
-      // Redirect ke Dashboard setelah berhasil mendaftar/membeli
-      router.push("/dashboard");
+      // Re-fetch data to update UI
+      fetchDetail();
     } catch (e: any) {
       setRegisterError(e.message);
     } finally {
       setRegisterLoading(false);
+    }
+  };
+
+  const onConfirmUnlock = async () => {
+    if (!tryoutId) return;
+    setUnlockLoading(true);
+    setUnlockError("");
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/unlock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Gagal membuka pembahasan");
+      }
+
+      toast.success(data.message || "Berhasil membuka pembahasan!");
+      setUnlockModalOpen(false);
+
+      // Re-fetch data to update UI
+      fetchDetail();
+    } catch (e: any) {
+      setUnlockError(e.message);
+    } finally {
+      setUnlockLoading(false);
     }
   };
 
@@ -241,6 +277,16 @@ const TryoutDetailModule = () => {
         const finishedId = tryoutData.latestFinishedAttemptId;
         if (!finishedId) {
           setError("Data pembahasan belum tersedia.");
+          return;
+        }
+
+        // Check if solution is unlocked
+        console.log("DEBUG: handleStart - tryoutData.isFree:", tryoutData.isFree);
+        console.log("DEBUG: handleStart - tryoutData.tokenCost:", tryoutData.tokenCost);
+        console.log("DEBUG: handleStart - tryoutData.unlockedSolutions:", tryoutData.unlockedSolutions);
+        console.log("DEBUG: handleStart - tryoutData.unlockedSolutions.length:", tryoutData.unlockedSolutions.length);
+        if (!tryoutData.isFree && tryoutData.unlockedSolutions.length === 0) {
+          setUnlockModalOpen(true);
           return;
         }
 
@@ -274,6 +320,16 @@ const TryoutDetailModule = () => {
       tryoutData.latestAttemptStatus === "FINISHED" || isCompletedSubtest;
 
     if (isReviewMode) {
+      // Check if solution is unlocked
+      console.log("DEBUG: handleStartSubtest - tryoutData.isFree:", tryoutData.isFree);
+      console.log("DEBUG: handleStartSubtest - tryoutData.tokenCost:", tryoutData.tokenCost);
+      console.log("DEBUG: handleStartSubtest - tryoutData.unlockedSolutions:", tryoutData.unlockedSolutions);
+      console.log("DEBUG: handleStartSubtest - tryoutData.unlockedSolutions.length:", tryoutData.unlockedSolutions.length);
+      if (!tryoutData.isFree && tryoutData.unlockedSolutions.length === 0) {
+        setUnlockModalOpen(true);
+        return;
+      }
+
       // 2. Ambil ID Attempt untuk review
       const finishedAttemptId = tryoutData.latestFinishedAttemptId;
 
@@ -481,8 +537,6 @@ const TryoutDetailModule = () => {
                       </h3>
                       <p className="text-gray-600">
                         Daftar sekarang untuk mengikuti try out ini
-                        {!tryoutData.isFree &&
-                          ` (${tryoutData.tokenCost} Token)`}
                       </p>
                     </div>
                   </>
@@ -557,7 +611,7 @@ const TryoutDetailModule = () => {
         {/* DETAIL & SUBTESTS UI */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -642,46 +696,6 @@ const TryoutDetailModule = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Right Column - Requirements */}
-          <div className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-900">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                  Persyaratan
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {tryoutData.requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <AlertCircle className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-gray-700 leading-relaxed text-sm">
-                        {requirement}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl shadow-lg border-0 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-              <CardContent className="p-6 relative z-10">
-                <div className="text-center text-white">
-                  <Video className="w-12 h-12 mx-auto mb-3 opacity-90" />
-                  <h3 className="font-bold text-lg mb-2">Video Pembahasan</h3>
-                  <p className="text-sm text-orange-100 leading-relaxed">
-                    Dapatkan akses video pembahasan lengkap setelah mengerjakan
-                    try out
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         <RegisterModal
@@ -689,10 +703,19 @@ const TryoutDetailModule = () => {
           onClose={() => setRegisterModalOpen(false)}
           onConfirm={onConfirmRegister}
           tryoutTitle={tryoutData?.title || ""}
-          tokenCost={tryoutData?.tokenCost || 0}
-          userBalance={userBalance}
           isLoading={registerLoading}
           error={registerError}
+        />
+
+        <UnlockSolutionModal
+          isOpen={unlockModalOpen}
+          onClose={() => setUnlockModalOpen(false)}
+          onConfirm={onConfirmUnlock}
+          tryoutTitle={tryoutData?.title || ""}
+          tokenCost={tryoutData?.tokenCost || 0}
+          userBalance={userBalance}
+          isLoading={unlockLoading}
+          error={unlockError}
         />
       </div>
     </div>
