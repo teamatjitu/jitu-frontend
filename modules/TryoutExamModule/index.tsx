@@ -20,14 +20,19 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { TransitionView } from "./components/TransitionView";
 import { FontSizeControl } from "./components/FontSizeControl";
 import renderMathInElement from "katex/contrib/auto-render";
 import "katex/dist/katex.min.css";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type UiOption = { id: string; text: string };
-
 type UiQuestion = {
   id: string;
   questionText: string;
@@ -106,7 +111,6 @@ export default function TryoutExamModule() {
   >({});
   const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const questionContainerRef = useRef<HTMLDivElement>(null);
 
@@ -451,8 +455,20 @@ export default function TryoutExamModule() {
       await saveCurrentQuestionIfDirty();
 
       if (hasNextSubtest) {
-        setIsTransitioning(true);
-        setIsSubmittingFinish(false);
+        const currentOrder = Number(subtestId);
+        const nextSubtest = examData.allSubtests.find(
+          (s) => s.order === currentOrder + 1
+        );
+
+        const query = new URLSearchParams({
+          attemptId,
+          prevSubtestName: examData.subtestName,
+          nextSubtestName: nextSubtest?.name || "",
+        });
+
+        router.push(
+          `/tryout/${tryoutId}/break/${nextSubtestParam}?${query.toString()}`
+        );
       } else {
         await fetch(
           `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/finish`,
@@ -476,13 +492,13 @@ export default function TryoutExamModule() {
     // Jika review mode atau tidak ada attempt, jangan jalankan SSE
     if (isReviewMode || !attemptId) return;
 
+    // --- SUBTEST TIMER SSE ---
     // Tutup koneksi lama jika ada sebelum membuka yang baru
     if (sseRef.current) {
       sseRef.current.close();
       sseRef.current = null;
     }
 
-    // Buka koneksi SSE baru dengan menyertakan order subtest (subtestIndex + 1)
     const es = new EventSource(
       `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/stream/${
         subtestIndex + 1
@@ -503,10 +519,11 @@ export default function TryoutExamModule() {
           setTimeRemainingSec(remainingSeconds);
         }
 
-        // Jika waktu subtes ini habis (Sinyal dari backend)
         if (status === "SUBTEST_FINISHED") {
-          console.log("Waktu subtes habis, pindah otomatis...");
-          finishCurrentSubtest(true); // Kirim flag timeout
+          console.log("Waktu subtes habis, pindah otomatis atau break...");
+          es.close();
+          sseRef.current = null;
+          finishCurrentSubtest(true);
         }
 
         if (status === "FINISHED") {
@@ -529,8 +546,7 @@ export default function TryoutExamModule() {
         sseRef.current = null;
       }
     };
-    // TAMBAHKAN subtestId dan subtestIndex di sini agar useEffect jalan ulang saat pindah subtes
-  }, [attemptId, isReviewMode, router, tryoutId, subtestId, subtestIndex]);
+  }, [attemptId, isReviewMode, router, tryoutId, subtestId, subtestIndex, hasNextSubtest]);
 
   useEffect(() => {
     if (isReviewMode || !examData || loading) return;

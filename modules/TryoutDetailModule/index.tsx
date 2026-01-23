@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { BACKEND_URL } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +37,16 @@ import {
 
 import { TryoutDetail } from "./interface";
 import { RegisterModal } from "../DashboardModule/components/RegisterModal";
+import { UnlockSolutionModal } from "./components/UnlockSolutionModal";
+import { Leaderboard } from "@/components/elements/Leaderboard";
 import { toast } from "sonner";
 import { getUserStats } from "@/lib/api/DashboardApi";
+import {
+  getTryoutDetail,
+  getTryoutLeaderboard,
+  LeaderboardData,
+} from "@/lib/api/tryout";
+import { startTryoutAttempt, registerTryout } from "@/lib/api/exam";
 
 const TryoutDetailModule = () => {
   const router = useRouter();
@@ -53,8 +60,12 @@ const TryoutDetailModule = () => {
   const { data: session } = useSession();
 
   const [tryoutData, setTryoutData] = useState<TryoutDetail | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [leaderboardError, setLeaderboardError] = useState("");
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -67,11 +78,16 @@ const TryoutDetailModule = () => {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+
+  // Unlock Solution Modal State
+  const [unlockModalOpen, setUnlockModalOpen] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
   const [userBalance, setUserBalance] = useState(0);
 
-  // Fetch latest balance when modal opens
+  // Fetch latest balance when a modal that needs it opens
   useEffect(() => {
-    if (registerModalOpen) {
+    if (unlockModalOpen) {
       const fetchBalance = async () => {
         try {
           const stats = await getUserStats();
@@ -82,66 +98,37 @@ const TryoutDetailModule = () => {
       };
       fetchBalance();
     }
-  }, [registerModalOpen]);
+  }, [unlockModalOpen]);
 
   const fetchDetail = async () => {
     if (!tryoutId) return;
 
     setError("");
+    setLeaderboardError("");
     try {
       setIsLoading(true);
 
-      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      // 1. Fetch main tryout detail
+      const data = await getTryoutDetail(tryoutId);
+      setTryoutData(data);
 
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(msg || "Gagal mengambil data try out");
-      }
-
-      const data = await res.json();
-
-      const mappedData: TryoutDetail = {
-        id: data.id,
-        title: data.title,
-        description: data.description || "Tidak ada deskripsi",
-        badge: data.badge || "UTBK",
-        number: data.number || "1",
-
-        isFree: data.isFree,
-        tokenCost: data.tokenCost,
-
-        participants: data.participants ?? 0,
-        totalQuestions: data.totalQuestions ?? 0,
-        duration: data.duration ?? 0,
-        startDate: data.startDate,
-        endDate: data.endDate,
-
-        isRegistered: !!data.isRegistered,
-        unlockedSolutions: data.unlockedSolutions || [],
-
-        benefits: data.benefits || [],
-        requirements: data.requirements || [],
-
-        categories: data.categories || [],
-
-        latestFinishedAttemptId: data.latestFinishedAttemptId ?? null,
-        latestAttemptStatus: data.latestAttemptStatus ?? null,
-        latestAttemptId: data.latestAttemptId ?? null,
-        currentSubtestOrder: data.currentSubtestOrder ?? 1,
-        latestScore: data.latestScore ?? 0,
-      };
-
-      setTryoutData(mappedData);
-
-      const finishedIds = (mappedData.categories || [])
+      const finishedIds = (data.categories || [])
         .filter((cat: any) => cat?.isCompleted)
         .map((cat: any) => cat?.id);
-
       setCompletedSubtests(finishedIds);
+
+      // 2. Check if tryout has ended
+      if (data.endDate && new Date() > new Date(data.endDate)) {
+        try {
+          // Fetch leaderboard data
+          const lbData = await getTryoutLeaderboard(tryoutId);
+          setLeaderboardData(lbData);
+        } catch (lbErr: any) {
+          // Don't block the page for leaderboard errors, just log it
+          setLeaderboardError("Gagal memuat leaderboard.");
+          console.error("Leaderboard Fetch Error:", lbErr);
+        }
+      }
     } catch (err: any) {
       console.error("Fetch Error:", err);
       setError(err?.message || "Gagal mengambil data try out");
@@ -154,41 +141,14 @@ const TryoutDetailModule = () => {
     fetchDetail();
   }, [tryoutId]);
 
-  const startAttempt = async (): Promise<string> => {
-    if (!tryoutId) throw new Error("Tryout ID tidak ditemukan.");
-    if (!session?.user?.id) {
-      throw new Error("Kamu belum login atau session belum siap.");
-    }
-
-    const res = await fetch(`${BACKEND_URL}/exam/${tryoutId}/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ userId: session.user.id }),
-    });
-
-    if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      throw new Error(msg || "Gagal memulai attempt");
-    }
-
-    const data = await res.json();
-
-    const id = data?.attemptId || data?.id;
-    if (!id)
-      throw new Error(
-        "Attempt berhasil dibuat, tapi attemptId tidak ditemukan di response.",
-      );
-
-    return String(id);
-  };
-
   const ensureAttempt = async (): Promise<string> => {
     if (attemptId) return attemptId;
 
     setIsStartingAttempt(true);
     try {
-      const id = await startAttempt();
+      if (!tryoutId) throw new Error("Tryout ID not found.");
+      if (!session?.user?.id) throw new Error("User session not found.");
+      const id = await startTryoutAttempt(tryoutId, session.user.id);
       setAttemptId(id);
       return id;
     } finally {
@@ -208,7 +168,24 @@ const TryoutDetailModule = () => {
     setRegisterError("");
 
     try {
-      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/register`, {
+      const data = await registerTryout(tryoutId);
+      toast.success(data.message || "Berhasil mendaftar tryout!");
+      setRegisterModalOpen(false);
+      fetchDetail(); // Re-fetch data to update UI
+    } catch (e: any) {
+      setRegisterError(e.message);
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
+  const onConfirmUnlock = async () => {
+    if (!tryoutId) return;
+    setUnlockLoading(true);
+    setUnlockError("");
+
+    try {
+      const res = await fetch(`/api/proxy/tryout/${tryoutId}/unlock`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -217,18 +194,18 @@ const TryoutDetailModule = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Gagal mendaftar tryout");
+        throw new Error(data.message || "Gagal membuka pembahasan");
       }
 
-      toast.success(data.message || "Berhasil mendaftar tryout!");
-      setRegisterModalOpen(false);
+      toast.success(data.message || "Berhasil membuka pembahasan!");
+      setUnlockModalOpen(false);
 
-      // Redirect ke Dashboard setelah berhasil mendaftar/membeli
-      router.push("/dashboard");
+      // Re-fetch data to update UI
+      fetchDetail();
     } catch (e: any) {
-      setRegisterError(e.message);
+      setUnlockError(e.message);
     } finally {
-      setRegisterLoading(false);
+      setUnlockLoading(false);
     }
   };
 
@@ -244,7 +221,11 @@ const TryoutDetailModule = () => {
           return;
         }
 
-        // Langsung ke subtest 1 mode review
+        if (!tryoutData.isFree && tryoutData.unlockedSolutions.length === 0) {
+          setUnlockModalOpen(true);
+          return;
+        }
+
         router.push(
           `/tryout/${tryoutId}/exam/1?review=true&attemptId=${finishedId}`,
         );
@@ -253,10 +234,7 @@ const TryoutDetailModule = () => {
 
       // 2. MODE UJIAN (NOT_STARTED / IN_PROGRESS)
       const id = await ensureAttempt();
-
-      // Ambil order subtes yang harus dikerjakan (default ke 1 jika baru mulai)
       const orderToStart = tryoutData?.currentSubtestOrder || 1;
-
       router.push(`/tryout/${tryoutId}/exam/${orderToStart}?attemptId=${id}`);
     } catch (e: any) {
       setError(e?.message || "Gagal memulai tryout");
@@ -269,20 +247,19 @@ const TryoutDetailModule = () => {
   ) => {
     if (!tryoutId || !tryoutData) return;
 
-    // 1. Tentukan apakah masuk ke Mode Review
     const isReviewMode =
       tryoutData.latestAttemptStatus === "FINISHED" || isCompletedSubtest;
 
     if (isReviewMode) {
-      // 2. Ambil ID Attempt untuk review
+      if (!tryoutData.isFree && tryoutData.unlockedSolutions.length === 0) {
+        setUnlockModalOpen(true);
+        return;
+      }
       const finishedAttemptId = tryoutData.latestFinishedAttemptId;
-
       if (!finishedAttemptId) {
         setError("Data pembahasan belum tersedia. Silakan refresh halaman.");
         return;
       }
-
-      // Navigasi ke Review Mode
       router.push(
         `/tryout/${tryoutId}/exam/${subtestId}?review=true&attemptId=${encodeURIComponent(
           finishedAttemptId,
@@ -291,7 +268,6 @@ const TryoutDetailModule = () => {
       return;
     }
 
-    // --- Mode Ujian Normal ---
     setError("");
     try {
       const id = await ensureAttempt();
@@ -305,17 +281,8 @@ const TryoutDetailModule = () => {
     }
   };
 
-  const isSubtestLocked = (subtestIndex: number) => {
-    if (!tryoutData) return true;
-    // Jika sudah FINISHED, semua subtest terbuka untuk direview
-    if (tryoutData.latestAttemptStatus === "FINISHED") return false;
-
-    if (subtestIndex === 0) return false;
-    const previousSubtestId = tryoutData.categories[subtestIndex - 1]?.id;
-    return !completedSubtests.includes(previousSubtestId);
-  };
-
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
@@ -356,7 +323,6 @@ const TryoutDetailModule = () => {
   return (
     <div className="min-h-screen pl-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 pt-24 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Back Button - Fixed path to avoid history loops */}
         <Button
           variant="ghost"
           onClick={() => router.push("/tryout")}
@@ -366,7 +332,6 @@ const TryoutDetailModule = () => {
           Kembali ke Daftar
         </Button>
 
-        {/* Header Card */}
         <Card className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl shadow-blue-500/20 border-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -ml-32 -mb-32"></div>
@@ -481,14 +446,11 @@ const TryoutDetailModule = () => {
                       </h3>
                       <p className="text-gray-600">
                         Daftar sekarang untuk mengikuti try out ini
-                        {!tryoutData.isFree &&
-                          ` (${tryoutData.tokenCost} Token)`}
                       </p>
                     </div>
                   </>
                 )}
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 {tryoutData.isRegistered ? (
                   <>
@@ -554,10 +516,19 @@ const TryoutDetailModule = () => {
           </CardContent>
         </Card>
 
-        {/* DETAIL & SUBTESTS UI */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
+            {leaderboardData && (
+              <Leaderboard leaderboardData={leaderboardData} />
+            )}
+            {leaderboardError && (
+              <Card className="bg-red-50 border-red-200">
+                <CardContent className="p-4 text-red-700">
+                  {leaderboardError}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900">
@@ -642,46 +613,6 @@ const TryoutDetailModule = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Right Column - Requirements */}
-          <div className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-900">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                  Persyaratan
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {tryoutData.requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <AlertCircle className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-gray-700 leading-relaxed text-sm">
-                        {requirement}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl shadow-lg border-0 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-              <CardContent className="p-6 relative z-10">
-                <div className="text-center text-white">
-                  <Video className="w-12 h-12 mx-auto mb-3 opacity-90" />
-                  <h3 className="font-bold text-lg mb-2">Video Pembahasan</h3>
-                  <p className="text-sm text-orange-100 leading-relaxed">
-                    Dapatkan akses video pembahasan lengkap setelah mengerjakan
-                    try out
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         <RegisterModal
@@ -689,10 +620,19 @@ const TryoutDetailModule = () => {
           onClose={() => setRegisterModalOpen(false)}
           onConfirm={onConfirmRegister}
           tryoutTitle={tryoutData?.title || ""}
-          tokenCost={tryoutData?.tokenCost || 0}
-          userBalance={userBalance}
           isLoading={registerLoading}
           error={registerError}
+        />
+
+        <UnlockSolutionModal
+          isOpen={unlockModalOpen}
+          onClose={() => setUnlockModalOpen(false)}
+          onConfirm={onConfirmUnlock}
+          tryoutTitle={tryoutData?.title || ""}
+          tokenCost={tryoutData?.tokenCost || 0}
+          userBalance={userBalance}
+          isLoading={unlockLoading}
+          error={unlockError}
         />
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   LogOut,
   FileText,
 } from "lucide-react";
+// import { useState, useEffect } from 'react'; // Removed local state and effect
 
 interface SubtestInfo {
   id: string;
@@ -25,6 +26,7 @@ interface TransitionViewProps {
   onExit: () => void;
   subtests: SubtestInfo[];
   currentOrder: number; // Order dari subtes yang BARU SAJA selesai
+  breakTimeRemainingSec: number | null; // New prop for break time
 }
 
 export function TransitionView({
@@ -34,8 +36,12 @@ export function TransitionView({
   onExit,
   subtests,
   currentOrder,
+  breakTimeRemainingSec,
 }: TransitionViewProps) {
+  // const [countdown, setCountdown] = useState(30); // Removed local state
   const isLastSubtest = currentOrder === Math.max(...subtests.map((s) => s.order));
+
+  // Removed local useEffect for countdown, now driven by SSE
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-open-sans">
@@ -60,49 +66,51 @@ export function TransitionView({
               </p>
             </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 text-left relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-3 opacity-10">
-                <PlayCircle className="w-24 h-24 text-blue-600" />
+            {isLastSubtest ? (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 text-left relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <PlayCircle className="w-24 h-24 text-blue-600" />
+                </div>
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                  Status Akhir
+                </p>
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 relative z-10">
+                  Selesai Ujian
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 flex items-start gap-2 relative z-10">
+                  <Clock className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>
+                    Kamu telah menyelesaikan semua subtes dalam tryout ini. Klik tombol di bawah untuk mengakhiri dan melihat nilai.
+                  </span>
+                </p>
               </div>
-              <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
-                {isLastSubtest ? "Status Akhir" : "Selanjutnya"}
-              </p>
-              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 relative z-10">
-                {isLastSubtest ? "Selesai Ujian" : nextSubtestName}
-                {!isLastSubtest && <ArrowRight className="w-5 h-5 text-gray-400" />}
-              </h3>
-              <p className="text-sm text-gray-500 mt-2 flex items-start gap-2 relative z-10">
-                <Clock className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>
-                  {isLastSubtest
-                    ? "Kamu telah menyelesaikan semua subtes dalam tryout ini. Klik tombol di bawah untuk mengakhiri dan melihat nilai."
-                    : "Waktu akan dimulai saat kamu menekan tombol di bawah. Gunakan waktu istirahat ini dengan bijak."}
-                </span>
-              </p>
-            </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <PlayCircle className="w-24 h-24 text-blue-600" />
+                </div>
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                  WAKTU ISTIRAHAT
+                </p>
+                <div className="text-6xl font-bold text-blue-600 my-4">{breakTimeRemainingSec}</div>
+                <h3 className="text-xl font-bold text-gray-900 flex items-center justify-center gap-2 relative z-10">
+                  Subtes Selanjutnya: {nextSubtestName}
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
+                </h3>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-3">
-            <Button
-              onClick={onNext}
-              className={`w-full py-6 rounded-xl font-bold text-base shadow-lg transition-all hover:scale-[1.02] ${
-                isLastSubtest
-                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
-                  : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
-              }`}
-            >
-              {isLastSubtest ? "Selesaikan Ujian" : "Lanjut Mengerjakan"}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              onClick={onExit}
-              className="w-full text-gray-500 hover:text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Keluar dan Lanjut Nanti
-            </Button>
-          </div>
+          {isLastSubtest && (
+            <div className="space-y-3">
+              <Button
+                onClick={onNext}
+                className={`w-full py-6 rounded-xl font-bold text-base shadow-lg transition-all hover:scale-[1.02] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200`}
+              >
+                Selesaikan Ujian
+              </Button>
+            </div>
+          )}
         </CardContent>
 
         {/* Right Side: Progress Stepper */}
