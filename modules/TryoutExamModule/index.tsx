@@ -6,15 +6,7 @@ import { BACKEND_URL } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -45,6 +37,7 @@ type UiQuestion = {
   solution?: string;
   type?: string;
   userAnswer?: string;
+  userAnswerIsCorrect?: boolean;
 };
 
 type UiSubtestInfo = {
@@ -62,6 +55,7 @@ type UiExamData = {
   durationMinutes: number;
   questions: UiQuestion[];
   allSubtests: UiSubtestInfo[]; // Data dinamis dari backend
+  isSolutionLocked?: boolean;
 };
 
 type AnswersMap = Record<string, string>;
@@ -93,7 +87,7 @@ export default function TryoutExamModule() {
   const { data: session } = useSession();
 
   const [attemptId, setAttemptId] = useState<string | null>(
-    attemptIdFromQuery ? String(attemptIdFromQuery) : null
+    attemptIdFromQuery ? String(attemptIdFromQuery) : null,
   );
 
   const [examData, setExamData] = useState<UiExamData | null>(null);
@@ -118,9 +112,9 @@ export default function TryoutExamModule() {
 
   const subtestIndex = useMemo(
     () => getSubtestIndex(String(subtestId)),
-    [subtestId]
+    [subtestId],
   );
-  
+
   const hasNextSubtest = useMemo(() => {
     if (examData?.allSubtests && examData.allSubtests.length > 0) {
       return subtestIndex < examData.allSubtests.length - 1;
@@ -142,7 +136,7 @@ export default function TryoutExamModule() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ userId }),
-      }
+      },
     );
 
     if (!res.ok) {
@@ -154,6 +148,23 @@ export default function TryoutExamModule() {
     const id = data?.attemptId || data?.id;
     if (!id) throw new Error("Attempt ID tidak ditemukan.");
     return String(id);
+  };
+
+  const handleUnlock = async () => {
+    if (!confirm("Buka pembahasan lengkap menggunakan Token?")) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/unlock`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok)
+        throw new Error("Gagal membuka pembahasan. Token tidak cukup?");
+      toast.success("Pembahasan berhasil dibuka!");
+
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message || "Gagal unlock");
+    }
   };
 
   const ensureAttempt = async (): Promise<string> => {
@@ -171,7 +182,9 @@ export default function TryoutExamModule() {
   useEffect(() => {
     if (questionContainerRef.current) {
       // Fix potential ampersand encoding issues before rendering math
-      const contentElements = questionContainerRef.current.querySelectorAll(".prose, .option-text");
+      const contentElements = questionContainerRef.current.querySelectorAll(
+        ".prose, .option-text",
+      );
       contentElements.forEach((el) => {
         if (el.innerHTML.includes("&amp;")) {
           el.innerHTML = el.innerHTML.replace(/&amp;/g, "&");
@@ -193,7 +206,7 @@ export default function TryoutExamModule() {
 
   const mapQuestionsPayloadToUi = (
     raw: any,
-    effectiveAttemptId: string
+    effectiveAttemptId: string,
   ): UiExamData => {
     const rawQuestions = Array.isArray(raw?.questions) ? raw.questions : [];
 
@@ -205,6 +218,7 @@ export default function TryoutExamModule() {
 
       const ua = q?.userAnswer;
       const valUserAnswer = ua?.questionItemId || ua?.inputText || "";
+      const isCorrect = ua?.isCorrect === true;
 
       return {
         id: s(q?.id),
@@ -215,6 +229,7 @@ export default function TryoutExamModule() {
         correctAnswerId: s(q?.correctAnswerId),
         correctAnswerText: s(q?.correctAnswerText),
         userAnswer: valUserAnswer,
+        userAnswerIsCorrect: isCorrect,
       };
     });
 
@@ -225,12 +240,17 @@ export default function TryoutExamModule() {
       durationMinutes: Number(raw?.durationMinutes || 0),
       questions,
       allSubtests: Array.isArray(raw?.allSubtests) ? raw.allSubtests : [],
+      isSolutionLocked: raw?.isSolutionLocked === true,
     };
   };
 
   const handleExit = () => {
-    if (confirm("Apakah Anda yakin ingin keluar? Progress jawaban Anda saat ini sudah tersimpan, tetapi waktu ujian akan terus berjalan jika Anda belum menyelesaikan subtes.")) {
-        router.replace(`/tryout/${tryoutId}`);
+    if (
+      confirm(
+        "Apakah Anda yakin ingin keluar? Progress jawaban Anda saat ini sudah tersimpan, tetapi waktu ujian akan terus berjalan jika Anda belum menyelesaikan subtes.",
+      )
+    ) {
+      router.replace(`/tryout/${tryoutId}`);
     }
   };
 
@@ -258,11 +278,11 @@ export default function TryoutExamModule() {
         const currentUserId = session?.user?.id || "";
 
         const url = `${BACKEND_URL}/tryout/${encodeURIComponent(
-          tryoutId
+          tryoutId,
         )}/exam/${encodeURIComponent(
-          String(subtestId)
+          String(subtestId),
         )}?userId=${encodeURIComponent(
-          currentUserId
+          currentUserId,
         )}&attemptId=${encodeURIComponent(effectiveAttemptId)}`;
 
         const res = await fetch(url, {
@@ -322,7 +342,7 @@ export default function TryoutExamModule() {
     attemptIdParam: string,
     questionId: string,
     value: string,
-    isText: boolean
+    isText: boolean,
   ) => {
     const payload: any = { questionId };
     if (isText) {
@@ -340,7 +360,7 @@ export default function TryoutExamModule() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
-      }
+      },
     );
     if (!res.ok) throw new Error("Gagal menyimpan jawaban");
   };
@@ -364,7 +384,7 @@ export default function TryoutExamModule() {
         effectiveAttemptId,
         qid,
         chosen,
-        isTextAnswer
+        isTextAnswer,
       );
       setLastSyncedAnswers((prev) => ({ ...prev, [qid]: chosen }));
     } catch (e) {
@@ -377,38 +397,38 @@ export default function TryoutExamModule() {
   const handleProceedToNext = async () => {
     try {
       setIsSubmittingFinish(true);
-      
+
       // Panggil API start-subtest untuk mereset timer di backend
       const nextOrder = subtestIndex + 2; // subtestIndex 0-based, order 1-based. Next = +2
       await fetch(
         `${BACKEND_URL}/exam/${encodeURIComponent(
-          attemptId || ""
+          attemptId || "",
         )}/start-subtest`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ subtestOrder: nextOrder }),
-        }
+        },
       );
 
       setIsTransitioning(false);
       setIsSubmittingFinish(false);
-      
+
       router.push(
         `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
-          attemptId || ""
-        )}`
+          attemptId || "",
+        )}`,
       );
     } catch (e) {
       console.error("Gagal memulai subtes:", e);
       setIsSubmittingFinish(false);
       // Fallback: tetap lanjut navigasi meski API gagal (opsional, tergantung kebijakan strictness)
       setIsTransitioning(false);
-       router.push(
+      router.push(
         `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${encodeURIComponent(
-          attemptId || ""
-        )}`
+          attemptId || "",
+        )}`,
       );
     }
   };
@@ -439,7 +459,7 @@ export default function TryoutExamModule() {
           {
             method: "POST",
             credentials: "include",
-          }
+          },
         );
 
         router.replace(`/tryout/${tryoutId}`);
@@ -466,7 +486,7 @@ export default function TryoutExamModule() {
     const es = new EventSource(
       `${BACKEND_URL}/exam/${encodeURIComponent(attemptId)}/stream/${
         subtestIndex + 1
-      }`
+      }`,
     );
     sseRef.current = es;
 
@@ -475,7 +495,7 @@ export default function TryoutExamModule() {
         const raw =
           typeof evt.data === "string" ? JSON.parse(evt.data) : evt.data;
         const remainingSeconds = Number(
-          raw?.remainingSeconds ?? raw?.data?.remainingSeconds
+          raw?.remainingSeconds ?? raw?.data?.remainingSeconds,
         );
         const status = raw?.status ?? raw?.data?.status;
 
@@ -535,7 +555,7 @@ export default function TryoutExamModule() {
       if (isLastQuestion) {
         if (hasNextSubtest) {
           router.push(
-            `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${attemptId}&review=true`
+            `/tryout/${tryoutId}/exam/${nextSubtestParam}?attemptId=${attemptId}&review=true`,
           );
         } else {
           router.push(`/tryout/${tryoutId}`);
@@ -581,7 +601,7 @@ export default function TryoutExamModule() {
     const s = seconds % 60;
     return `${String(h).padStart(2, "0")} : ${String(m).padStart(
       2,
-      "0"
+      "0",
     )} : ${String(s).padStart(2, "0")}`;
   };
   const currentQuestion = examData?.questions[currentQuestionIndex];
@@ -617,14 +637,18 @@ export default function TryoutExamModule() {
 
   if (isTransitioning) {
     const currentOrder = Number(subtestId);
-    const nextSubtest = examData?.allSubtests.find((s) => s.order === currentOrder + 1);
+    const nextSubtest = examData?.allSubtests.find(
+      (s) => s.order === currentOrder + 1,
+    );
     const nextName = nextSubtest?.name || "Selesai Ujian";
 
     return (
       <TransitionView
         currentSubtestName={examData?.subtestName || ""}
         nextSubtestName={nextName}
-        onNext={nextSubtest ? handleProceedToNext : () => finishCurrentSubtest()}
+        onNext={
+          nextSubtest ? handleProceedToNext : () => finishCurrentSubtest()
+        }
         onExit={handleExit}
         subtests={examData?.allSubtests || []}
         currentOrder={currentOrder}
@@ -689,7 +713,13 @@ export default function TryoutExamModule() {
                         Pindah Subtes:
                       </p>
                       <div className="space-y-1">
-                        {(examData?.allSubtests?.length ? examData.allSubtests : SUBTEST_FLOW.map((s, i) => ({ name: s, order: i + 1 }))).map((sub: any, idx) => (
+                        {(examData?.allSubtests?.length
+                          ? examData.allSubtests
+                          : SUBTEST_FLOW.map((s, i) => ({
+                              name: s,
+                              order: i + 1,
+                            }))
+                        ).map((sub: any, idx) => (
                           <Button
                             key={sub.id || idx}
                             variant={
@@ -700,7 +730,7 @@ export default function TryoutExamModule() {
                               router.push(
                                 `/tryout/${tryoutId}/exam/${
                                   idx + 1
-                                }?attemptId=${attemptId}&review=true`
+                                }?attemptId=${attemptId}&review=true`,
                               )
                             }
                           >
@@ -743,18 +773,19 @@ export default function TryoutExamModule() {
                           // Unanswered in review mode, treat as incorrect
                           baseBtnClass = "bg-red-100 text-red-800"; // Kosong
                         }
-                      } else { // Exam mode
+                      } else {
+                        // Exam mode
                         const isMarked = markedQuestions.includes(q.id);
-                        if (isMarked)
-                          baseBtnClass = "bg-yellow-400 text-black";
+                        if (isMarked) baseBtnClass = "bg-yellow-400 text-black";
                         else if (isAnswered)
-                          baseBtnClass = "bg-blue-500 text-white hover:bg-blue-600";
+                          baseBtnClass =
+                            "bg-blue-500 text-white hover:bg-blue-600";
                       }
 
                       // Apply current styling AFTER base color is determined
                       let finalBtnClass = baseBtnClass;
                       if (isCurrent) {
-                          finalBtnClass += " ring-2 ring-blue-500";
+                        finalBtnClass += " ring-2 ring-blue-500";
                       }
 
                       return (
@@ -820,10 +851,12 @@ export default function TryoutExamModule() {
 
                 <div ref={questionContainerRef}>
                   <div className="mb-8 w-full overflow-x-auto pb-2 custom-scrollbar">
-                    <div 
+                    <div
                       className="prose prose-lg max-w-none text-gray-800 whitespace-pre-wrap leading-relaxed"
                       style={{ fontSize: `${fontSize}px` }}
-                      dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+                      dangerouslySetInnerHTML={{
+                        __html: currentQuestion.questionText,
+                      }}
                     />
                   </div>
 
@@ -841,19 +874,45 @@ export default function TryoutExamModule() {
                       let textClass = "text-gray-700";
 
                       if (isReviewMode) {
-                        if (isCorrectKey) {
-                          containerClass =
-                            "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
-                          dotClass = "border-emerald-500 bg-emerald-500";
-                          textClass = "text-emerald-900 font-bold";
-                        } else if (isSelected && !isCorrectKey) {
-                          containerClass =
-                            "border-red-500 bg-red-50 ring-1 ring-red-200";
-                          dotClass = "border-red-500 bg-red-500";
-                          textClass =
-                            "text-red-900 font-medium line-through decoration-red-500/50";
+                        if (examData.isSolutionLocked) {
+                          // LOCKED MODE
+                          if (isSelected) {
+                            if (currentQuestion.userAnswerIsCorrect) {
+                              // User Right, Show Green
+                              containerClass =
+                                "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
+                              dotClass = "border-emerald-500 bg-emerald-500";
+                              textClass = "text-emerald-900 font-bold";
+                            } else {
+                              // User Wrong, Show Red
+                              containerClass =
+                                "border-red-500 bg-red-50 ring-1 ring-red-200";
+                              dotClass = "border-red-500 bg-red-500";
+                              textClass =
+                                "text-red-900 font-medium line-through decoration-red-500/50";
+                            }
+                          } else {
+                            // Not selected, standard look
+                            containerClass =
+                              "border-gray-100 bg-white opacity-60";
+                          }
                         } else {
-                          containerClass = "border-gray-100 bg-white opacity-60";
+                          // UNLOCKED MODE
+                          if (isCorrectKey) {
+                            containerClass =
+                              "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200";
+                            dotClass = "border-emerald-500 bg-emerald-500";
+                            textClass = "text-emerald-900 font-bold";
+                          } else if (isSelected && !isCorrectKey) {
+                            containerClass =
+                              "border-red-500 bg-red-50 ring-1 ring-red-200";
+                            dotClass = "border-red-500 bg-red-500";
+                            textClass =
+                              "text-red-900 font-medium line-through decoration-red-500/50";
+                          } else {
+                            containerClass =
+                              "border-gray-100 bg-white opacity-60";
+                          }
                         }
                       } else if (isSelected) {
                         containerClass =
@@ -872,20 +931,35 @@ export default function TryoutExamModule() {
                           <div className="flex items-center gap-4">
                             <div
                               className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 text-sm font-bold ${
-                                isSelected || isCorrectKey 
-                                  ? "border-transparent text-white " + (isReviewMode && isCorrectKey ? "bg-emerald-500" : isReviewMode && !isCorrectKey && isSelected ? "bg-red-500" : "bg-blue-500")
+                                isSelected ||
+                                (isReviewMode &&
+                                  !examData.isSolutionLocked &&
+                                  isCorrectKey) ||
+                                (isReviewMode &&
+                                  examData.isSolutionLocked &&
+                                  isSelected)
+                                  ? "border-transparent text-white " +
+                                    (isReviewMode
+                                      ? examData.isSolutionLocked
+                                        ? currentQuestion.userAnswerIsCorrect
+                                          ? "bg-emerald-500"
+                                          : "bg-red-500"
+                                        : isCorrectKey
+                                          ? "bg-emerald-500"
+                                          : "bg-red-500"
+                                      : "bg-blue-500")
                                   : "border-gray-300 text-gray-500 bg-white"
                               }`}
                             >
                               {String.fromCharCode(65 + idx)}
                             </div>
-                            <div 
+                            <div
                               className={`text-base flex-1 option-text ${textClass}`}
                               style={{ fontSize: `${fontSize}px` }}
                               dangerouslySetInnerHTML={{ __html: opt.text }}
                             />
 
-                            {isReviewMode && (
+                            {isReviewMode && !examData.isSolutionLocked && (
                               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                 {isCorrectKey && (
                                   <CheckCircle2 className="w-6 h-6 text-emerald-600" />
@@ -895,6 +969,18 @@ export default function TryoutExamModule() {
                                 )}
                               </div>
                             )}
+
+                            {isReviewMode &&
+                              examData.isSolutionLocked &&
+                              isSelected && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                  {currentQuestion.userAnswerIsCorrect ? (
+                                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                  ) : (
+                                    <XCircle className="w-6 h-6 text-red-500" />
+                                  )}
+                                </div>
+                              )}
                           </div>
                         </button>
                       );
@@ -933,21 +1019,47 @@ export default function TryoutExamModule() {
                     )}
                   </div>
 
-                  {isReviewMode && currentQuestion.solution && (
-                    <div className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                      <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-blue-500" />
-                        Pembahasan
-                      </h4>
-                      <div 
-                        className="prose prose-sm max-w-none text-slate-700"
-                        style={{ fontSize: `${fontSize}px` }}
-                      >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {currentQuestion.solution}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
+                  {isReviewMode && (
+                    <>
+                      {examData.isSolutionLocked ? (
+                        <div className="mb-10 p-8 bg-slate-50 rounded-2xl border border-slate-200 text-center flex flex-col items-center">
+                          <div className="p-3 bg-amber-100 rounded-full mb-4">
+                            <BookOpen className="w-8 h-8 text-amber-600" />
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-lg mb-2">
+                            Pembahasan Terkunci
+                          </h4>
+                          <p className="text-slate-600 mb-6 max-w-md">
+                            Dapatkan akses ke pembahasan lengkap, kunci jawaban,
+                            dan analisis mendalam dengan membuka kunci
+                            menggunakan Token.
+                          </p>
+                          <Button
+                            onClick={handleUnlock}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-6 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95"
+                          >
+                            Buka Pembahasan
+                          </Button>
+                        </div>
+                      ) : (
+                        currentQuestion.solution && (
+                          <div className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                              <BookOpen className="w-5 h-5 text-blue-500" />
+                              Pembahasan
+                            </h4>
+                            <div
+                              className="prose prose-sm max-w-none text-slate-700"
+                              style={{ fontSize: `${fontSize}px` }}
+                            >
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {currentQuestion.solution}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -959,7 +1071,7 @@ export default function TryoutExamModule() {
                         setMarkedQuestions((prev) =>
                           prev.includes(qid)
                             ? prev.filter((x) => x !== qid)
-                            : [...prev, qid]
+                            : [...prev, qid],
                         );
                       }}
                       variant="outline"
@@ -1004,8 +1116,8 @@ export default function TryoutExamModule() {
                             ? "Lanjut Subtes (Review)"
                             : "Selesai Review"
                           : hasNextSubtest
-                          ? "Lanjut Subtes"
-                          : "Selesai"
+                            ? "Lanjut Subtes"
+                            : "Selesai"
                         : "Selanjutnya"}
                       <ArrowRight className="w-4 h-4" />
                     </Button>
