@@ -40,6 +40,7 @@ interface TryOutData {
   isPublic: boolean;
   scheduledStart: string | null;
   scheduledEnd: string | null;
+  isRegistered?: boolean; // Add this line
 }
 
 const TryoutModule = () => {
@@ -53,7 +54,7 @@ const TryoutModule = () => {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "free" | "paid">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "registered" | "not-registered">("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   // --- Effects ---
@@ -84,6 +85,7 @@ const TryoutModule = () => {
           isPublic: item.isPublic ?? true,
           scheduledStart: item.scheduledStart,
           scheduledEnd: item.scheduledEnd,
+          isRegistered: item.isRegistered ?? false, // Add this line
         }));
 
         setTryouts(mappedData);
@@ -103,10 +105,10 @@ const TryoutModule = () => {
     let result = [...tryouts];
 
     // Filter by Tab
-    if (activeTab === "free") {
-      result = result.filter((t) => t.solutionPrice === 0);
-    } else if (activeTab === "paid") {
-      result = result.filter((t) => t.solutionPrice > 0);
+    if (activeTab === "registered") {
+      result = result.filter((t) => t.isRegistered);
+    } else if (activeTab === "not-registered") {
+      result = result.filter((t) => !t.isRegistered);
     }
 
     // Filter by Search
@@ -165,16 +167,16 @@ const TryoutModule = () => {
                     Semua
                 </button>
                 <button 
-                    onClick={() => setActiveTab("free")}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "free" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                    onClick={() => setActiveTab("registered")}
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "registered" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                    Gratis
+                    Terdaftar
                 </button>
                 <button 
-                    onClick={() => setActiveTab("paid")}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "paid" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                    onClick={() => setActiveTab("not-registered")}
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "not-registered" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                    Berbayar
+                    Belum Terdaftar
                 </button>
             </div>
 
