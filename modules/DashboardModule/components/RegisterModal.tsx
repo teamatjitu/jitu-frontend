@@ -7,16 +7,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Coins, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   tryoutTitle: string;
+  tokenCost: number;
   isLoading: boolean;
   error?: string;
-  // The tokenCost and userBalance are removed as registration is now always free
 }
 
 export function RegisterModal({
@@ -24,6 +24,7 @@ export function RegisterModal({
   onClose,
   onConfirm,
   tryoutTitle,
+  tokenCost,
   isLoading,
   error,
 }: RegisterModalProps) {
