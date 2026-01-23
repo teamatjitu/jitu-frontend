@@ -27,6 +27,8 @@ export function RegisterModal({
   isLoading,
   error,
 }: RegisterModalProps) {
+  const isPaidSolution = tokenCost > 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -45,15 +47,24 @@ export function RegisterModal({
         </DialogHeader>
 
         <div className="py-4">
-          <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
+          <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center mb-3">
             <p className="text-green-800 font-medium">
-              Pendaftaran tryout ini <span className="font-bold">GRATIS</span>!
+              Pengerjaan Tryout ini <span className="font-bold">GRATIS</span>!
             </p>
             <p className="text-sm text-green-600 mt-1">
-              Langsung daftar dan kerjakan sekarang. Pembahasan tryout dapat
-              dibeli secara terpisah setelah ujian selesai.
+              Anda bisa mengerjakan soal tanpa memotong token.
             </p>
           </div>
+
+          {isPaidSolution && (
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-blue-800 flex gap-2 items-start">
+              <Coins className="w-4 h-4 mt-0.5 shrink-0" />
+              <p>
+                Jika ingin melihat <strong>Pembahasan Lengkap</strong> setelah selesai, 
+                dibutuhkan <strong>{tokenCost} Token</strong>.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-start gap-2">

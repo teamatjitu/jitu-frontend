@@ -176,7 +176,7 @@ const TryoutModule = () => {
                     onClick={() => setActiveTab("not-registered")}
                     className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "not-registered" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                    Belum Terdaftar
+                    Premium
                 </button>
             </div>
 
@@ -243,16 +243,16 @@ const TryoutModule = () => {
                                         {tryout.badge}
                                     </Badge>
                                     
-                                    {isPaid ? (
-                                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-0">
-                                            <Coins className="w-3 h-3 mr-1" />
-                                            {tryout.solutionPrice} Token
-                                        </Badge>
-                                    ) : (
+                                    <div className="flex gap-2">
                                         <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0">
-                                            GRATIS
+                                            Akses Gratis
                                         </Badge>
-                                    )}
+                                        {isPaid && (
+                                            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[10px]">
+                                                Solusi: {tryout.solutionPrice} Token
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
