@@ -535,9 +535,15 @@ const DashboardModule = () => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <Badge
-                        className={`${tryout.isPublic ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"} hover:bg-opacity-80 border-0`}
+                        className={`${
+                          tryout.solutionPrice > 0
+                            ? "bg-orange-100 text-orange-700"
+                            : "bg-green-100 text-green-700"
+                        } hover:bg-opacity-80 border-0`}
                       >
-                        {tryout.isPublic ? "Gratis" : "Premium"}
+                        {tryout.solutionPrice > 0
+                          ? `${tryout.solutionPrice} Token`
+                          : "Gratis"}
                       </Badge>
                       <div className="text-sm font-bold text-gray-400">
                         #{tryout.title.match(/\d+/)?.[0] || "TO"}
@@ -565,12 +571,12 @@ const DashboardModule = () => {
                     </div>
 
                     <Button
-                      className={`w-full justify-between group ${tryout.isPublic ? "bg-emerald-600 hover:bg-emerald-700" : "border-blue-200 text-white "}`}
+                      className="w-full justify-between group bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() =>
                         handleRegisterClick(tryout as OngoingTryout)
                       }
                     >
-                      {tryout.isPublic ? "Daftar Gratis" : "Beli Sekarang"}
+                      <span>Daftar Gratis</span>
                       <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </CardContent>
