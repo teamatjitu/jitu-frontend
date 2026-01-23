@@ -74,8 +74,7 @@ export const getTryoutLeaderboard = async (
 
   if (!res.ok) {
     if (res.status === 403) {
-      // Leaderboard not available yet
-      return null;
+      throw new Error("Terjadi kesalahan");
     }
     const msg = await res.text().catch(() => "");
     throw new Error(msg || "Gagal mengambil data leaderboard");

@@ -331,43 +331,6 @@ const ShopModule = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div
-            onClick={() => router.push("/shop/pending")}
-            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer hover:shadow-xl transition-shadow"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                <Clock className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-1">
-                  Cek Transaksi Pending
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Lihat transaksi token try out yang belum selesai dibayar
-                </p>
-              </div>
-            </div>
-          </div>
-          <div
-            onClick={() => router.push("/shop/past")}
-            className="rounded-2xl p-6 text-gray-700 shadow-lg w-full cursor-pointer hover:shadow-xl transition-shadow"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                <History className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-1">Cek Transaksi Lama</h3>
-                <p className="text-gray-500 text-sm">
-                  Lihat riwayat pembelian token try out kamu sebelumnya
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Info Banner */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-start gap-4">

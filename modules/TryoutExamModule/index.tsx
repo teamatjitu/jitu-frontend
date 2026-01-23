@@ -21,16 +21,10 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FontSizeControl } from "./components/FontSizeControl";
+import { TransitionView } from "./components/TransitionView";
 import renderMathInElement from "katex/contrib/auto-render";
 import "katex/dist/katex.min.css";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type UiOption = { id: string; text: string };
 type UiQuestion = {
@@ -111,6 +105,7 @@ export default function TryoutExamModule() {
   >({});
   const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const questionContainerRef = useRef<HTMLDivElement>(null);
 
@@ -457,7 +452,7 @@ export default function TryoutExamModule() {
       if (hasNextSubtest) {
         const currentOrder = Number(subtestId);
         const nextSubtest = examData.allSubtests.find(
-          (s) => s.order === currentOrder + 1
+          (s) => s.order === currentOrder + 1,
         );
 
         const query = new URLSearchParams({
@@ -467,7 +462,7 @@ export default function TryoutExamModule() {
         });
 
         router.push(
-          `/tryout/${tryoutId}/break/${nextSubtestParam}?${query.toString()}`
+          `/tryout/${tryoutId}/break/${nextSubtestParam}?${query.toString()}`,
         );
       } else {
         await fetch(
@@ -546,7 +541,15 @@ export default function TryoutExamModule() {
         sseRef.current = null;
       }
     };
-  }, [attemptId, isReviewMode, router, tryoutId, subtestId, subtestIndex, hasNextSubtest]);
+  }, [
+    attemptId,
+    isReviewMode,
+    router,
+    tryoutId,
+    subtestId,
+    subtestIndex,
+    hasNextSubtest,
+  ]);
 
   useEffect(() => {
     if (isReviewMode || !examData || loading) return;
@@ -662,12 +665,11 @@ export default function TryoutExamModule() {
       <TransitionView
         currentSubtestName={examData?.subtestName || ""}
         nextSubtestName={nextName}
-        onNext={
-          nextSubtest ? handleProceedToNext : () => finishCurrentSubtest()
-        }
+        onNext={nextSubtest ? handleProceedToNext : () => finishCurrentSubtest()}
         onExit={handleExit}
         subtests={examData?.allSubtests || []}
         currentOrder={currentOrder}
+        breakTimeRemainingSec={0}
       />
     );
   }

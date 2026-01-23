@@ -61,8 +61,8 @@ export function RegisterModal({
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-blue-800 flex gap-2 items-start">
               <Coins className="w-4 h-4 mt-0.5 shrink-0" />
               <p>
-                Jika ingin melihat <strong>Pembahasan Lengkap</strong> setelah selesai, 
-                dibutuhkan <strong>{tokenCost} Token</strong>.
+                Jika ingin melihat <strong>Pembahasan Lengkap</strong> setelah
+                selesai, dibutuhkan <strong>{tokenCost} Token</strong>.
               </p>
             </div>
           )}

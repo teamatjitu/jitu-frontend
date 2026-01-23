@@ -217,7 +217,7 @@ const SocialProof = () => {
           {universities.map((uni) => (
             <div
               key={uni.name}
-              className="relative w-16 h-16 md:w-20 md:h-20 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer hover:scale-110"
+              className="relative w-16 h-16 md:w-20 md:h-20 grayscale md:opacity-40 max-md:grayscale-0 hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer hover:scale-110"
               title={`Universitas ${uni.name}`}
             >
               <img

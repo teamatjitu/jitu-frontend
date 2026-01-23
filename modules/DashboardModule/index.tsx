@@ -540,9 +540,12 @@ const DashboardModule = () => {
                         Akses Gratis
                       </Badge>
                       {!tryout.isPublic && (
-                         <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[10px]">
-                            Solusi: {tryout.solutionPrice} Token
-                         </Badge>
+                        <Badge
+                          variant="outline"
+                          className="border-amber-200 bg-amber-50 text-amber-700 text-[10px]"
+                        >
+                          Solusi: {tryout.solutionPrice} Token
+                        </Badge>
                       )}
                     </div>
 
@@ -632,7 +635,6 @@ const DashboardModule = () => {
         onConfirm={onConfirmRegister}
         tryoutTitle={selectedTryout?.title || ""}
         tokenCost={selectedTryout?.solutionPrice || 0}
-        userBalance={userStats?.tokenBalance || 0}
         isLoading={registerLoading}
         error={registerError}
       />
