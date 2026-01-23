@@ -541,9 +541,7 @@ const DashboardModule = () => {
                             : "bg-green-100 text-green-700"
                         } hover:bg-opacity-80 border-0`}
                       >
-                        {tryout.solutionPrice > 0
-                          ? `${tryout.solutionPrice} Token`
-                          : "Gratis"}
+                        {tryout.solutionPrice > 0 ? "Premium" : "Gratis"}
                       </Badge>
                       <div className="text-sm font-bold text-gray-400">
                         #{tryout.title.match(/\d+/)?.[0] || "TO"}
