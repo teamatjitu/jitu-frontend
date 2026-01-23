@@ -274,13 +274,14 @@ export default function ProfileModule() {
         <div className="max-w-5xl mx-auto px-4 py-8 md:flex md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="relative group">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100 relative">
                 {user.image ? (
                   <Image
                     src={user.image}
                     alt={user.name}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-full"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-slate-400">
