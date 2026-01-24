@@ -1,10 +1,5 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { signOut, changePassword, useSession } from "@/lib/auth-client";
-import { toast } from "sonner";
 import {
   User,
   LogOut,
@@ -21,8 +16,13 @@ import {
   Lock,
   KeyRound,
   ChevronRight,
+  CreditCard,
+  AlertCircleIcon,
+  Camera,
+  Loader2,
 } from "lucide-react";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,12 @@ import {
 } from "@/components/ui/dialog";
 import { BACKEND_URL } from "@/lib/api";
 import { Input } from "@/components/ui/input";
+import PendingTransactionList from "../PendingTransactionsModule/components/PendingTransactionList";
+import PastTransactionList from "../PastTransactionsModule/components/PastTransactionList";
+import { useRouter } from "next/navigation";
+import { useSession, signOut, changePassword } from "@/lib/auth-client";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 // --- Tipe Data (Interface) ---
 interface Attempt {
@@ -60,7 +66,7 @@ export default function ProfileModule() {
 
   // -- State Tabs --
   const [activeTab, setActiveTab] = useState<
-    "overview" | "history" | "settings"
+    "overview" | "history" | "transactions" | "settings"
   >("overview");
 
   // -- State Data --
@@ -93,6 +99,36 @@ export default function ProfileModule() {
   // Untuk simplifikasi, kita anggap semua user punya akses set password.
   // Tapi sebaiknya check session.user.hasPassword jika available di schema Anda.
   const hasPassword = (session?.user as any)?.hasPassword ?? false;
+
+  // -- Profile Upload State --
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/dashboard/profile`, {
+        method: "PUT",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Gagal mengupload foto");
+
+      toast.success("Foto profil berhasil diperbarui!");
+      window.location.reload(); 
+    } catch (err) {
+      toast.error("Gagal mengupload foto");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // -- 1. Fetch Data Tambahan (Client Side Proxy) --
   useEffect(() => {
@@ -274,23 +310,48 @@ export default function ProfileModule() {
         <div className="max-w-5xl mx-auto px-4 py-8 md:flex md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="relative group">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100">
+              <div 
+                className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-slate-50 shadow-sm overflow-hidden bg-slate-100 relative cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 {user.image ? (
                   <Image
                     src={user.image}
                     alt={user.name}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-full"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-slate-400">
                     <User size={40} />
                   </div>
                 )}
+
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full z-10">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  </div>
+                )}
+
+                {!isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                )}
               </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+
               <button
                 onClick={openEditModal}
-                className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+                className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-slate-200 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer z-20"
               >
                 <Edit3 size={14} />
               </button>
@@ -351,6 +412,12 @@ export default function ProfileModule() {
               onClick={() => setActiveTab("history")}
               icon={History}
               label="Riwayat Tryout"
+            />
+            <MenuButton
+              active={activeTab === "transactions"}
+              onClick={() => setActiveTab("transactions")}
+              icon={CreditCard}
+              label="Transaksi"
             />
             <MenuButton
               active={activeTab === "settings"}
@@ -501,6 +568,26 @@ export default function ProfileModule() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {activeTab === "transactions" && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <AlertCircleIcon className="w-5 h-5 text-amber-500" />
+                  Menunggu Pembayaran
+                </h3>
+                <PendingTransactionList />
+              </div>
+              <Separator />
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <History className="w-5 h-5 text-slate-500" />
+                  Riwayat Pembelian
+                </h3>
+                <PastTransactionList />
+              </div>
+            </div>
           )}
 
           {activeTab === "settings" && (
