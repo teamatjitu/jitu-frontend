@@ -535,18 +535,17 @@ const DashboardModule = () => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <Badge
-                        className={`${tryout.isPublic ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"} hover:bg-opacity-80 border-0`}
+                        className={`${
+                          tryout.solutionPrice > 0
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-green-100 text-green-700"
+                        } hover:bg-opacity-80 border-0`}
                       >
-                        Akses Gratis
+                        {tryout.solutionPrice > 0 ? "Premium" : "Gratis"}
                       </Badge>
-                      {!tryout.isPublic && (
-                        <Badge
-                          variant="outline"
-                          className="border-amber-200 bg-amber-50 text-amber-700 text-[10px]"
-                        >
-                          Solusi: {tryout.solutionPrice} Token
-                        </Badge>
-                      )}
+                      <div className="text-sm font-bold text-gray-400">
+                        #{tryout.title.match(/\d+/)?.[0] || "TO"}
+                      </div>
                     </div>
 
                     <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 h-[3.5rem]">
@@ -570,12 +569,12 @@ const DashboardModule = () => {
                     </div>
 
                     <Button
-                      className={`w-full justify-between group bg-blue-600 hover:bg-blue-700 text-white`}
+                      className="w-full justify-between group bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() =>
                         handleRegisterClick(tryout as OngoingTryout)
                       }
                     >
-                      Kerjakan Sekarang
+                      <span>Daftar Gratis</span>
                       <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </CardContent>
@@ -635,6 +634,7 @@ const DashboardModule = () => {
         onConfirm={onConfirmRegister}
         tryoutTitle={selectedTryout?.title || ""}
         tokenCost={selectedTryout?.solutionPrice || 0}
+        userBalance={userStats?.tokenBalance || 0}
         isLoading={registerLoading}
         error={registerError}
       />

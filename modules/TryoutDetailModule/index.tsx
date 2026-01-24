@@ -60,8 +60,9 @@ const TryoutDetailModule = () => {
   const { data: session } = useSession();
 
   const [tryoutData, setTryoutData] = useState<TryoutDetail | null>(null);
-  const [leaderboardData, setLeaderboardData] =
-    useState<LeaderboardData | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [leaderboardError, setLeaderboardError] = useState("");
@@ -621,7 +622,6 @@ const TryoutDetailModule = () => {
           tryoutTitle={tryoutData?.title || ""}
           isLoading={registerLoading}
           error={registerError}
-          tokenCost={tryoutData?.tokenCost || 0}
         />
 
         <UnlockSolutionModal
