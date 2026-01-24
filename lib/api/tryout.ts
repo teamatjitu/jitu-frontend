@@ -65,7 +65,7 @@ export const getTryoutDetail = async (
 
 export const getTryoutLeaderboard = async (
   tryoutId: string,
-): Promise<LeaderboardData> => {
+): Promise<LeaderboardData | null> => {
   const res = await fetch(`${BACKEND_URL}/tryout/${tryoutId}/leaderboard`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
