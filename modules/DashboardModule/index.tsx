@@ -633,6 +633,7 @@ const DashboardModule = () => {
         onClose={() => setRegisterModalOpen(false)}
         onConfirm={onConfirmRegister}
         tryoutTitle={selectedTryout?.title || ""}
+        tokenCost={selectedTryout?.solutionPrice || 0}
         isLoading={registerLoading}
         error={registerError}
       />

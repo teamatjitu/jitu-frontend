@@ -620,6 +620,7 @@ const TryoutDetailModule = () => {
           onClose={() => setRegisterModalOpen(false)}
           onConfirm={onConfirmRegister}
           tryoutTitle={tryoutData?.title || ""}
+          tokenCost={tryoutData?.tokenCost || 0}
           isLoading={registerLoading}
           error={registerError}
         />
