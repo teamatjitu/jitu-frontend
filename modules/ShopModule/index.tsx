@@ -88,6 +88,7 @@ const ShopModule = () => {
   const [showPendingDialog, setShowPendingDialog] = useState(false);
   const [cancellingPayment, setCancellingPayment] = useState(false);
   const [checkingPending, setCheckingPending] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   const router = useRouter();
 
@@ -315,6 +316,53 @@ const ShopModule = () => {
       window.location.href = pendingPayment.metadata.deeplink_url;
     }
   };
+
+  const handleManualCheck = async () => {
+    if (!paymentData?.orderId) return;
+
+    setIsCheckingStatus(true);
+    toast.info('Memeriksa status pembayaran di server...');
+
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/shop/midtrans/check-status/${paymentData.orderId}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        },
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Gagal memeriksa status');
+      }
+
+      const data = await res.json();
+
+      // The polling mechanism will catch the 'CONFIRMED' status,
+      // so we only need to handle the case where it's still pending.
+      if (data.status === 'PENDING') {
+        toast.warning('Pembayaran Belum Terkonfirmasi', {
+          description:
+            'Status pembayaran kamu masih pending. Coba lagi dalam beberapa saat.',
+        });
+      } else if (data.status === 'CONFIRMED') {
+        // Let the poller handle the success message
+      } else {
+        toast.error('Status Pembayaran Tidak Valid', {
+          description: `Status: ${data.status}. Hubungi customer service jika masalah berlanjut.`,
+        });
+      }
+    } catch (e: any) {
+      toast.error('Gagal Memeriksa Status', {
+        description:
+          e.message || 'Terjadi kesalahan. Silahkan coba lagi nanti.',
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen pl-20 bg-gray-100 pt-24 pb-20">
@@ -649,11 +697,17 @@ const ShopModule = () => {
 
               <Button
                 variant="outline"
-                onClick={() => {
-                  setShowContact(true);
-                }}
+                onClick={handleManualCheck}
+                disabled={isCheckingStatus}
               >
-                Saya sudah melakukan pembayaran
+                {isCheckingStatus ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memeriksa...
+                  </>
+                ) : (
+                  'Saya sudah melakukan pembayaran'
+                )}
               </Button>
             </div>
           )}
